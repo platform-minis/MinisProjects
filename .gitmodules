@@ -1,0 +1,3 @@
+[submodule "libs/arduino_lib_pubsubclient"]
+	path = libs/arduino_lib_pubsubclient
+	url = git@github.com:platform-minis/arduino_lib_pubsubclient.git
