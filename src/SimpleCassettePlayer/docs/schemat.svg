@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" font-family="'Courier New', monospace">
+  <defs>
+    <marker id="arrowR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#e74c3c"/>
+    </marker>
+    <marker id="arrowB" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2c3e50"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="620" rx="12" fill="#fdf6e3"/>
+  <rect x="10" y="10" width="880" height="600" rx="8" fill="none" stroke="#2c3e50" stroke-width="2"/>
+
+  <!-- Title -->
+  <text x="450" y="45" text-anchor="middle" font-size="20" font-weight="bold" fill="#2c3e50">DIY ODTWARZACZ KASETOWY — SCHEMAT</text>
+  <text x="450" y="65" text-anchor="middle" font-size="12" fill="#7f8c8d">Wersja minimalna · ~10 elementów</text>
+
+  <!-- ===== BATERIA ===== -->
+  <rect x="30" y="100" width="100" height="60" rx="6" fill="#fff3cd" stroke="#f39c12" stroke-width="2"/>
+  <text x="80" y="125" text-anchor="middle" font-size="11" font-weight="bold" fill="#e67e22">BATERIE</text>
+  <text x="80" y="142" text-anchor="middle" font-size="10" fill="#e67e22">4×AA = 6V</text>
+  <!-- Battery symbol -->
+  <line x1="60" y1="155" x2="60" y2="165" stroke="#e67e22" stroke-width="3"/>
+  <line x1="70" y1="157" x2="70" y2="163" stroke="#e67e22" stroke-width="2"/>
+  <line x1="80" y1="155" x2="80" y2="165" stroke="#e67e22" stroke-width="3"/>
+  <line x1="90" y1="157" x2="90" y2="163" stroke="#e67e22" stroke-width="2"/>
+  <text x="80" y="178" text-anchor="middle" font-size="9" fill="#e67e22">+ 6V</text>
+
+  <!-- + rail line from battery -->
+  <line x1="130" y1="120" x2="170" y2="120" stroke="#e74c3c" stroke-width="2" marker-end="url(#arrowR)"/>
+  <text x="150" y="113" text-anchor="middle" font-size="9" fill="#e74c3c">+6V</text>
+
+  <!-- ===== SILNIK DC ===== -->
+  <rect x="180" y="90" width="120" height="70" rx="6" fill="#d5f4e6" stroke="#27ae60" stroke-width="2"/>
+  <text x="240" y="115" text-anchor="middle" font-size="11" font-weight="bold" fill="#27ae60">SILNIK DC</text>
+  <text x="240" y="132" text-anchor="middle" font-size="10" fill="#27ae60">EG-530AD-2F</text>
+  <text x="240" y="147" text-anchor="middle" font-size="9" fill="#27ae60">3-9V / CCW</text>
+  <!-- Motor circle symbol -->
+  <circle cx="240" cy="175" r="10" fill="none" stroke="#27ae60" stroke-width="1.5"/>
+  <text x="240" y="179" text-anchor="middle" font-size="10" fill="#27ae60">M</text>
+
+  <!-- SW1 switch between battery and motor -->
+  <rect x="142" y="195" width="70" height="30" rx="4" fill="#ffeaa7" stroke="#fdcb6e" stroke-width="1.5"/>
+  <text x="177" y="214" text-anchor="middle" font-size="9" font-weight="bold" fill="#e17055">SW1 ON/OFF</text>
+
+  <!-- ===== GŁOWICA ===== -->
+  <rect x="370" y="90" width="130" height="70" rx="6" fill="#dfe6e9" stroke="#636e72" stroke-width="2"/>
+  <text x="435" y="115" text-anchor="middle" font-size="11" font-weight="bold" fill="#2d3436">GŁOWICA</text>
+  <text x="435" y="132" text-anchor="middle" font-size="10" fill="#636e72">magnetyczna</text>
+  <text x="435" y="147" text-anchor="middle" font-size="9" fill="#636e72">mono/stereo</text>
+  <!-- Head symbol -->
+  <rect x="420" y="165" width="30" height="15" rx="2" fill="#b2bec3" stroke="#636e72" stroke-width="1"/>
+  <line x1="435" y1="180" x2="435" y2="195" stroke="#636e72" stroke-width="1.5"/>
+
+  <!-- Arrow from head to C1 -->
+  <line x1="500" y1="125" x2="540" y2="125" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowB)"/>
+  <text x="520" y="118" text-anchor="middle" font-size="9" fill="#636e72">sygnał</text>
+  <text x="520" y="140" text-anchor="middle" font-size="8" fill="#636e72">~0.5mV</text>
+
+  <!-- ===== C1 kondensator sprzęgający ===== -->
+  <rect x="550" y="105" width="70" height="40" rx="4" fill="#e8daef" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="585" y="122" text-anchor="middle" font-size="10" font-weight="bold" fill="#8e44ad">C1</text>
+  <text x="585" y="136" text-anchor="middle" font-size="9" fill="#8e44ad">100nF</text>
+  <!-- Cap symbol -->
+  <line x1="577" y1="148" x2="577" y2="158" stroke="#8e44ad" stroke-width="2"/>
+  <line x1="593" y1="148" x2="593" y2="158" stroke="#8e44ad" stroke-width="2"/>
+
+  <!-- Arrow from C1 to potentiometer -->
+  <line x1="620" y1="125" x2="650" y2="125" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowB)"/>
+
+  <!-- ===== POTENCJOMETR ===== -->
+  <rect x="655" y="95" width="90" height="60" rx="6" fill="#ffeaa7" stroke="#fdcb6e" stroke-width="2"/>
+  <text x="700" y="118" text-anchor="middle" font-size="10" font-weight="bold" fill="#e17055">POT R1</text>
+  <text x="700" y="133" text-anchor="middle" font-size="9" fill="#e17055">10kΩ</text>
+  <text x="700" y="146" text-anchor="middle" font-size="8" fill="#e17055">głośność</text>
+
+  <!-- Arrow from pot to LM386 -->
+  <line x1="700" y1="155" x2="700" y2="200" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowB)"/>
+
+  <!-- ===== LM386 — main amp ===== -->
+  <rect x="610" y="210" width="180" height="120" rx="8" fill="#dceefb" stroke="#2980b9" stroke-width="2.5"/>
+  <text x="700" y="238" text-anchor="middle" font-size="14" font-weight="bold" fill="#2980b9">LM386</text>
+  <text x="700" y="256" text-anchor="middle" font-size="10" fill="#2980b9">Wzmacniacz mocy</text>
+  <text x="700" y="272" text-anchor="middle" font-size="9" fill="#2980b9">Wzmocnienie: 20–200×</text>
+
+  <!-- Pin labels -->
+  <text x="622" y="300" font-size="8" fill="#2980b9">Pin 2: IN+</text>
+  <text x="622" y="312" font-size="8" fill="#2980b9">Pin 3: IN−</text>
+  <text x="622" y="324" font-size="8" fill="#2980b9">Pin 6: Vs+</text>
+  <text x="720" y="300" font-size="8" fill="#2980b9">Pin 5: OUT</text>
+  <text x="720" y="312" font-size="8" fill="#2980b9">Pin 4: GND</text>
+  <text x="720" y="324" font-size="8" fill="#2980b9">Pin 1,8: Gain</text>
+
+  <!-- Power to LM386 -->
+  <line x1="130" y1="140" x2="130" y2="260" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <line x1="130" y1="260" x2="610" y2="260" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="370" y="253" text-anchor="middle" font-size="9" fill="#e74c3c">+6V → Pin 6 (Vs)</text>
+
+  <!-- ===== C2 wyjściowy ===== -->
+  <line x1="790" y1="270" x2="820" y2="270" stroke="#2c3e50" stroke-width="2"/>
+  <rect x="545" y="370" width="70" height="40" rx="4" fill="#e8daef" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="580" y="387" text-anchor="middle" font-size="10" font-weight="bold" fill="#8e44ad">C2</text>
+  <text x="580" y="401" text-anchor="middle" font-size="9" fill="#8e44ad">220µF</text>
+
+  <!-- Arrow from LM386 pin5 to C2 -->
+  <line x1="700" y1="330" x2="700" y2="390" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="700" y1="390" x2="615" y2="390" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowB)"/>
+  <text x="660" y="383" text-anchor="middle" font-size="8" fill="#636e72">Pin 5 OUT</text>
+
+  <!-- ===== C3 bypass ===== -->
+  <rect x="445" y="370" width="70" height="40" rx="4" fill="#e8daef" stroke="#8e44ad" stroke-width="1.5"/>
+  <text x="480" y="387" text-anchor="middle" font-size="10" font-weight="bold" fill="#8e44ad">C3</text>
+  <text x="480" y="401" text-anchor="middle" font-size="9" fill="#8e44ad">10µF</text>
+  <text x="480" y="430" text-anchor="middle" font-size="8" fill="#636e72">bypass (Pin 7→GND)</text>
+
+  <!-- ===== GŁOŚNIK ===== -->
+  <rect x="350" y="460" width="130" height="70" rx="6" fill="#ffecd2" stroke="#e17055" stroke-width="2"/>
+  <text x="415" y="488" text-anchor="middle" font-size="12" font-weight="bold" fill="#e17055">GŁOŚNIK</text>
+  <text x="415" y="505" text-anchor="middle" font-size="10" fill="#e17055">8Ω / 0.5W</text>
+  <!-- Speaker symbol -->
+  <polygon points="400,515 410,515 420,525 420,535 410,535 400,535" fill="none" stroke="#e17055" stroke-width="1.5"/>
+  <line x1="420" y1="522" x2="430" y2="518" stroke="#e17055" stroke-width="1"/>
+  <line x1="420" y1="528" x2="430" y2="528" stroke="#e17055" stroke-width="1"/>
+  <line x1="420" y1="534" x2="430" y2="538" stroke="#e17055" stroke-width="1"/>
+
+  <!-- Arrow from C2 to speaker -->
+  <line x1="545" y1="390" x2="490" y2="390" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="490" y1="390" x2="490" y2="490" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="490" y1="490" x2="480" y2="490" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowB)"/>
+
+  <!-- GND line -->
+  <line x1="80" y1="190" x2="80" y2="570" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="80" y1="570" x2="820" y2="570" stroke="#2c3e50" stroke-width="2"/>
+  <text x="450" y="590" text-anchor="middle" font-size="10" font-weight="bold" fill="#2c3e50">GND (masa wspólna)</text>
+  <!-- GND symbols -->
+  <line x1="80" y1="570" x2="80" y2="580" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="70" y1="580" x2="90" y2="580" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="73" y1="584" x2="87" y2="584" stroke="#2c3e50" stroke-width="1.5"/>
+  <line x1="76" y1="588" x2="84" y2="588" stroke="#2c3e50" stroke-width="1"/>
+
+  <line x1="820" y1="570" x2="820" y2="580" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="810" y1="580" x2="830" y2="580" stroke="#2c3e50" stroke-width="2"/>
+  <line x1="813" y1="584" x2="827" y2="584" stroke="#2c3e50" stroke-width="1.5"/>
+  <line x1="816" y1="588" x2="824" y2="588" stroke="#2c3e50" stroke-width="1"/>
+
+  <!-- ===== SIGNAL FLOW ===== -->
+  <rect x="30" y="460" width="280" height="100" rx="6" fill="#f0f0f0" stroke="#bdc3c7" stroke-width="1"/>
+  <text x="170" y="482" text-anchor="middle" font-size="11" font-weight="bold" fill="#2c3e50">PRZEBIEG SYGNAŁU:</text>
+  <text x="40" y="500" font-size="9" fill="#636e72">1. Silnik kręci kasetą (stała prędkość)</text>
+  <text x="40" y="514" font-size="9" fill="#636e72">2. Głowica odczytuje sygnał z taśmy (~0.5mV)</text>
+  <text x="40" y="528" font-size="9" fill="#636e72">3. C1 odcina składową stałą</text>
+  <text x="40" y="542" font-size="9" fill="#636e72">4. R1 reguluje głośność</text>
+  <text x="40" y="556" font-size="9" fill="#636e72">5. LM386 wzmacnia ×20–200 → głośnik</text>
+
+  <!-- ===== OPTIONAL: Jack output ===== -->
+  <rect x="640" y="440" width="120" height="50" rx="4" fill="#f5f5f5" stroke="#bdc3c7" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="700" y="460" text-anchor="middle" font-size="9" fill="#95a5a6">OPCJONALNIE:</text>
+  <text x="700" y="475" text-anchor="middle" font-size="9" fill="#95a5a6">Jack 3.5mm</text>
+  <text x="700" y="487" text-anchor="middle" font-size="8" fill="#95a5a6">(zamiast głośnika)</text>
+
+  <!-- Connection from C2 area to jack -->
+  <line x1="615" y1="400" x2="640" y2="400" stroke="#bdc3c7" stroke-width="1" stroke-dasharray="4,2"/>
+  <line x1="640" y1="400" x2="640" y2="440" stroke="#bdc3c7" stroke-width="1" stroke-dasharray="4,2"/>
+
+  <!-- Cassette icon decorative -->
+  <rect x="780" y="90" width="80" height="55" rx="4" fill="#2c3e50" opacity="0.1"/>
+  <circle cx="800" cy="117" r="10" fill="none" stroke="#2c3e50" stroke-width="1" opacity="0.3"/>
+  <circle cx="840" cy="117" r="10" fill="none" stroke="#2c3e50" stroke-width="1" opacity="0.3"/>
+  <rect x="795" y="132" width="50" height="5" rx="2" fill="#2c3e50" opacity="0.15"/>
+
+</svg>
