@@ -1,0 +1,64 @@
+; capture.pio
+; RP2350 PIO program for GPIO edge capture.
+;
+; Monitors a contiguous block of 8 input pins starting at 'in_base'.
+; Pushes one 32-bit word to the RX FIFO on every transition (any pin change).
+; The host reads the word and extracts the new pin-state byte from bits [7:0].
+;
+; Timing: runs at full PIO clock (150 MHz = 6.67 ns resolution).
+; Jitter: ≤2 PIO cycles (~13 ns) due to the 2-instruction change-detect loop.
+;
+; PIO clock divisor should be set to 1.0 (full speed) for maximum resolution.
+;
+; Program constraints:
+;   - in_base: first pin to monitor (must be GPIO-aligned)
+;   - in_count: 8 (always monitors 8 pins)
+;   - out_count / set_count: not used
+;   - FIFO: RX only; TX FIFO unused
+
+.program capture
+
+; X holds the previous pin state (initialised by the C SDK init function).
+; The loop samples pins into Y and compares with X.
+; On change: push Y to RX FIFO, update X.
+
+    mov x, pins         ; snapshot initial pin state (8 bits into X[7:0])
+
+scan:
+    mov y, pins         ; sample current pin state
+    jmp x!=y, changed   ; any bit changed?
+    jmp scan            ; no change, loop (2 cycles per iteration)
+
+changed:
+    in y, 8             ; shift Y into ISR (8 bits)
+    push noblock        ; push ISR to RX FIFO (non-blocking: drop if full)
+    mov x, y           ; update reference state
+    jmp scan
+
+% c-sdk {
+#include "hardware/clocks.h"
+
+// Initialise a PIO state machine to run the capture program.
+// pin_base: first GPIO to monitor (GP0..GP22; must support PIO).
+// Call pio_sm_set_enabled(pio, sm, true) after this function.
+static inline void capture_program_init(PIO pio, uint sm, uint offset, uint pin_base) {
+    pio_sm_config c = capture_program_get_default_config(offset);
+
+    // Map 8 consecutive input pins starting at pin_base
+    sm_config_set_in_pins(&c, pin_base);
+
+    // Shift 8 bits left into ISR, auto-push disabled (we push manually)
+    sm_config_set_in_shift(&c, false, false, 8);
+
+    // Run at full PIO clock (150 MHz on RP2350 with default PLL)
+    sm_config_set_clkdiv(&c, 1.0f);
+
+    // Initialise GPIO pins as inputs (no pulls - caller configures externally)
+    for (uint i = pin_base; i < pin_base + 8; ++i) {
+        pio_gpio_init(pio, i);
+    }
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_base, 8, false); // inputs
+
+    pio_sm_init(pio, sm, offset, &c);
+}
+%}
