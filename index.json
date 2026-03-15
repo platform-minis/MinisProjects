@@ -71,8 +71,8 @@
         "arduino"
       ],
       "path": "src/Esp32S3Test",
-      "hasSrc": false,
-      "hasDocs": false
+      "hasSrc": true,
+      "hasDocs": true
     },
     {
       "id": "Esp32S3uPythonCurses",
