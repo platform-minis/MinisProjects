@@ -60,7 +60,7 @@
     },
     {
       "id": "Esp32S3Test",
-      "name": "ESP32-S3 Test",
+      "name": "ESP32-S3-Test",
       "description": "ESP32-S3 test project for demonstrating functionality.",
       "softwarePlatform": "Arduino",
       "moduleId": "esp32-s3-pico",
@@ -76,7 +76,7 @@
     },
     {
       "id": "Esp32S3uPythonCurses",
-      "name": "ESP32-S3 uPython Curses",
+      "name": "ESP32-S3-uPythonCurses",
       "description": "ESP32-S3 test project for demonstrating functionality.",
       "softwarePlatform": "uPython",
       "moduleId": "esp32-s3-pico",
@@ -92,7 +92,7 @@
     },
     {
       "id": "Esp32S3Test",
-      "name": "ESP32-S3 uPython Test",
+      "name": "ESP32-S3-uPythonTest",
       "description": "ESP32-S3 test project for demonstrating functionality.",
       "softwarePlatform": "uPython",
       "moduleId": "esp32-s3-pico",
