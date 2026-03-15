@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(json.dumps\\(dev, indent=2\\)\\) for dev in d[''''devices''''] if dev.get\\(''''sn''''\\)==''''997'''']\")",
-      "Bash(pnpm --filter @mhersztowski/core-backend build)"
+      "Bash(pnpm --filter @mhersztowski/core-backend build)",
+      "Bash(git push:*)"
     ]
   }
 }
