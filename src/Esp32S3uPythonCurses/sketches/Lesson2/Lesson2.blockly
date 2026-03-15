@@ -1,0 +1,51 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="upy_start" id="7LKoSS+4[~Ue=@lX[.98" x="110" y="-90">
+    <statement name="DO">
+      <block type="upy_pin_init" id="=o!sD!HV)=oG0ojQf%Uo">
+        <field name="PIN">11</field>
+        <field name="MODE">OUT</field>
+        <field name="PULL">NONE</field>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="Cf0~$ctiGW{MS^FiM~EJ" x="110" y="70">
+    <statement name="DO">
+      <block type="upy_pin_set_value" id="41``xhqro1hMvp;ZAt@L">
+        <field name="PIN">11</field>
+        <value name="VALUE">
+          <shadow type="math_number" id="XXXROijj=)e8G$$E.KJ)">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+        <next>
+          <block type="upy_sleep_ms" id="IBQ3_EgD~UyJTga(rA/a">
+            <value name="MS">
+              <shadow type="math_number" id="yxkDtv{AquXs_E,R)VZh">
+                <field name="NUM">1000</field>
+              </shadow>
+            </value>
+            <next>
+              <block type="upy_pin_set_value" id="X?NDUabrY!y00u|5II8w">
+                <field name="PIN">11</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="r;Lh`UebB::S2!5THGvD">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+                <next>
+                  <block type="upy_sleep_ms" id="9AHbHhFq;Lfr9L8A[A@j">
+                    <value name="MS">
+                      <shadow type="math_number" id="2.II~}-PxFPMu6B%}o[L">
+                        <field name="NUM">1000</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

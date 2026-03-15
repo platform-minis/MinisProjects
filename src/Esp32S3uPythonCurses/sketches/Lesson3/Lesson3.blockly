@@ -1,0 +1,114 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="upy_start" id="P%UB`Z*/uClZO`-v^WMK" x="50" y="10">
+    <statement name="DO">
+      <block type="upy_pin_init" id="{zblpccFB~~mSS%NcQrd">
+        <field name="PIN">12</field>
+        <field name="MODE">OUT</field>
+        <field name="PULL">NONE</field>
+        <next>
+          <block type="upy_pin_init" id="FtRW:SBCaa%tjI2L0!Xw">
+            <field name="PIN">13</field>
+            <field name="MODE">OUT</field>
+            <field name="PULL">NONE</field>
+            <next>
+              <block type="upy_pin_init" id="yim!AK26jP%JYaJ2!e+f">
+                <field name="PIN">14</field>
+                <field name="MODE">OUT</field>
+                <field name="PULL">NONE</field>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="_){w%0ylQ;sl6/4r{_D#" x="50" y="170">
+    <statement name="DO">
+      <block type="upy_pin_set_value" id="P|5=+NAG{~-bA5/v--5r">
+        <field name="PIN">14</field>
+        <value name="VALUE">
+          <shadow type="math_number" id="6yJ-[(vuJQ@$n9x}9ke5">
+            <field name="NUM">1</field>
+          </shadow>
+        </value>
+        <next>
+          <block type="upy_sleep_ms" id="(6MD8cRJZ$$/k,8funL$">
+            <value name="MS">
+              <shadow type="math_number" id="-Q~f}}j4OwSRIj}Vcn!G">
+                <field name="NUM">3000</field>
+              </shadow>
+            </value>
+            <next>
+              <block type="upy_pin_set_value" id="pP{!Deh~A=3w@z,0VjvZ">
+                <field name="PIN">14</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="{aN*$okYI#Yp0(Nz$768">
+                    <field name="NUM">0</field>
+                  </shadow>
+                </value>
+                <next>
+                  <block type="upy_pin_set_value" id="RIfN[h,6Tuap5vSsOQSO">
+                    <field name="PIN">13</field>
+                    <value name="VALUE">
+                      <shadow type="math_number" id="WQ1{lsAW0HgY[nSre{Nk">
+                        <field name="NUM">1</field>
+                      </shadow>
+                    </value>
+                    <next>
+                      <block type="upy_sleep_ms" id="}Mjm)hnAi$0r-07T;v4S">
+                        <value name="MS">
+                          <shadow type="math_number" id="4g*yFt+vP1{MfU63_+0{">
+                            <field name="NUM">1000</field>
+                          </shadow>
+                        </value>
+                        <next>
+                          <block type="upy_pin_set_value" id="|%sslB768?h5Lb)e_=H9">
+                            <field name="PIN">13</field>
+                            <value name="VALUE">
+                              <shadow type="math_number" id="]gnn2`k6fy1tl1u-Md{5">
+                                <field name="NUM">0</field>
+                              </shadow>
+                            </value>
+                            <next>
+                              <block type="upy_pin_set_value" id="4ve!W,a[w(b#]k+`%+C9">
+                                <field name="PIN">12</field>
+                                <value name="VALUE">
+                                  <shadow type="math_number" id="Lje`oX=%b/Tx{MyCj-nR">
+                                    <field name="NUM">1</field>
+                                  </shadow>
+                                </value>
+                                <next>
+                                  <block type="upy_sleep_ms" id="s?C.-3Ct^+jIQ{/,xPn;">
+                                    <value name="MS">
+                                      <shadow type="math_number" id="}$oJh{(SJfwOeF|:+8ZL">
+                                        <field name="NUM">3000</field>
+                                      </shadow>
+                                    </value>
+                                    <next>
+                                      <block type="upy_pin_set_value" id="%}u5]8fZyWH}~@]Rf_%?">
+                                        <field name="PIN">12</field>
+                                        <value name="VALUE">
+                                          <shadow type="math_number" id="=#hee)@w%,hs)f=TeqXY">
+                                            <field name="NUM">0</field>
+                                          </shadow>
+                                        </value>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

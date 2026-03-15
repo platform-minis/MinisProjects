@@ -1,0 +1,73 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="zK!u`voWb0b[`#a:7R?}">item</variable>
+  </variables>
+  <block type="upy_start" id="x!D2R9mwCG8Z7OWM[gUG" x="170" y="130">
+    <statement name="DO">
+      <block type="variables_set" id="5El!1CHvEV-eYFNU|%Xx">
+        <field name="VAR" id="zK!u`voWb0b[`#a:7R?}">item</field>
+        <value name="VALUE">
+          <block type="math_number" id="^+HmS:#Fp#0^DtE6]:(?">
+            <field name="NUM">0</field>
+          </block>
+        </value>
+        <next>
+          <block type="upy_pin_init" id="w.BHeNm+1FS4JmJ9jCL]">
+            <field name="PIN">11</field>
+            <field name="MODE">OUT</field>
+            <field name="PULL">NONE</field>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="[h;v8O]}FAlNR$s!pi.f" x="170" y="370">
+    <statement name="DO">
+      <block type="upy_print" id="z`.}#Be,kO2%T00dwFOV">
+        <value name="TEXT">
+          <block type="variables_get" id="SmuN)_:`pgy!kKfE*b0P">
+            <field name="VAR" id="zK!u`voWb0b[`#a:7R?}">item</field>
+          </block>
+        </value>
+        <next>
+          <block type="math_change" id="v3H,6ULn/-J(paR,9-g9">
+            <field name="VAR" id="zK!u`voWb0b[`#a:7R?}">item</field>
+            <value name="DELTA">
+              <shadow type="math_number" id="$%Sw+U,S+pXiLty}T_h}">
+                <field name="NUM">1</field>
+              </shadow>
+            </value>
+            <next>
+              <block type="upy_pin_on" id="~tqqyAqG%!)K4Co-5PrD">
+                <field name="PIN">11</field>
+                <next>
+                  <block type="upy_sleep_ms" id="MFScl59.$4o|M):dv)!;">
+                    <value name="MS">
+                      <shadow type="math_number" id=").bVumwmunI6wMqG.s5%">
+                        <field name="NUM">3000</field>
+                      </shadow>
+                    </value>
+                    <next>
+                      <block type="upy_pin_off" id=".#I2u,?(,0`}!`NyB|.2">
+                        <field name="PIN">11</field>
+                        <next>
+                          <block type="upy_sleep_ms" id=")LLH%_C{*Lu/.wJ^{*.=">
+                            <value name="MS">
+                              <shadow type="math_number" id="0tyJRi]C*!6y?!;:v|}v">
+                                <field name="NUM">3000</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

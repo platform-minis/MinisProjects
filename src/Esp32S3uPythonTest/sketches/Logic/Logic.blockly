@@ -1,0 +1,93 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="#-f{eoQGZu@wZam6Y_BY">item</variable>
+  </variables>
+  <block type="upy_start" id="_mc3mF1^P?6QRRmfpg6#" x="70" y="130">
+    <statement name="DO">
+      <block type="variables_set" id="!n`H@T-+pqH03lH|D*AK">
+        <field name="VAR" id="#-f{eoQGZu@wZam6Y_BY">item</field>
+        <value name="VALUE">
+          <block type="math_number" id="L(e@-/?7=^+?7TYR9KXn">
+            <field name="NUM">0</field>
+          </block>
+        </value>
+        <next>
+          <block type="controls_if" id="={sSYf9H5yt)no|v.w*T">
+            <value name="IF0">
+              <block type="logic_compare" id="=vZg=ZDY$uj}5DShk0:[">
+                <field name="OP">EQ</field>
+                <value name="A">
+                  <block type="variables_get" id=":pBen2=GeCN3G6Y2k%Fk">
+                    <field name="VAR" id="#-f{eoQGZu@wZam6Y_BY">item</field>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="math_number" id="RGMx*D.7$.+nLN^):#1}">
+                    <field name="NUM">0</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="O-=,?yU4hAosWWR~m/%T">
+                <field name="VAR" id="#-f{eoQGZu@wZam6Y_BY">item</field>
+                <value name="VALUE">
+                  <block type="logic_operation" id="%z:T!~s2aN/.G;kNBL^c">
+                    <field name="OP">AND</field>
+                    <value name="A">
+                      <block type="logic_boolean" id=";6#unGb@/(|#nh:[O^la">
+                        <field name="BOOL">TRUE</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="logic_negate" id="N?g+/p}wSNwX2gtPB^#(">
+                        <value name="BOOL">
+                          <block type="logic_boolean" id="l@#WyfLy1X7+keUd~rW~">
+                            <field name="BOOL">FALSE</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+                  <block type="variables_set" id="XBG$|([IZ/?_%0%k]j%|">
+                    <field name="VAR" id="#-f{eoQGZu@wZam6Y_BY">item</field>
+                    <value name="VALUE">
+                      <block type="logic_null" id="jMp6_F@Uj*Doo!ghvY`z"></block>
+                    </value>
+                    <next>
+                      <block type="variables_set" id="mPdlQg8=;]^z?,4Yy=j4">
+                        <field name="VAR" id="#-f{eoQGZu@wZam6Y_BY">item</field>
+                        <value name="VALUE">
+                          <block type="logic_ternary" id="BTeJDLybZD{KNW_ZFgFq">
+                            <value name="IF">
+                              <block type="variables_get" id="nInfg#Nf2DA}S6qf|9tP">
+                                <field name="VAR" id="#-f{eoQGZu@wZam6Y_BY">item</field>
+                              </block>
+                            </value>
+                            <value name="THEN">
+                              <block type="math_number" id="FigI_gbN7gsW2w1nE1U2">
+                                <field name="NUM">2</field>
+                              </block>
+                            </value>
+                            <value name="ELSE">
+                              <block type="math_number" id="bZQ+_Q|AYz0v/8)iA(yv">
+                                <field name="NUM">3</field>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="E~~UoYdrGY~#I0~oJ@-@" x="470" y="110"></block>
+</xml>

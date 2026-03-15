@@ -1,0 +1,9 @@
+{
+  "id": "Esp32S3Test",
+  "name": "ESP32-S3 uPython Test",
+  "description": "ESP32-S3 test project for demonstrating functionality.",
+  "version": "1.0.0",
+  "softwarePlatform": "uPython",
+  "tags": ["test", "esp32s3", "uPython"],
+  "moduleId": "esp32-s3-pico"
+}

@@ -1,0 +1,78 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="upy_start" id="pP/(xvJ+C.T5W~4}C.On" x="50" y="70">
+    <statement name="DO">
+      <block type="upy_pin_init" id="1TCJy/!pEaq3#RhE-qF/">
+        <field name="PIN">11</field>
+        <field name="MODE">OUT</field>
+        <field name="PULL">NONE</field>
+        <next>
+          <block type="upy_pin_init" id="iW7DF}E.r5.,,x4gyM#+">
+            <field name="PIN">16</field>
+            <field name="MODE">IN</field>
+            <field name="PULL">NONE</field>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="CE=L1`~O=t]|2L[cL.h8" x="50" y="250">
+    <statement name="DO">
+      <block type="controls_if" id="1}/Q(jJ=_s!@Bxu4U{Cu">
+        <mutation else="1"></mutation>
+        <value name="IF0">
+          <block type="logic_compare" id="mxPsJm{YV3@!bt7PxA!8">
+            <field name="OP">EQ</field>
+            <value name="A">
+              <block type="upy_pin_get_value" id="eUVIV1hn]WW5mLhU.VMM">
+                <field name="PIN">16</field>
+              </block>
+            </value>
+            <value name="B">
+              <block type="math_number" id="3(rzI5I/u()mqg!MWE,(">
+                <field name="NUM">1</field>
+              </block>
+            </value>
+          </block>
+        </value>
+        <statement name="DO0">
+          <block type="upy_pin_set_value" id="4zPt7}^~kBdGowX4nlZ4">
+            <field name="PIN">11</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="LlyQvTm1AjoN.ReuS,%d">
+                <field name="NUM">1</field>
+              </shadow>
+            </value>
+            <next>
+              <block type="upy_print" id="K6eD1#^5)S6+`eUgp:S-">
+                <value name="TEXT">
+                  <block type="text" id=";aBJ/U:SC#bHAH~HZ{~W">
+                    <field name="TEXT">Button pressed</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </statement>
+        <statement name="ELSE">
+          <block type="upy_pin_set_value" id="bZ)MxEYs~ar87W7.@zz:">
+            <field name="PIN">11</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="miF_mUM|cvjLsp9)8J4u">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+          </block>
+        </statement>
+        <next>
+          <block type="upy_sleep_ms" id="JdY=hvgIUCunJo1{~ww1">
+            <value name="MS">
+              <shadow type="math_number" id="ikdAB5/NRoGX[AVe[}MW">
+                <field name="NUM">100</field>
+              </shadow>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

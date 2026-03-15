@@ -59,6 +59,54 @@
       "hasDocs": true
     },
     {
+      "id": "Esp32S3Test",
+      "name": "ESP32-S3 Test",
+      "description": "ESP32-S3 test project for demonstrating functionality.",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-s3-pico",
+      "version": "1.0.0",
+      "tags": [
+        "test",
+        "esp32s3",
+        "uPython"
+      ],
+      "path": "src/Esp32S3Test",
+      "hasSrc": false,
+      "hasDocs": false
+    },
+    {
+      "id": "Esp32S3uPythonCurses",
+      "name": "ESP32-S3 uPython Curses",
+      "description": "ESP32-S3 test project for demonstrating functionality.",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-s3-pico",
+      "version": "1.0.0",
+      "tags": [
+        "test",
+        "esp32s3",
+        "uPython"
+      ],
+      "path": "src/Esp32S3uPythonCurses",
+      "hasSrc": false,
+      "hasDocs": false
+    },
+    {
+      "id": "Esp32S3Test",
+      "name": "ESP32-S3 uPython Test",
+      "description": "ESP32-S3 test project for demonstrating functionality.",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-s3-pico",
+      "version": "1.0.0",
+      "tags": [
+        "test",
+        "esp32s3",
+        "uPython"
+      ],
+      "path": "src/Esp32S3uPythonTest",
+      "hasSrc": false,
+      "hasDocs": false
+    },
+    {
       "id": "Esp32StreamingAudioPlayer",
       "name": "ESP32 Streaming Audio Player",
       "description": "Platforma do strumieniowania audio przez WiFi w obu kierunkach — ESP32 jako odbiornik (radio internetowe, Snapcast client) i nadajnik (web serwer audio, RTSP).",

@@ -1,0 +1,177 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="`!wlLlP/J_jdVFZQ~23v">item</variable>
+  </variables>
+  <block type="upy_start" id="h[bc-@Q30Nu+4Gs]7Uf3" x="90" y="130">
+    <statement name="DO">
+      <block type="variables_set" id="+UT.=L_Ux1{DIh:4zA%g">
+        <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+        <value name="VALUE">
+          <block type="math_number" id="eG8U(=I[2D6.2HVX9Cf^">
+            <field name="NUM">0</field>
+          </block>
+        </value>
+        <next>
+          <block type="variables_set" id="thD6?h(Je77EE%+DXGj(">
+            <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+            <value name="VALUE">
+              <block type="upy_bitwise" id="b$S].$N,-cJWqkSWNwD7">
+                <field name="OP">AND</field>
+                <value name="A">
+                  <block type="variables_get" id="rceD+f7k(WLi-L(8[y2b">
+                    <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="math_number" id="G%FR;i#ic7QO3jhj61z5">
+                    <field name="NUM">8</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <next>
+              <block type="variables_set" id="(nb_$@VD^w4XX}tK-Hbm">
+                <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                <value name="VALUE">
+                  <block type="upy_bitnot" id=":yuzu4dT?b,A+Doz=vp,">
+                    <value name="VALUE">
+                      <block type="variables_get" id="2pj{f/@TN4I7-VO/[PiN">
+                        <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+                  <block type="variables_set" id="CH$R8sXt~u_}Y_D%kN0J">
+                    <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                    <value name="VALUE">
+                      <block type="upy_bit_get" id="}!dC`x{(gIhecQ9@.hre">
+                        <value name="VAR">
+                          <block type="variables_get" id="f}8#7K4rTM%UI*rP#tH?">
+                            <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                          </block>
+                        </value>
+                        <value name="BIT">
+                          <shadow type="math_number" id="8Sbgj#(ewFn~*vBtH[2C">
+                            <field name="NUM">3</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="variables_set" id="0$B31[c9GO]jut*DP1X3">
+                        <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                        <value name="VALUE">
+                          <block type="upy_bit_set" id="d^VBc1]LbHbbo899jcd(">
+                            <value name="VAR">
+                              <block type="variables_get" id="f.l7qYe:XE#,|_ao_(cX">
+                                <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                              </block>
+                            </value>
+                            <value name="BIT">
+                              <shadow type="math_number" id="G.*$WfOo21id[yfA8K:Z">
+                                <field name="NUM">3</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="variables_set" id="5ZIXNqYZ%$I.wN,?W~G+">
+                            <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                            <value name="VALUE">
+                              <block type="upy_bit_clear" id="(K,{2f|%TmDG_0CW)aJ5">
+                                <value name="VAR">
+                                  <block type="variables_get" id="occSH4lVw%Q.^h8Wj=b.">
+                                    <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                                  </block>
+                                </value>
+                                <value name="BIT">
+                                  <shadow type="math_number" id="lSP.+??lnE9l{J8OYbna">
+                                    <field name="NUM">3</field>
+                                  </shadow>
+                                </value>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="variables_set" id="`NG-794o|,D4e9Wla7$#">
+                                <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                                <value name="VALUE">
+                                  <block type="upy_bit_toggle" id="4?m^X:eor/*m:Q-iqoP/">
+                                    <value name="VAR">
+                                      <block type="variables_get" id="d,0oD(^z5Hi2{{l$:KE+">
+                                        <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                                      </block>
+                                    </value>
+                                    <value name="BIT">
+                                      <shadow type="math_number" id="uTPzK/.uq_#j],G{SQX#">
+                                        <field name="NUM">3</field>
+                                      </shadow>
+                                    </value>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="variables_set" id="K9|]^e1PiCX+$0Mpx==[">
+                                    <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                                    <value name="VALUE">
+                                      <block type="upy_int_from_bytes" id="h0,!J|v6D7Ps2B:*{0t}">
+                                        <field name="BYTEORDER">big</field>
+                                        <value name="VALUE">
+                                          <block type="variables_get" id="veP7O+gJMccc$jG2os`f">
+                                            <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                                          </block>
+                                        </value>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="variables_set" id="PfCv-Hjg^$2*Fu?hr7pu">
+                                        <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                                        <value name="VALUE">
+                                          <block type="upy_to_int" id="QkEk@0]ouk1HUgK1CqxN">
+                                            <value name="VALUE">
+                                              <block type="text" id="x,P}VUXIs~c%fU,GTVPT">
+                                                <field name="TEXT">3.14</field>
+                                              </block>
+                                            </value>
+                                          </block>
+                                        </value>
+                                        <next>
+                                          <block type="variables_set" id="!9;9b@h^KO1a.|S36%F4">
+                                            <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+                                            <value name="VALUE">
+                                              <block type="upy_to_float" id="A*$ZC.OH=)(}oO!X1%pL">
+                                                <value name="VALUE">
+                                                  <block type="text" id="68}ucPp,%irNbYI#f?-k">
+                                                    <field name="TEXT">3.14</field>
+                                                  </block>
+                                                </value>
+                                              </block>
+                                            </value>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id=",n+DN7W#mkp:2j],bQ2}" x="490" y="110"></block>
+  <block type="variables_set" id="w2}1g)Aui%Cv$][cqpn-" x="195" y="588">
+    <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+  </block>
+  <block type="variables_set" id="D$sw]~_L@n*{I9BR:V0^" x="223" y="644">
+    <field name="VAR" id="`!wlLlP/J_jdVFZQ~23v">item</field>
+  </block>
+</xml>

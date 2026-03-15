@@ -1,0 +1,115 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="@77SEk_%95yj-,?}CQFX">Light</variable>
+  </variables>
+  <block type="upy_start" id="RFGAR|G8ZA9O[eVI(j73" x="170" y="90">
+    <statement name="DO">
+      <block type="upy_adc_init" id="GNT_+tGuv?tN@l7%::ao">
+        <field name="PIN">7</field>
+        <field name="ATTEN">ATTN_11DB</field>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="#c(}F8Jh}wS.!p3_x(hc" x="170" y="330">
+    <statement name="DO">
+      <block type="variables_set" id=".T$lmdyQ^_;4N,70~/j#">
+        <field name="VAR" id="@77SEk_%95yj-,?}CQFX">Light</field>
+        <value name="VALUE">
+          <block type="upy_adc_read" id="q-RLT!#`P`y?*-b;$7?8">
+            <field name="PIN">7</field>
+          </block>
+        </value>
+        <next>
+          <block type="upy_print" id="Z7#TeCCvp~.;]!M_rO!i">
+            <value name="TEXT">
+              <block type="text_join" id="JZ/))DikB08vBU}iU%Gp">
+                <mutation items="2"></mutation>
+                <value name="ADD0">
+                  <block type="text" id="?gbo{/rJ8UTjywmj(^zV">
+                    <field name="TEXT">Light level</field>
+                  </block>
+                </value>
+                <value name="ADD1">
+                  <block type="variables_get" id="yM3-9F{vVso?Xo|*P@Eb">
+                    <field name="VAR" id="@77SEk_%95yj-,?}CQFX">Light</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <next>
+              <block type="controls_if" id="DvLTzNFTYnu}YP`h+0xC">
+                <mutation elseif="1" else="1"></mutation>
+                <value name="IF0">
+                  <block type="logic_compare" id="x%L_|5lwGAyX0`#PY4Dk">
+                    <field name="OP">LT</field>
+                    <value name="A">
+                      <block type="variables_get" id="J57w1ClwAtDOc^1PW%T+">
+                        <field name="VAR" id="@77SEk_%95yj-,?}CQFX">Light</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="pqqwJ*d.(wmQU83F=f;s">
+                        <field name="NUM">1000</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <statement name="DO0">
+                  <block type="upy_print" id="5Cd{T068P_pe8m+P8$)j">
+                    <value name="TEXT">
+                      <block type="text" id="r`H%6x;J[Z*,m]NI]y4S">
+                        <field name="TEXT">DARK</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <value name="IF1">
+                  <block type="logic_compare" id="B!#wn{-U%KUX#9Q,W!f4">
+                    <field name="OP">LT</field>
+                    <value name="A">
+                      <block type="variables_get" id="9*).tk$RI2kR1Y91cZm%">
+                        <field name="VAR" id="@77SEk_%95yj-,?}CQFX">Light</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="(K%ng9KSXnm~I%[*XD.%">
+                        <field name="NUM">2500</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <statement name="DO1">
+                  <block type="upy_print" id="^f65S7Ql6?b/XQX~?pGC">
+                    <value name="TEXT">
+                      <block type="text" id="}SNPe|(X0?FG~$|I)LwC">
+                        <field name="TEXT">NORMAL</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <statement name="ELSE">
+                  <block type="upy_print" id="x6-?@sG^:4kpl--;xv37">
+                    <value name="TEXT">
+                      <block type="text" id="*x7YCO-9OD5%!#H]PuZj">
+                        <field name="TEXT">BRIGHT</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <next>
+                  <block type="upy_sleep_ms" id="t[O0N8,f07bB?K0t3|Lo">
+                    <value name="MS">
+                      <shadow type="math_number" id="Op;PyDg%},)D^7Ma`#c9">
+                        <field name="NUM">500</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
