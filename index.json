@@ -62,13 +62,13 @@
       "id": "Esp32S3Test",
       "name": "ESP32-S3 Test",
       "description": "ESP32-S3 test project for demonstrating functionality.",
-      "softwarePlatform": "uPython",
+      "softwarePlatform": "Arduino",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
       "tags": [
         "test",
         "esp32s3",
-        "uPython"
+        "arduino"
       ],
       "path": "src/Esp32S3Test",
       "hasSrc": false,

@@ -3,7 +3,7 @@
   "name": "ESP32-S3 Test",
   "description": "ESP32-S3 test project for demonstrating functionality.",
   "version": "1.0.0",
-  "softwarePlatform": "uPython",
-  "tags": ["test", "esp32s3", "uPython"],
+  "softwarePlatform": "Arduino",
+  "tags": ["test", "esp32s3", "arduino"],
   "moduleId": "esp32-s3-pico"
 }
