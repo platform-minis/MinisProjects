@@ -18,6 +18,7 @@
         "sd-card",
         "intermediate"
       ],
+      "libraries": [],
       "path": "src/Esp32AudioPlayer",
       "hasSrc": false,
       "hasDocs": true,
@@ -38,6 +39,7 @@
         "dma",
         "advanced"
       ],
+      "libraries": [],
       "path": "src/Esp32S3DisplayVGA",
       "hasSrc": true,
       "hasDocs": true,
@@ -67,6 +69,7 @@
         "monochrome",
         "advanced"
       ],
+      "libraries": [],
       "path": "src/Esp32S3DisplayVGA1bit",
       "hasSrc": true,
       "hasDocs": true,
@@ -94,6 +97,13 @@
         "esp32s3",
         "arduino"
       ],
+      "libraries": [
+        {
+          "name": "ArduinoJson",
+          "version": "7.4.3",
+          "url": "https://github.com/bblanchon/ArduinoJson"
+        }
+      ],
       "path": "src/Esp32S3Test",
       "hasSrc": true,
       "hasDocs": true,
@@ -119,6 +129,7 @@
         "esp32s3",
         "uPython"
       ],
+      "libraries": [],
       "path": "src/Esp32S3uPythonCurses",
       "hasSrc": true,
       "hasDocs": true,
@@ -180,6 +191,7 @@
         "esp32s3",
         "uPython"
       ],
+      "libraries": [],
       "path": "src/Esp32S3uPythonTest",
       "hasSrc": true,
       "hasDocs": true,
@@ -237,6 +249,7 @@
         "rtsp",
         "advanced"
       ],
+      "libraries": [],
       "path": "src/Esp32StreamingAudioPlayer",
       "hasSrc": false,
       "hasDocs": true,
@@ -259,6 +272,7 @@
         "msx",
         "advanced"
       ],
+      "libraries": [],
       "path": "src/Esp32TapeForge",
       "hasSrc": false,
       "hasDocs": true,
@@ -280,6 +294,7 @@
         "sd-card",
         "advanced"
       ],
+      "libraries": [],
       "path": "src/Esp32VinylCaster",
       "hasSrc": false,
       "hasDocs": true,
@@ -301,6 +316,7 @@
         "pio",
         "advanced"
       ],
+      "libraries": [],
       "path": "src/RPiPico2DisplayDVI",
       "hasSrc": true,
       "hasDocs": true,
@@ -322,6 +338,7 @@
         "rp2350",
         "advanced"
       ],
+      "libraries": [],
       "path": "src/RPiPico2DisplayVGA",
       "hasSrc": true,
       "hasDocs": true,
@@ -343,6 +360,7 @@
         "rp2350",
         "intermediate"
       ],
+      "libraries": [],
       "path": "src/RPiPico2TestPlatform",
       "hasSrc": true,
       "hasDocs": true,
@@ -363,6 +381,7 @@
         "lm386",
         "beginner"
       ],
+      "libraries": [],
       "path": "src/SimpleCassettePlayer",
       "hasSrc": false,
       "hasDocs": true,
@@ -383,6 +402,7 @@
         "recording",
         "intermediate"
       ],
+      "libraries": [],
       "path": "src/SimpleCassettePlayerRecorder",
       "hasSrc": false,
       "hasDocs": true,

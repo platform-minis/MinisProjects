@@ -74,6 +74,7 @@ for (const dir of fs.readdirSync(SRC_DIR).sort()) {
       moduleId: meta.moduleId ?? null,
       version: meta.version ?? '1.0.0',
       tags: meta.tags ?? [],
+      libraries: meta.libraries ?? [],
       path: `src/${dir}`,
       hasSrc,
       hasDocs,

@@ -5,5 +5,8 @@
   "version": "1.0.0",
   "softwarePlatform": "Arduino",
   "tags": ["test", "esp32s3", "arduino"],
-  "moduleId": "esp32-s3-pico"
+  "moduleId": "esp32-s3-pico",
+  "libraries": [
+    { "name": "MinisLib", "url": "https://github.com/platform-minis/MinisLib" }
+  ]
 }

@@ -3,7 +3,12 @@
     "allow": [
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(json.dumps\\(dev, indent=2\\)\\) for dev in d[''''devices''''] if dev.get\\(''''sn''''\\)==''''997'''']\")",
       "Bash(pnpm --filter @mhersztowski/core-backend build)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(PROJ=\"/home/mhersztowski/myprojects/claude/MyCastle/data/Minis/Users/marcin/Projects/888fc93c-39be-486e-ac52-c1e6f62a44f9\")",
+      "Bash(mkdir -p \"$PROJ/output\" \"$PROJ/build\")",
+      "Bash(/home/mhersztowski/bin/arduino-cli compile:*)",
+      "Bash(npm run:*)",
+      "Bash(git submodule:*)"
     ]
   }
 }

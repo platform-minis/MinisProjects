@@ -29,3 +29,7 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local libs (not submodules)
+libs/MinisLib/
+libs/MinisLib2/
