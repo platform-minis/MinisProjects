@@ -1,0 +1,108 @@
+{
+  "version": "1",
+  "updatedAt": "2026-03-15",
+  "modules": [
+    {
+      "id": "esp32-s3-pico",
+      "name": "ESP32-S3 Pico",
+      "vendor": "Waveshare",
+      "description": "Compact ESP32-S3 board in Pico form factor. 8MB Flash, 2MB OPI PSRAM, native USB (HWCDC). Requires PSRAM=opi — without it the chip (ESP32-S3R2) crashes on boot.",
+      "platform": "Arduino",
+      "boardProfileKey": "esp32s3_pico",
+      "fqbn": "esp32:esp32:esp32s3",
+      "arduinoOptions": {
+        "USBMode": "hwcdc",
+        "CDCOnBoot": "cdc",
+        "MSCOnBoot": "default",
+        "DFUOnBoot": "default",
+        "UploadMode": "default",
+        "PartitionScheme": "default",
+        "CPUFreq": "240",
+        "FlashMode": "qio",
+        "FlashFreq": "80",
+        "FlashSize": "8M",
+        "UploadSpeed": "921600",
+        "PSRAM": "opi",
+        "DebugLevel": "none",
+        "EraseFlash": "none"
+      }
+    },
+    {
+      "id": "esp32-s3-devkitc",
+      "name": "ESP32-S3 DevKit-C",
+      "vendor": "Espressif",
+      "description": "Official Espressif ESP32-S3 development board. 4MB Flash, no PSRAM by default. USB via separate USB-UART chip.",
+      "platform": "Arduino",
+      "boardProfileKey": "esp32s3_devkitc",
+      "fqbn": "esp32:esp32:esp32s3",
+      "arduinoOptions": {
+        "USBMode": "default",
+        "CDCOnBoot": "default",
+        "MSCOnBoot": "default",
+        "DFUOnBoot": "default",
+        "UploadMode": "default",
+        "PartitionScheme": "default",
+        "CPUFreq": "240",
+        "FlashMode": "qio",
+        "FlashFreq": "80",
+        "FlashSize": "4M",
+        "UploadSpeed": "921600",
+        "PSRAM": "disabled",
+        "DebugLevel": "none",
+        "EraseFlash": "none"
+      }
+    },
+    {
+      "id": "esp32-devkitc",
+      "name": "ESP32 DevKit-C",
+      "vendor": "Espressif",
+      "description": "Standard ESP32 development board with USB-UART. 4MB Flash, dual-core 240MHz, Wi-Fi + Bluetooth.",
+      "platform": "Arduino",
+      "boardProfileKey": "esp32_devkitc",
+      "fqbn": "esp32:esp32:esp32",
+      "arduinoOptions": {
+        "PartitionScheme": "default",
+        "CPUFreq": "240",
+        "FlashMode": "qio",
+        "FlashFreq": "80",
+        "FlashSize": "4M",
+        "UploadSpeed": "921600",
+        "DebugLevel": "none",
+        "EraseFlash": "none"
+      }
+    },
+    {
+      "id": "rp2350-pico2",
+      "name": "Raspberry Pi Pico 2",
+      "vendor": "Raspberry Pi",
+      "description": "RP2350-based board. 4MB Flash, dual ARM Cortex-M33 or dual RISC-V Hazard3, 520KB SRAM. Supports PIO for custom peripherals.",
+      "platform": "cmake",
+      "boardProfileKey": "rp2350_pico2",
+      "cmakeOptions": {
+        "PICO_BOARD": "pico2",
+        "CMAKE_BUILD_TYPE": "Release",
+        "PICO_PLATFORM": "rp2350"
+      }
+    },
+    {
+      "id": "rp2040-pico",
+      "name": "Raspberry Pi Pico",
+      "vendor": "Raspberry Pi",
+      "description": "RP2040-based board. 2MB Flash, dual ARM Cortex-M0+, 264KB SRAM. Supports PIO and MicroPython.",
+      "platform": "Arduino",
+      "boardProfileKey": "rp2040_pico",
+      "fqbn": "rp2040:rp2040:rpipico",
+      "arduinoOptions": {
+        "freq": "133",
+        "opt": "Small",
+        "rtti": "Disabled",
+        "stackprotect": "Disabled",
+        "exceptions": "Disabled",
+        "dbgport": "Disabled",
+        "dbglvl": "None",
+        "usbstack": "picosdk",
+        "boot2": "default"
+      }
+    }
+  ]
+}

@@ -4,6 +4,6 @@
   "description": "Raspberry Pi Pico 2 (RP2350) wyświetla obraz DVI/HDMI. Wykorzystuje PIO i DMA do generowania sygnału bez obciążenia CPU.",
   "version": "1.0.0",
   "softwarePlatform": "cmake",
-  "soc": "RP2350",
-  "tags": ["display", "dvi", "hdmi", "rp2350", "pio", "advanced"]
+  "tags": ["display", "dvi", "hdmi", "rp2350", "pio", "advanced"],
+  "moduleId": "rp2350-pico2"
 }

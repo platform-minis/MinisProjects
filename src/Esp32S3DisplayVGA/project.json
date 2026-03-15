@@ -4,7 +4,6 @@
   "description": "ESP32-S3 wyświetla obraz VGA 640×480 @ 60Hz, 8-bit kolor (R3G3B2). Używa sprzętowego bloku LCD_CAM z DMA. Oparty na bibliotece luniVGA.",
   "version": "1.0.0",
   "softwarePlatform": "Arduino",
-  "soc": "Esp32S3Pico",
-  "fqbn": "esp32:esp32:esp32s3",
-  "tags": ["display", "vga", "esp32s3", "dma", "advanced"]
+  "tags": ["display", "vga", "esp32s3", "dma", "advanced"],
+  "moduleId": "esp32-s3-pico"
 }

@@ -4,6 +4,6 @@
   "description": "Urządzenie na ESP32 nagrywające na kasety magnetofonowe dane cyfrowe kompatybilne z komputerami retro (C64, ZX Spectrum, MSX) oraz zwykłe audio WAV z karty microSD.",
   "version": "1.0.0",
   "softwarePlatform": "Arduino",
-  "soc": "Esp32",
-  "tags": ["audio", "retro", "cassette", "c64", "zxspectrum", "msx", "advanced"]
+  "tags": ["audio", "retro", "cassette", "c64", "zxspectrum", "msx", "advanced"],
+  "moduleId": "esp32-devkitc"
 }

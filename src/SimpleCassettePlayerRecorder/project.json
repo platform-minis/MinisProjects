@@ -4,6 +4,5 @@
   "description": "Rozszerzenie SimpleCassettePlayer o funkcjonalność nagrywania. Pełny rejestrator/odtwarzacz kasetowy z preampem dla mikrofonu, oscylatorem bias i mieszaczem audio.",
   "version": "1.0.0",
   "softwarePlatform": "hardware",
-  "soc": null,
   "tags": ["audio", "analog", "cassette", "recording", "intermediate"]
 }

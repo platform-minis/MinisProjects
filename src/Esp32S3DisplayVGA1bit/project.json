@@ -4,7 +4,6 @@
   "description": "ESP32-S3 wyświetla obraz monochromatyczny VGA 640×480 @ 60Hz. Minimalne okablowanie: tylko 3 piny danych (MSB każdego kanału) + HSYNC + VSYNC.",
   "version": "1.0.0",
   "softwarePlatform": "Arduino",
-  "soc": "Esp32S3Pico",
-  "fqbn": "esp32:esp32:esp32s3",
-  "tags": ["display", "vga", "esp32s3", "monochrome", "advanced"]
+  "tags": ["display", "vga", "esp32s3", "monochrome", "advanced"],
+  "moduleId": "esp32-s3-pico"
 }

@@ -4,6 +4,6 @@
   "description": "Platforma testowa GPIO, PWM i protokołów komunikacji na Raspberry Pi Pico 2 (RP2350). Obsługuje sekwencje komend przez UART/USB.",
   "version": "1.0.0",
   "softwarePlatform": "cmake",
-  "soc": "RP2350",
-  "tags": ["gpio", "pwm", "uart", "testing", "rp2350", "intermediate"]
+  "tags": ["gpio", "pwm", "uart", "testing", "rp2350", "intermediate"],
+  "moduleId": "rp2350-pico2"
 }

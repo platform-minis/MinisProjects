@@ -4,6 +4,13 @@
   "description": "Platforma do strumieniowania audio przez WiFi w obu kierunkach — ESP32 jako odbiornik (radio internetowe, Snapcast client) i nadajnik (web serwer audio, RTSP).",
   "version": "1.0.0",
   "softwarePlatform": "Arduino",
-  "soc": "Esp32S3Pico",
-  "tags": ["audio", "streaming", "wifi", "snapcast", "rtsp", "advanced"]
+  "tags": [
+    "audio",
+    "streaming",
+    "wifi",
+    "snapcast",
+    "rtsp",
+    "advanced"
+  ],
+  "moduleId": "esp32-s3-pico"
 }

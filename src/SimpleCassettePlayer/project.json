@@ -4,6 +4,5 @@
   "description": "Minimalistyczny odtwarzacz kasetowy z wzmacniaczem LM386. Projekt edukacyjny do nauki elektroniki analogowej i zasad magnetyzmu.",
   "version": "1.0.0",
   "softwarePlatform": "hardware",
-  "soc": null,
   "tags": ["audio", "analog", "cassette", "lm386", "beginner"]
 }

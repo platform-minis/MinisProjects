@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Generates index.json from project.json files found in src/ subdirectories.
+ * Generates index.json from project.json files found in src/ subdirectories
+ * and modules from modules.json.
  * Usage: node scripts/generate-index.js
  */
 
@@ -45,8 +46,7 @@ for (const dir of fs.readdirSync(SRC_DIR).sort()) {
       name: meta.name,
       description: meta.description ?? '',
       softwarePlatform: meta.softwarePlatform ?? null,
-      soc: meta.soc ?? null,
-      fqbn: meta.fqbn ?? undefined,
+      moduleId: meta.moduleId ?? null,
       version: meta.version ?? '1.0.0',
       tags: meta.tags ?? [],
       path: `src/${dir}`,
@@ -54,9 +54,22 @@ for (const dir of fs.readdirSync(SRC_DIR).sort()) {
       hasDocs,
     });
 
-    console.log(`  [ok]   ${meta.id} (${meta.softwarePlatform ?? 'hardware'}, ${meta.soc ?? 'no soc'})`);
+    console.log(`  [ok]   ${meta.id} (${meta.softwarePlatform ?? 'hardware'}, ${meta.moduleId ?? 'no module'})`);
   } catch (e) {
     console.warn(`  [err]  ${dir} — ${e.message}`);
+  }
+}
+
+// Load modules
+const modulesPath = path.join(ROOT, 'modules.json');
+let modules = [];
+if (fs.existsSync(modulesPath)) {
+  try {
+    const modulesData = JSON.parse(fs.readFileSync(modulesPath, 'utf8'));
+    modules = modulesData.modules ?? [];
+    console.log(`\nLoaded ${modules.length} modules from modules.json.`);
+  } catch (e) {
+    console.warn(`  [err]  modules.json — ${e.message}`);
   }
 }
 
@@ -65,7 +78,8 @@ const index = {
   updatedAt: new Date().toISOString().split('T')[0],
   repoUrl: 'https://github.com/platform-minis/MinisProjects',
   projects,
+  modules,
 };
 
 fs.writeFileSync(OUTPUT, JSON.stringify(index, null, 2) + '\n');
-console.log(`\nGenerated index.json with ${projects.length} projects.`);
+console.log(`Generated index.json with ${projects.length} projects and ${modules.length} modules.`);

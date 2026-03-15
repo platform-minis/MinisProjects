@@ -4,6 +4,13 @@
   "description": "Modularna platforma audio na ESP32 — odtwarzacz plików z karty SD, radio internetowe, głośnik Bluetooth, stacja efektów dźwiękowych i rejestrator audio.",
   "version": "1.0.0",
   "softwarePlatform": "Arduino",
-  "soc": "Esp32S3Pico",
-  "tags": ["audio", "player", "bluetooth", "radio", "sd-card", "intermediate"]
+  "tags": [
+    "audio",
+    "player",
+    "bluetooth",
+    "radio",
+    "sd-card",
+    "intermediate"
+  ],
+  "moduleId": "esp32-s3-pico"
 }
