@@ -1,0 +1,215 @@
+{
+  "version": "1",
+  "updatedAt": "2026-03-15",
+  "repoUrl": "https://github.com/platform-minis/MinisProjects",
+  "projects": [
+    {
+      "id": "Esp32AudioPlayer",
+      "name": "ESP32 Audio Player",
+      "description": "Modularna platforma audio na ESP32 — odtwarzacz plików z karty SD, radio internetowe, głośnik Bluetooth, stacja efektów dźwiękowych i rejestrator audio.",
+      "softwarePlatform": "Arduino",
+      "soc": "Esp32S3Pico",
+      "version": "1.0.0",
+      "tags": [
+        "audio",
+        "player",
+        "bluetooth",
+        "radio",
+        "sd-card",
+        "intermediate"
+      ],
+      "path": "src/Esp32AudioPlayer",
+      "hasSrc": false,
+      "hasDocs": true
+    },
+    {
+      "id": "Esp32S3DisplayVGA",
+      "name": "ESP32-S3 Display VGA",
+      "description": "ESP32-S3 wyświetla obraz VGA 640×480 @ 60Hz, 8-bit kolor (R3G3B2). Używa sprzętowego bloku LCD_CAM z DMA. Oparty na bibliotece luniVGA.",
+      "softwarePlatform": "Arduino",
+      "soc": "Esp32S3Pico",
+      "fqbn": "esp32:esp32:esp32s3",
+      "version": "1.0.0",
+      "tags": [
+        "display",
+        "vga",
+        "esp32s3",
+        "dma",
+        "advanced"
+      ],
+      "path": "src/Esp32S3DisplayVGA",
+      "hasSrc": true,
+      "hasDocs": true
+    },
+    {
+      "id": "Esp32S3DisplayVGA1bit",
+      "name": "ESP32-S3 Display VGA 1bit",
+      "description": "ESP32-S3 wyświetla obraz monochromatyczny VGA 640×480 @ 60Hz. Minimalne okablowanie: tylko 3 piny danych (MSB każdego kanału) + HSYNC + VSYNC.",
+      "softwarePlatform": "Arduino",
+      "soc": "Esp32S3Pico",
+      "fqbn": "esp32:esp32:esp32s3",
+      "version": "1.0.0",
+      "tags": [
+        "display",
+        "vga",
+        "esp32s3",
+        "monochrome",
+        "advanced"
+      ],
+      "path": "src/Esp32S3DisplayVGA1bit",
+      "hasSrc": true,
+      "hasDocs": true
+    },
+    {
+      "id": "Esp32StreamingAudioPlayer",
+      "name": "ESP32 Streaming Audio Player",
+      "description": "Platforma do strumieniowania audio przez WiFi w obu kierunkach — ESP32 jako odbiornik (radio internetowe, Snapcast client) i nadajnik (web serwer audio, RTSP).",
+      "softwarePlatform": "Arduino",
+      "soc": "Esp32S3Pico",
+      "version": "1.0.0",
+      "tags": [
+        "audio",
+        "streaming",
+        "wifi",
+        "snapcast",
+        "rtsp",
+        "advanced"
+      ],
+      "path": "src/Esp32StreamingAudioPlayer",
+      "hasSrc": false,
+      "hasDocs": true
+    },
+    {
+      "id": "Esp32TapeForge",
+      "name": "ESP32 Tape Forge",
+      "description": "Urządzenie na ESP32 nagrywające na kasety magnetofonowe dane cyfrowe kompatybilne z komputerami retro (C64, ZX Spectrum, MSX) oraz zwykłe audio WAV z karty microSD.",
+      "softwarePlatform": "Arduino",
+      "soc": "Esp32",
+      "version": "1.0.0",
+      "tags": [
+        "audio",
+        "retro",
+        "cassette",
+        "c64",
+        "zxspectrum",
+        "msx",
+        "advanced"
+      ],
+      "path": "src/Esp32TapeForge",
+      "hasSrc": false,
+      "hasDocs": true
+    },
+    {
+      "id": "Esp32VinylCaster",
+      "name": "ESP32 Vinyl Caster",
+      "description": "Bezprzewodowy digitizer audio na ESP32. Zamienia sygnał analogowy (gramofon, magnetofon) na strumień cyfrowy przez WiFi lub zapis WAV/FLAC na kartę SD.",
+      "softwarePlatform": "Arduino",
+      "soc": "Esp32S3Pico",
+      "version": "1.0.0",
+      "tags": [
+        "audio",
+        "wifi",
+        "streaming",
+        "adc",
+        "sd-card",
+        "advanced"
+      ],
+      "path": "src/Esp32VinylCaster",
+      "hasSrc": false,
+      "hasDocs": true
+    },
+    {
+      "id": "RPiPico2DisplayDVI",
+      "name": "RPi Pico 2 Display DVI",
+      "description": "Raspberry Pi Pico 2 (RP2350) wyświetla obraz DVI/HDMI. Wykorzystuje PIO i DMA do generowania sygnału bez obciążenia CPU.",
+      "softwarePlatform": "cmake",
+      "soc": "RP2350",
+      "version": "1.0.0",
+      "tags": [
+        "display",
+        "dvi",
+        "hdmi",
+        "rp2350",
+        "pio",
+        "advanced"
+      ],
+      "path": "src/RPiPico2DisplayDVI",
+      "hasSrc": true,
+      "hasDocs": true
+    },
+    {
+      "id": "RPiPico2DisplayVGA",
+      "name": "RPi Pico 2 Display VGA",
+      "description": "Raspberry Pi Pico 2 (RP2350) wyświetla tekst na monitorze VGA 640×480 1bit (monochrom). Terminal 80×60 znaków z czcionką 8×8 px i obsługą klawiatury PS/2.",
+      "softwarePlatform": "cmake",
+      "soc": "RP2350",
+      "version": "1.0.0",
+      "tags": [
+        "display",
+        "vga",
+        "ps2",
+        "terminal",
+        "rp2350",
+        "advanced"
+      ],
+      "path": "src/RPiPico2DisplayVGA",
+      "hasSrc": true,
+      "hasDocs": true
+    },
+    {
+      "id": "RPiPico2TestPlatform",
+      "name": "RPi Pico 2 Test Platform",
+      "description": "Platforma testowa GPIO, PWM i protokołów komunikacji na Raspberry Pi Pico 2 (RP2350). Obsługuje sekwencje komend przez UART/USB.",
+      "softwarePlatform": "cmake",
+      "soc": "RP2350",
+      "version": "1.0.0",
+      "tags": [
+        "gpio",
+        "pwm",
+        "uart",
+        "testing",
+        "rp2350",
+        "intermediate"
+      ],
+      "path": "src/RPiPico2TestPlatform",
+      "hasSrc": true,
+      "hasDocs": true
+    },
+    {
+      "id": "SimpleCassettePlayer",
+      "name": "Simple Cassette Player",
+      "description": "Minimalistyczny odtwarzacz kasetowy z wzmacniaczem LM386. Projekt edukacyjny do nauki elektroniki analogowej i zasad magnetyzmu.",
+      "softwarePlatform": "hardware",
+      "soc": null,
+      "version": "1.0.0",
+      "tags": [
+        "audio",
+        "analog",
+        "cassette",
+        "lm386",
+        "beginner"
+      ],
+      "path": "src/SimpleCassettePlayer",
+      "hasSrc": false,
+      "hasDocs": true
+    },
+    {
+      "id": "SimpleCassettePlayerRecorder",
+      "name": "Simple Cassette Player & Recorder",
+      "description": "Rozszerzenie SimpleCassettePlayer o funkcjonalność nagrywania. Pełny rejestrator/odtwarzacz kasetowy z preampem dla mikrofonu, oscylatorem bias i mieszaczem audio.",
+      "softwarePlatform": "hardware",
+      "soc": null,
+      "version": "1.0.0",
+      "tags": [
+        "audio",
+        "analog",
+        "cassette",
+        "recording",
+        "intermediate"
+      ],
+      "path": "src/SimpleCassettePlayerRecorder",
+      "hasSrc": false,
+      "hasDocs": true
+    }
+  ]
+}

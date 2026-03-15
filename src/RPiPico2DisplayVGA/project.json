@@ -1,0 +1,9 @@
+{
+  "id": "RPiPico2DisplayVGA",
+  "name": "RPi Pico 2 Display VGA",
+  "description": "Raspberry Pi Pico 2 (RP2350) wyświetla tekst na monitorze VGA 640×480 1bit (monochrom). Terminal 80×60 znaków z czcionką 8×8 px i obsługą klawiatury PS/2.",
+  "version": "1.0.0",
+  "softwarePlatform": "cmake",
+  "soc": "RP2350",
+  "tags": ["display", "vga", "ps2", "terminal", "rp2350", "advanced"]
+}

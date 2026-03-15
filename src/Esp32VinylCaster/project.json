@@ -1,0 +1,9 @@
+{
+  "id": "Esp32VinylCaster",
+  "name": "ESP32 Vinyl Caster",
+  "description": "Bezprzewodowy digitizer audio na ESP32. Zamienia sygnał analogowy (gramofon, magnetofon) na strumień cyfrowy przez WiFi lub zapis WAV/FLAC na kartę SD.",
+  "version": "1.0.0",
+  "softwarePlatform": "Arduino",
+  "soc": "Esp32S3Pico",
+  "tags": ["audio", "wifi", "streaming", "adc", "sd-card", "advanced"]
+}
