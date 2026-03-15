@@ -20,7 +20,9 @@
       ],
       "path": "src/Esp32AudioPlayer",
       "hasSrc": false,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/Esp32AudioPlayer/docs/ESP32AudioPlayer.md"
     },
     {
       "id": "Esp32S3DisplayVGA",
@@ -38,7 +40,18 @@
       ],
       "path": "src/Esp32S3DisplayVGA",
       "hasSrc": true,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "luniVGA",
+          "files": [
+            "src/Esp32S3DisplayVGA/src/luniVGA/DMAVideoBuffer.h",
+            "src/Esp32S3DisplayVGA/src/luniVGA/luniVGA.h",
+            "src/Esp32S3DisplayVGA/src/luniVGA/luniVGA.ino"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3DisplayVGA/docs/Esp32S3DisplayVGA.md"
     },
     {
       "id": "Esp32S3DisplayVGA1bit",
@@ -56,7 +69,18 @@
       ],
       "path": "src/Esp32S3DisplayVGA1bit",
       "hasSrc": true,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "luniVGA",
+          "files": [
+            "src/Esp32S3DisplayVGA1bit/src/luniVGA/DMAVideoBuffer.h",
+            "src/Esp32S3DisplayVGA1bit/src/luniVGA/luniVGA.h",
+            "src/Esp32S3DisplayVGA1bit/src/luniVGA/luniVGA.ino"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3DisplayVGA1bit/docs/Esp32S3DisplayVGA1bit.md"
     },
     {
       "id": "Esp32S3Test",
@@ -72,7 +96,16 @@
       ],
       "path": "src/Esp32S3Test",
       "hasSrc": true,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "Test1",
+          "files": [
+            "src/Esp32S3Test/src/Test1/Test1.ino"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3Test/docs/Esp32S3Test.md"
     },
     {
       "id": "Esp32S3uPythonCurses",
@@ -87,8 +120,53 @@
         "uPython"
       ],
       "path": "src/Esp32S3uPythonCurses",
-      "hasSrc": false,
-      "hasDocs": false
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "Lesson1",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson1/Lesson1.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson1/Lesson1.py"
+          ]
+        },
+        {
+          "name": "Lesson2",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson2/Lesson2.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson2/Lesson2.py"
+          ]
+        },
+        {
+          "name": "Lesson3",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson3/Lesson3.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson3/Lesson3.py"
+          ]
+        },
+        {
+          "name": "Lesson4",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson4/Lesson4.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson4/Lesson4.py"
+          ]
+        },
+        {
+          "name": "Lesson6",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson6/Lesson6.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson6/Lesson6.py"
+          ]
+        },
+        {
+          "name": "Lesson7",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson7/Lesson7.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson7/Lesson7.py"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3uPythonCurses/README.md"
     },
     {
       "id": "Esp32S3Test",
@@ -103,8 +181,46 @@
         "uPython"
       ],
       "path": "src/Esp32S3uPythonTest",
-      "hasSrc": false,
-      "hasDocs": false
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "Bits",
+          "files": [
+            "src/Esp32S3uPythonTest/sketches/Bits/Bits.blockly",
+            "src/Esp32S3uPythonTest/sketches/Bits/Bits.py"
+          ]
+        },
+        {
+          "name": "Logic",
+          "files": [
+            "src/Esp32S3uPythonTest/sketches/Logic/Logic.blockly",
+            "src/Esp32S3uPythonTest/sketches/Logic/Logic.py"
+          ]
+        },
+        {
+          "name": "Loop",
+          "files": [
+            "src/Esp32S3uPythonTest/sketches/Loop/Loop.blockly",
+            "src/Esp32S3uPythonTest/sketches/Loop/Loop.py"
+          ]
+        },
+        {
+          "name": "Math",
+          "files": [
+            "src/Esp32S3uPythonTest/sketches/Math/Math.blockly",
+            "src/Esp32S3uPythonTest/sketches/Math/Math.py"
+          ]
+        },
+        {
+          "name": "test1",
+          "files": [
+            "src/Esp32S3uPythonTest/sketches/test1/test1.blockly",
+            "src/Esp32S3uPythonTest/sketches/test1/test1.py"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3uPythonTest/README.md"
     },
     {
       "id": "Esp32StreamingAudioPlayer",
@@ -123,7 +239,9 @@
       ],
       "path": "src/Esp32StreamingAudioPlayer",
       "hasSrc": false,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/Esp32StreamingAudioPlayer/docs/ESP32StreamingAudioPlayer.md"
     },
     {
       "id": "Esp32TapeForge",
@@ -143,7 +261,9 @@
       ],
       "path": "src/Esp32TapeForge",
       "hasSrc": false,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/Esp32TapeForge/docs/Esp32TapeForge.md"
     },
     {
       "id": "Esp32VinylCaster",
@@ -162,7 +282,9 @@
       ],
       "path": "src/Esp32VinylCaster",
       "hasSrc": false,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/Esp32VinylCaster/docs/Esp32VinylCaster.md"
     },
     {
       "id": "RPiPico2DisplayDVI",
@@ -181,7 +303,9 @@
       ],
       "path": "src/RPiPico2DisplayDVI",
       "hasSrc": true,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/RPiPico2DisplayDVI/docs/RPiPico2DisplayDVI.md"
     },
     {
       "id": "RPiPico2DisplayVGA",
@@ -200,7 +324,9 @@
       ],
       "path": "src/RPiPico2DisplayVGA",
       "hasSrc": true,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/RPiPico2DisplayVGA/docs/RPiPico2DisplayVGA.md"
     },
     {
       "id": "RPiPico2TestPlatform",
@@ -219,7 +345,9 @@
       ],
       "path": "src/RPiPico2TestPlatform",
       "hasSrc": true,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/RPiPico2TestPlatform/docs/RPiPico2TestPlatform.md"
     },
     {
       "id": "SimpleCassettePlayer",
@@ -237,7 +365,9 @@
       ],
       "path": "src/SimpleCassettePlayer",
       "hasSrc": false,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/SimpleCassettePlayer/docs/SimpleCassettePlayer.md"
     },
     {
       "id": "SimpleCassettePlayerRecorder",
@@ -255,7 +385,9 @@
       ],
       "path": "src/SimpleCassettePlayerRecorder",
       "hasSrc": false,
-      "hasDocs": true
+      "hasDocs": true,
+      "sketches": [],
+      "readmePath": "src/SimpleCassettePlayerRecorder/docs/SimpleCassettePlayerRecorder.md"
     }
   ],
   "modules": [

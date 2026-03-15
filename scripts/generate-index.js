@@ -33,13 +33,38 @@ for (const dir of fs.readdirSync(SRC_DIR).sort()) {
       continue;
     }
 
-    // Check if source files exist
+    // Check if source files exist and enumerate sketches
+    // Arduino: src/{dir}/src/{sketchName}/  uPython: src/{dir}/sketches/{sketchName}/
     const srcPath = path.join(projectDir, 'src');
-    const hasSrc = fs.existsSync(srcPath) && fs.statSync(srcPath).isDirectory();
+    const sketchesPath = path.join(projectDir, 'sketches');
+    const hasSrc = (fs.existsSync(srcPath) && fs.statSync(srcPath).isDirectory())
+                || (fs.existsSync(sketchesPath) && fs.statSync(sketchesPath).isDirectory());
 
-    // Check if docs exist
+    const sketches = [];
+    const sketchScanDir = fs.existsSync(srcPath) ? srcPath : fs.existsSync(sketchesPath) ? sketchesPath : null;
+    const sketchRelBase = fs.existsSync(srcPath) ? `src/${dir}/src` : `src/${dir}/sketches`;
+    if (sketchScanDir) {
+      for (const sketchDir of fs.readdirSync(sketchScanDir).sort()) {
+        const sketchPath = path.join(sketchScanDir, sketchDir);
+        if (fs.statSync(sketchPath).isDirectory()) {
+          const sketchFiles = fs.readdirSync(sketchPath).map((f) => `${sketchRelBase}/${sketchDir}/${f}`);
+          sketches.push({ name: sketchDir, files: sketchFiles });
+        }
+      }
+    }
+
+    // Check if docs exist and find first markdown file
+    // Also check for README.md at project root
     const docsPath = path.join(projectDir, 'docs');
-    const hasDocs = fs.existsSync(docsPath);
+    const rootReadme = path.join(projectDir, 'README.md');
+    const hasDocs = fs.existsSync(docsPath) || fs.existsSync(rootReadme);
+    let readmePath = null;
+    if (fs.existsSync(docsPath)) {
+      const mdFiles = fs.readdirSync(docsPath).filter((f) => f.endsWith('.md'));
+      if (mdFiles.length > 0) readmePath = `src/${dir}/docs/${mdFiles[0]}`;
+    } else if (fs.existsSync(rootReadme)) {
+      readmePath = `src/${dir}/README.md`;
+    }
 
     projects.push({
       id: meta.id,
@@ -52,6 +77,8 @@ for (const dir of fs.readdirSync(SRC_DIR).sort()) {
       path: `src/${dir}`,
       hasSrc,
       hasDocs,
+      sketches,
+      readmePath,
     });
 
     console.log(`  [ok]   ${meta.id} (${meta.softwarePlatform ?? 'hardware'}, ${meta.moduleId ?? 'no module'})`);
