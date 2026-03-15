@@ -14,6 +14,22 @@ set(CMAKE_CXX_STANDARD 17)
 set(PICO_BOARD pico2)
 set(PICO_PLATFORM rp2350)
 
+include(FetchContent)
+
+# PicoDVI — DVI via PIO, 1bpp monochrome
+FetchContent_Declare(
+    picodvi
+    GIT_REPOSITORY https://github.com/Wren6991/PicoDVI.git
+    GIT_TAG master
+    GIT_SHALLOW TRUE
+)
+FetchContent_GetProperties(picodvi)
+if(NOT picodvi_POPULATED)
+    FetchContent_Populate(picodvi)
+endif()
+
 pico_sdk_init()
+
+add_subdirectory(${picodvi_SOURCE_DIR}/software/libdvi libdvi_build)
 
 add_subdirectory(src)

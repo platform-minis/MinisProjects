@@ -1,0 +1,31 @@
+# CMake / Make build directories
+build/
+build_*/
+cmake-build-*/
+
+# PlatformIO
+.pio/
+.pioenvs/
+
+# Arduino IDE / arduino-cli
+*.bin
+*.elf
+*.hex
+*.map
+*.uf2
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editor
+.vscode/settings.json
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db

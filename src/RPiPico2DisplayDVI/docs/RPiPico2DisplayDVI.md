@@ -166,6 +166,13 @@ export PICO_SDK_PATH=~/pico-sdk
 
 ### 2. Build
 
+> **Uwaga:** Niektóre wersje pico-sdk 2.x mają błąd — platforma `rp2350-arm-s` jest rozpoznawana,
+> ale CMake szuka pliku `rp2350.cmake` zamiast `rp2350-arm-s.cmake`.
+> Jeśli pojawi się błąd `rp2350.cmake does not exist`, utwórz symlink:
+> ```bash
+> ln -s ~/pico-sdk/src/rp2350-arm-s.cmake ~/pico-sdk/src/rp2350.cmake
+> ```
+
 ```bash
 cd src/RPiPico2DisplayDVI
 

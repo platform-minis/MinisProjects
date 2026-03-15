@@ -1,0 +1,32 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+MinisIoT	KEYWORD1
+MinisMetric	KEYWORD1
+MinisCommandCallback	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+loop	KEYWORD2
+setWifi	KEYWORD2
+onCommand	KEYWORD2
+setHeartbeatInterval	KEYWORD2
+setDebug	KEYWORD2
+sendTelemetry	KEYWORD2
+sendHeartbeat	KEYWORD2
+ackCommand	KEYWORD2
+isConnected	KEYWORD2
+brokerUri	KEYWORD2
+clientId	KEYWORD2
+
+#######################################
+# MinisMetric factories (KEYWORD2)
+#######################################
+
+Float	KEYWORD2
+Bool	KEYWORD2
+Str	KEYWORD2

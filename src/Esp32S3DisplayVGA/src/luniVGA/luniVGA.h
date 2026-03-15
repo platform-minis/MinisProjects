@@ -12,7 +12,6 @@
 #include <hal/gpio_hal.h>
 #include <rom/cache.h>
 #include <soc/lcd_cam_struct.h>
-#include "spiram.h"
 
 #include "DMAVideoBuffer.h"
 
@@ -139,7 +138,7 @@ int backBuffer = 0;
 void attachPinToSignal(int pin, int signal)
 {
 	esp_rom_gpio_connect_out_signal(pin, signal, false, false);
-	gpio_hal_iomux_func_sel(GPIO_PIN_MUX_REG[pin], PIN_FUNC_GPIO);
+	PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[pin], PIN_FUNC_GPIO);
 	gpio_set_drive_capability((gpio_num_t)pin, (gpio_drive_cap_t)3);
 }
 
