@@ -179,6 +179,32 @@
       "readmePath": "src/Esp32S3uPythonCurses/README.md"
     },
     {
+      "id": "Esp32S3uPythonIot",
+      "name": "ESP32-S3-uPython-IoT",
+      "description": "ESP32-S3 test project for demonstrating functionality.",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-s3-pico",
+      "version": "1.0.0",
+      "tags": [
+        "test",
+        "esp32s3",
+        "uPython"
+      ],
+      "libraries": [],
+      "path": "src/Esp32S3uPythonIot",
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "basic_sensor",
+          "files": [
+            "src/Esp32S3uPythonIot/sketches/basic_sensor/basic_sensor.py"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3uPythonIot/README.md"
+    },
+    {
       "id": "Esp32S3Test",
       "name": "ESP32-S3-uPythonTest",
       "description": "ESP32-S3 test project for demonstrating functionality.",
