@@ -147,7 +147,7 @@ class _WsMqttClient:
                 raise OSError('WS handshake: connection closed')
             resp += chunk
         if b'101' not in resp:
-            raise OSError('WS handshake failed: ' + repr(resp[:80]))
+            raise OSError('WS handshake failed: ' + repr(resp[:200]))
 
     def _ws_send(self, data):
         n = len(data)
