@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-03-15",
+  "updatedAt": "2026-03-16",
   "repoUrl": "https://github.com/platform-minis/MinisProjects",
   "projects": [
     {
@@ -99,9 +99,8 @@
       ],
       "libraries": [
         {
-          "name": "ArduinoJson",
-          "version": "7.4.3",
-          "url": "https://github.com/bblanchon/ArduinoJson"
+          "name": "MinisLib",
+          "url": "https://github.com/platform-minis/MinisLib"
         }
       ],
       "path": "src/Esp32S3Test",
