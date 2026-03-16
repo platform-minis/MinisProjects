@@ -181,16 +181,22 @@
     {
       "id": "Esp32S3uPythonIot",
       "name": "ESP32-S3-uPython-IoT",
-      "description": "ESP32-S3 test project for demonstrating functionality.",
+      "description": "ESP32-S3 MicroPython IoT project for MyCastle platform.",
       "softwarePlatform": "uPython",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
       "tags": [
-        "test",
+        "iot",
         "esp32s3",
-        "uPython"
+        "uPython",
+        "mqtt"
       ],
-      "libraries": [],
+      "libraries": [
+        {
+          "url": "https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/minis_iot.py",
+          "remoteName": "minis_iot.py"
+        }
+      ],
       "path": "src/Esp32S3uPythonIot",
       "hasSrc": true,
       "hasDocs": true,
