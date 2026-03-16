@@ -147,7 +147,7 @@ class _WsMqttClient:
                 raise OSError('WS handshake: connection closed')
             resp += chunk
         if b'101' not in resp:
-            raise OSError('WS handshake failed: ' + resp[:80].decode(errors='replace'))
+            raise OSError('WS handshake failed: ' + repr(resp[:80]))
 
     def _ws_send(self, data):
         n = len(data)
@@ -169,6 +169,8 @@ class _WsMqttClient:
 
     def _ws_recv_frame(self):
         """Read one WebSocket frame payload (server → client, no mask). Non-blocking."""
+        if self._sock is None:
+            return None
         try:
             hdr = self._sock.recv(2)
         except OSError:
