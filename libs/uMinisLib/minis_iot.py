@@ -128,7 +128,7 @@ class _WsMqttClient:
     # ── WebSocket layer ───────────────────────────────────────────────────────
 
     def _ws_handshake(self):
-        key = 'bWluaXNpb3Q9PT09'   # static base64 key (server doesn't validate it)
+        key = 'dGhlIHNhbXBsZSBub25jZQ=='   # valid 16-byte nonce per RFC 6455
         req = (
             'GET /mqtt HTTP/1.1\r\n'
             'Host: {}:{}\r\n'
