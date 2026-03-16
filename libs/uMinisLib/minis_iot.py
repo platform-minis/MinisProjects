@@ -1,14 +1,14 @@
 """
 minis_iot.py — MicroPython MinisIoT library for MyCastle IoT platform
 
-Transport: MQTT 3.1.1 over WebSocket  ws://{host}:{port}/mqtt
-No external dependencies — uses only MicroPython built-in modules.
+Transport: MQTT 3.1.1 over plain TCP (umqtt.simple)
+Port:      1884 (MQTT_TCP_PORT on MyCastle backend)
 
 Quick start::
 
     from minis_iot import MinisIoT
 
-    minis = MinisIoT('192.168.1.100', 1902, 'marcin', 'my-device-sn')
+    minis = MinisIoT('192.168.1.100', 1884, 'marcin', 'my-device-sn')
     minis.set_wifi('MySSID', 'MyPassword')
     minis.begin()
 
@@ -18,279 +18,60 @@ Quick start::
         time.sleep(10)
 
 When deployed via MyCastle a MinisConfig.py is injected with:
-    MINIS_DEVICE_SN, MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD, MINIS_CONFIG
+    MINIS_DEVICE_SN, MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD
 """
 
 import network
-import socket
-import struct
 import time
 import json
-import os
 import gc
+from umqtt.simple import MQTTClient
 
 _ticks = time.ticks_ms
 _diff  = time.ticks_diff
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# _WsMqttClient — MQTT 3.1.1 over WebSocket
+# _TcpMqttClient — thin wrapper around umqtt.simple
 # ─────────────────────────────────────────────────────────────────────────────
 
-class _WsMqttClient:
-    """
-    Minimal MQTT 3.1.1 client over WebSocket binary frames.
-
-    Implements: CONNECT, PUBLISH (QoS 0/1), SUBSCRIBE, PING, DISCONNECT.
-    Server → client frames are not masked (per RFC 6455).
-    Client → server frames are masked with os.urandom(4).
-    """
-
-    # MQTT packet type nibbles (high 4 bits of first byte)
-    _CONNECT    = 0x10
-    _CONNACK    = 0x20
-    _PUBLISH    = 0x30
-    _PUBACK     = 0x40
-    _SUBSCRIBE  = 0x82  # fixed header: type=8, flags=0b0010
-    _SUBACK     = 0x90
-    _PINGREQ    = 0xC0
-    _PINGRESP   = 0xD0
-    _DISCONNECT = 0xE0
+class _TcpMqttClient:
+    """Wraps umqtt.simple to match the interface expected by MinisIoT."""
 
     def __init__(self, host, port, client_id, keepalive=60, debug=False):
-        self._host      = host
-        self._port      = port
-        self._cid       = client_id
-        self._keepalive = keepalive
-        self._debug     = debug
-        self._sock      = None
-        self._buf       = bytearray()
-        self._pkt_id    = 0
+        self._mqtt = MQTTClient(client_id, host, port=port, keepalive=keepalive)
+        self._pending = None
+        self._mqtt.set_callback(self._on_msg)
 
-    # ── Connection ────────────────────────────────────────────────────────────
+    def _on_msg(self, topic, payload):
+        self._pending = (
+            topic.decode()   if isinstance(topic,   bytes) else topic,
+            payload.decode() if isinstance(payload, bytes) else payload,
+        )
 
     def connect(self, timeout_ms=10000):
-        addr = socket.getaddrinfo(self._host, self._port)[0][-1]
-        s = socket.socket()
-        s.settimeout(max(2, timeout_ms // 1000))
-        s.connect(addr)
-        self._sock = s
-        self._ws_handshake()
-        self._sock.settimeout(0.05)   # nearly non-blocking for loop() reads
-        self._mqtt_connect(timeout_ms)
+        self._mqtt.connect()
 
     def disconnect(self):
         try:
-            self._ws_send(bytes([self._DISCONNECT, 0]))
+            self._mqtt.disconnect()
         except Exception:
             pass
-        self._close()
-
-    # ── MQTT operations ───────────────────────────────────────────────────────
 
     def publish(self, topic, payload, qos=0):
-        t = topic.encode()   if isinstance(topic,   str) else topic
-        p = payload.encode() if isinstance(payload, str) else payload
-        pkt = bytearray([self._PUBLISH | (qos << 1)])
-        rem = 2 + len(t) + len(p) + (2 if qos else 0)
-        self._varlen(pkt, rem)
-        pkt += struct.pack('!H', len(t)) + t
-        if qos:
-            self._pkt_id = (self._pkt_id + 1) & 0xFFFF
-            pkt += struct.pack('!H', self._pkt_id)
-        pkt += p
-        self._ws_send(bytes(pkt))
-        self._log('PUB [{}]', topic)
+        self._mqtt.publish(topic, payload, qos=qos)
 
     def subscribe(self, topic, qos=1):
-        t = topic.encode() if isinstance(topic, str) else topic
-        self._pkt_id = (self._pkt_id + 1) & 0xFFFF
-        pkt = bytearray([self._SUBSCRIBE])
-        self._varlen(pkt, 2 + 2 + len(t) + 1)
-        pkt += struct.pack('!H', self._pkt_id)
-        pkt += struct.pack('!H', len(t)) + t
-        pkt.append(qos)
-        self._ws_send(bytes(pkt))
-
-    def ping(self):
-        self._ws_send(bytes([self._PINGREQ, 0]))
+        self._mqtt.subscribe(topic, qos)
 
     def check_msg(self):
-        """Non-blocking. Returns (topic:str, payload:str) or None."""
-        try:
-            frame = self._ws_recv_frame()
-            if frame:
-                self._buf.extend(frame)
-        except OSError:
-            pass
-        return self._parse_next()
+        """Non-blocking. Returns (topic, payload) or None."""
+        self._pending = None
+        self._mqtt.check_msg()
+        return self._pending
 
-    # ── WebSocket layer ───────────────────────────────────────────────────────
-
-    def _ws_handshake(self):
-        key = 'dGhlIHNhbXBsZSBub25jZQ=='   # valid 16-byte nonce per RFC 6455
-        req = (
-            'GET /mqtt HTTP/1.1\r\n'
-            'Host: {}:{}\r\n'
-            'Upgrade: websocket\r\n'
-            'Connection: Upgrade\r\n'
-            'Sec-WebSocket-Key: {}\r\n'
-            'Sec-WebSocket-Version: 13\r\n'
-            'Sec-WebSocket-Protocol: mqtt\r\n'
-            '\r\n'
-        ).format(self._host, self._port, key)
-        self._sock.sendall(req.encode())
-        resp = b''
-        while b'\r\n\r\n' not in resp:
-            chunk = self._sock.recv(512)
-            if not chunk:
-                raise OSError('WS handshake: connection closed')
-            resp += chunk
-        if b'101' not in resp:
-            raise OSError('WS handshake failed: ' + repr(resp[:200]))
-
-    def _ws_send(self, data):
-        n = len(data)
-        hdr = bytearray([0x82])   # FIN=1, opcode=binary(2)
-        if n < 126:
-            hdr.append(0x80 | n)
-        elif n < 65536:
-            hdr.append(0x80 | 126)
-            hdr += struct.pack('>H', n)
-        else:
-            hdr.append(0x80 | 127)
-            hdr += struct.pack('>Q', n)
-        mask = os.urandom(4)
-        hdr += mask
-        masked = bytearray(n)
-        for i in range(n):
-            masked[i] = data[i] ^ mask[i & 3]
-        self._sock.sendall(bytes(hdr) + bytes(masked))
-
-    def _ws_recv_frame(self):
-        """Read one WebSocket frame payload (server → client, no mask). Non-blocking."""
-        if self._sock is None:
-            return None
-        try:
-            hdr = self._sock.recv(2)
-        except OSError:
-            return None
-        if not hdr or len(hdr) < 2:
-            return None
-        masked = (hdr[1] & 0x80) != 0
-        n = hdr[1] & 0x7F
-        if n == 126:
-            n = struct.unpack('>H', self._recv_exact(2))[0]
-        elif n == 127:
-            n = struct.unpack('>Q', self._recv_exact(8))[0]
-        mkey = self._recv_exact(4) if masked else None
-        payload = self._recv_exact(n)
-        if mkey:
-            payload = bytearray(payload)
-            for i in range(n):
-                payload[i] ^= mkey[i & 3]
-            payload = bytes(payload)
-        return payload
-
-    # ── MQTT framing ──────────────────────────────────────────────────────────
-
-    def _mqtt_connect(self, timeout_ms):
-        cid  = self._cid.encode() if isinstance(self._cid, str) else self._cid
-        proto = b'MQTT'
-        # Variable header: protocol name, level=4, flags=CLEAN(2), keepalive
-        vhdr = struct.pack('!H', len(proto)) + proto + bytes([4, 2]) + struct.pack('!H', self._keepalive)
-        pl   = struct.pack('!H', len(cid)) + cid
-        pkt  = bytearray([self._CONNECT])
-        self._varlen(pkt, len(vhdr) + len(pl))
-        pkt += vhdr + pl
-        self._ws_send(bytes(pkt))
-        # Wait for CONNACK
-        deadline = _ticks() + timeout_ms
-        while _diff(deadline, _ticks()) > 0:
-            try:
-                frame = self._ws_recv_frame()
-            except OSError:
-                frame = None
-            if frame and len(frame) >= 4 and (frame[0] & 0xF0) == self._CONNACK:
-                rc = frame[3]
-                if rc != 0:
-                    raise OSError('CONNACK error code: {}'.format(rc))
-                return
-            time.sleep_ms(50)
-        raise OSError('MQTT connect timeout')
-
-    def _parse_next(self):
-        """Parse one MQTT packet from _buf. Returns (topic, payload) for PUBLISH or None."""
-        if len(self._buf) < 2:
-            return None
-        first = self._buf[0]
-        cmd   = first & 0xF0
-        flags = first & 0x0F
-        # Decode variable-length remaining-length field
-        mult = 1
-        rem  = 0
-        i    = 1
-        while True:
-            if i >= len(self._buf):
-                return None   # need more data
-            b = self._buf[i]; i += 1
-            rem += (b & 0x7F) * mult
-            if not (b & 0x80):
-                break
-            mult <<= 7
-            if mult > 0x200000:
-                del self._buf[:]
-                return None   # malformed
-        total = i + rem
-        if total > len(self._buf):
-            return None       # incomplete packet
-        pkt = bytes(self._buf[i:total])
-        del self._buf[:total]
-        if cmd == 0x30:       # PUBLISH
-            qos    = (flags >> 1) & 0x03
-            tlen   = struct.unpack('!H', pkt[:2])[0]
-            topic  = pkt[2:2 + tlen].decode()
-            offset = 2 + tlen + (2 if qos else 0)
-            payload = pkt[offset:].decode()
-            return (topic, payload)
-        # PINGRESP / SUBACK / PUBACK — consume silently
-        return None
-
-    # ── Helpers ───────────────────────────────────────────────────────────────
-
-    def _recv_exact(self, n):
-        buf = b''
-        while len(buf) < n:
-            chunk = self._sock.recv(n - len(buf))
-            if not chunk:
-                raise OSError('Connection closed')
-            buf += chunk
-        return buf
-
-    def _varlen(self, buf, n):
-        """Encode variable-length integer into buf (in-place)."""
-        while True:
-            b = n & 0x7F
-            n >>= 7
-            if n:
-                b |= 0x80
-            buf.append(b)
-            if not n:
-                break
-
-    def _close(self):
-        try:
-            self._sock.close()
-        except Exception:
-            pass
-        self._sock = None
-
-    def _log(self, fmt, *args):
-        if self._debug:
-            try:
-                print('[uMinis] ' + fmt.format(*args))
-            except Exception:
-                pass
+    def ping(self):
+        self._mqtt.ping()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -304,7 +85,7 @@ class MinisIoT:
     API mirrors the Arduino MinisIoT C++ library.
 
     :param host:      MyCastle hostname or IP  (e.g. '192.168.1.100')
-    :param port:      WebSocket MQTT port      (default: 1902)
+    :param port:      Plain TCP MQTT port      (default: 1884)
     :param user_id:   User ID in MyCastle      (e.g. 'marcin')
     :param device_id: Device SN / ID           (e.g. 'dev-001')
     """
@@ -452,7 +233,6 @@ class MinisIoT:
     def send_heartbeat(self, battery=None):
         """
         Manually send a heartbeat to keep the device ONLINE.
-        Not needed if send_telemetry() is called at least every heartbeat_interval seconds.
 
         :param battery: battery voltage in volts (float) or None
         :returns: True if published successfully
@@ -507,8 +287,8 @@ class MinisIoT:
         return self._connected
 
     def broker_uri(self):
-        """Full WebSocket broker URI."""
-        return 'ws://{}:{}/mqtt'.format(self._host, self._port)
+        """Broker URI."""
+        return 'mqtt://{}:{}'.format(self._host, self._port)
 
     def client_id(self):
         """MQTT client ID (format: minis-{device_id})."""
@@ -539,7 +319,7 @@ class MinisIoT:
                     self._client.disconnect()
                 except Exception:
                     pass
-            self._client = _WsMqttClient(
+            self._client = _TcpMqttClient(
                 self._host, self._port, self._client_id,
                 keepalive=self._hb_sec or 60,
                 debug=self._debug,

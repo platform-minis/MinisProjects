@@ -21,7 +21,7 @@ except ImportError:
     MINIS_DEVICE_SN     = 'YourDeviceSerialNumber'
 
 MYCASTLE_HOST = '192.168.0.89'
-MYCASTLE_PORT = 1894
+MYCASTLE_PORT = 1884
 USER_ID       = 'marcin'
 
 TELEMETRY_INTERVAL_S = 10
