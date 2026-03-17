@@ -106,10 +106,17 @@ class MinisIoT:
         self._last_wifi_retry = 0
 
         self._t_telemetry = 'minis/{}/{}/telemetry'.format(user_id, device_id)
+        self._t_hello     = 'minis/{}/{}/hello'.format(user_id, device_id)
         self._t_heartbeat = 'minis/{}/{}/heartbeat'.format(user_id, device_id)
         self._t_command   = 'minis/{}/{}/command'.format(user_id, device_id)
         self._t_cmd_ack   = 'minis/{}/{}/command/ack'.format(user_id, device_id)
         self._client_id   = 'minis-{}'.format(device_id)
+        self._t_ext_base  = 'minis/{}/{}/ext'.format(user_id, device_id)
+
+        # extension_type → callback(req_id, op, params_dict)
+        self._extensions     = {}
+        # extension_type → req topic string
+        self._ext_req_topics = {}
 
     # ── Configuration (call before begin()) ───────────────────────────────────
 
@@ -117,6 +124,46 @@ class MinisIoT:
         """Set WiFi credentials. If not called, WiFi must be already connected."""
         self._ssid     = ssid
         self._password = password
+
+    def add_extension(self, ext_type, callback):
+        """
+        Register a device-side extension handler.
+
+        :param ext_type: Extension type string, e.g. 'vkbd', 'vmouse'
+        :param callback: callback(req_id: str, op: str, params: dict)
+                         Call ext_respond() after processing.
+
+        The extension is announced in the next hello message and
+        subscribed on the next MQTT connect.
+        """
+        self._extensions[ext_type] = callback
+        self._ext_req_topics[ext_type] = '{}/{}/req'.format(self._t_ext_base, ext_type)
+
+    def ext_respond(self, ext_type, req_id, ok, data=None, error=None):
+        """
+        Publish the response for an extension request.
+
+        :param ext_type: Extension type string (must match add_extension call)
+        :param req_id:   Request ID from the callback
+        :param ok:       True on success, False on failure
+        :param data:     Optional result dict (e.g. {'x': 100, 'y': 200})
+        :param error:    Optional error dict (e.g. {'code': 'Error', 'message': '...'})
+        :returns: True if published successfully
+        """
+        if not self._connected:
+            return False
+        try:
+            payload = {'id': req_id, 'ok': ok}
+            if data is not None:
+                payload['data'] = data
+            if error is not None:
+                payload['error'] = error
+            res_topic = '{}/{}/res'.format(self._t_ext_base, ext_type)
+            self._client.publish(res_topic, json.dumps(payload), qos=1)
+            return True
+        except Exception as e:
+            self._log('ext_respond error: {}', e)
+            return False
 
     def on_command(self, callback):
         """
@@ -228,6 +275,30 @@ class MinisIoT:
             self._connected = False
             return False
 
+    # ── Hello ─────────────────────────────────────────────────────────────────
+
+    def send_hello(self):
+        """
+        Announce device presence to MyCastle.
+        Called automatically after every successful MQTT connection.
+        Immediately sets device status to ONLINE on the server side.
+        """
+        if not self._connected:
+            return False
+        try:
+            payload = {'uptime': time.ticks_ms() // 1000}
+            if self._extensions:
+                payload['extensions'] = [
+                    {'type': t, 'enabled': True} for t in self._extensions
+                ]
+            self._client.publish(self._t_hello, json.dumps(payload), qos=1)
+            self._log('Hello sent (extensions={})', list(self._extensions.keys()))
+            return True
+        except Exception as e:
+            self._log('sendHello error: {}', e)
+            self._connected = False
+            return False
+
     # ── Heartbeat ─────────────────────────────────────────────────────────────
 
     def send_heartbeat(self, battery=None):
@@ -328,9 +399,13 @@ class MinisIoT:
             if self._cmd_cb:
                 self._client.subscribe(self._t_command, qos=1)
                 self._log('Subscribed: {}', self._t_command)
+            for ext_type, req_topic in self._ext_req_topics.items():
+                self._client.subscribe(req_topic, qos=1)
+                self._log('Subscribed ext: {}', req_topic)
             self._connected = True
             self._last_hb   = _ticks()
             self._log('Connected  broker: {}  clientId: {}', self.broker_uri(), self._client_id)
+            self.send_hello()
             gc.collect()
             return True
         except Exception as e:
@@ -339,6 +414,24 @@ class MinisIoT:
             return False
 
     def _dispatch(self, topic, payload_str):
+        # ── Extension request ────────────────────────────────────────────────
+        for ext_type, req_topic in self._ext_req_topics.items():
+            if topic == req_topic:
+                cb = self._extensions.get(ext_type)
+                if not cb:
+                    return
+                try:
+                    doc    = json.loads(payload_str)
+                    req_id = doc.get('id', '')
+                    op     = doc.get('op', '')
+                    params = {k: v for k, v in doc.items() if k not in ('id', 'op')}
+                    self._log('EXT [{}] op={} id={}', ext_type, op, req_id)
+                    cb(req_id, op, params)
+                except Exception as e:
+                    self._log('ext dispatch error: {}', e)
+                return
+
+        # ── Command ──────────────────────────────────────────────────────────
         if topic != self._t_command or not self._cmd_cb:
             return
         try:
