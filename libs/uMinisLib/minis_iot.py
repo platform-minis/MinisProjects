@@ -59,6 +59,8 @@ class _TcpMqttClient:
             pass
 
     def publish(self, topic, payload, qos=0):
+        if isinstance(payload, str):
+            payload = payload.encode('utf-8')
         self._mqtt.publish(topic, payload, qos=qos)
 
     def subscribe(self, topic, qos=1):

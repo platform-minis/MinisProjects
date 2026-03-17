@@ -10,7 +10,9 @@
       "Bash(npm run:*)",
       "Bash(git submodule:*)",
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
-      "Bash(bash -c \"cd /home/mhersztowski/myprojects/claude/MyCastle && npx tsc --noEmit -p app/mycastle-web/tsconfig.json 2>&1 | grep ''error TS'' | grep -v node_modules | head -20\")"
+      "Bash(bash -c \"cd /home/mhersztowski/myprojects/claude/MyCastle && npx tsc --noEmit -p app/mycastle-web/tsconfig.json 2>&1 | grep ''error TS'' | grep -v node_modules | head -20\")",
+      "Bash(grep -rn \"telemetry.*payloadSchema\\\\|payloadSchema.*telemetry\" /home/mhersztowski/myprojects/claude/MyCastle --include=*.ts)",
+      "Bash(2)"
     ],
     "additionalDirectories": [
       "/home/mhersztowski/myprojects/claude/MyCastle/app/client/operations",
