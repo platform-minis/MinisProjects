@@ -21,7 +21,7 @@ except ImportError:
     MINIS_WIFI_PASSWORD = 'YourWiFiPassword'
     MINIS_DEVICE_SN     = 'YourDeviceSerialNumber'
 
-MYCASTLE_HOST = '192.168.0.89'
+MYCASTLE_HOST = '192.168.0.207'
 MYCASTLE_PORT = 1884
 USER_ID       = 'marcin'
 
