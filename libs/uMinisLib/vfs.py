@@ -1,5 +1,5 @@
 """
-minis_mqtt_vfs.py — VFS extension for MinisIoT (MicroPython)
+vfs.py — VFS extension for MinisIoT (MicroPython)
 
 Exposes the device's internal filesystem over MQTT using the MyCastle VFS
 protocol.  The server can browse, read, write, and manage files on the device
@@ -24,10 +24,10 @@ FileType values (match packages/core/src/vfs/types.ts):
 Usage::
 
     from minis_iot import MinisIoT
-    from minis_mqtt_vfs import MinisMqttVfs
+    from vfs import Vfs
 
     minis = MinisIoT(host, port, user_id, device_id)
-    vfs = MinisMqttVfs(minis, root='/')
+    Vfs(minis, root='/')
     minis.begin()
 
     while True:
@@ -44,7 +44,7 @@ _DIR  = 2
 _STAT_MODE_DIR = 0x4000   # st_mode bit set for directories in MicroPython
 
 
-class MinisMqttVfs:
+class Vfs:
     """
     MinisIoT VFS extension — exposes the internal MicroPython filesystem
     over MQTT so MyCastle can browse and manage files on the device.
@@ -58,22 +58,19 @@ class MinisMqttVfs:
 
     def __init__(self, minis, root='/'):
         self._minis = minis
-        # Normalise root: no trailing slash, keep bare '/'
         self._root = root.rstrip('/') if root != '/' else '/'
         minis.add_extension(self.EXT_TYPE, self._on_request)
 
     # ── Extension callback ─────────────────────────────────────────────────────
 
     def _on_request(self, req_id, op, params):
-        """Called by MinisIoT for each incoming ext/vfs/req message."""
         path = params.get('path')
         try:
             data = self._dispatch(op, path, params)
             self._minis.ext_respond(self.EXT_TYPE, req_id, True, data=data)
         except OSError as e:
-            code = _oserror_code(e)
             self._minis.ext_respond(self.EXT_TYPE, req_id, False,
-                                    error={'code': code, 'message': str(e)})
+                                    error={'code': _oserror_code(e), 'message': str(e)})
         except Exception as e:
             self._minis.ext_respond(self.EXT_TYPE, req_id, False,
                                     error={'code': 'Unknown', 'message': str(e)})
@@ -94,10 +91,7 @@ class MinisMqttVfs:
                 params.get('options') or {},
             )
         elif op == 'delete':
-            return self._delete(
-                self._resolve(path),
-                params.get('options') or {},
-            )
+            return self._delete(self._resolve(path), params.get('options') or {})
         elif op == 'rename':
             new_path = params.get('newPath')
             if not new_path:
@@ -139,7 +133,6 @@ class MinisMqttVfs:
     def _readfile(self, real):
         with open(real, 'rb') as f:
             raw = f.read()
-        # ubinascii.b2a_base64 appends '\n' — strip it
         return {'data': ubinascii.b2a_base64(raw).decode().rstrip()}
 
     def _writefile(self, real, data_b64, options):
@@ -150,19 +143,14 @@ class MinisMqttVfs:
             raise OSError(17, 'File exists: ' + real)
         if not exists and not create:
             raise OSError(2, 'No such file: ' + real)
-        raw = ubinascii.a2b_base64(data_b64)
         with open(real, 'wb') as f:
-            f.write(raw)
+            f.write(ubinascii.a2b_base64(data_b64))
         return {}
 
     def _delete(self, real, options):
-        recursive = options.get('recursive', False)
         s = os.stat(real)
         if s[0] & _STAT_MODE_DIR:
-            if recursive:
-                _rmtree(real)
-            else:
-                os.rmdir(real)
+            _rmtree(real) if options.get('recursive', False) else os.rmdir(real)
         else:
             os.remove(real)
         return {}
@@ -180,12 +168,10 @@ class MinisMqttVfs:
     # ── Path helpers ──────────────────────────────────────────────────────────
 
     def _resolve(self, path):
-        """Resolve a VFS path to a real device path. Guards against traversal."""
         if not path:
             raise ValueError("'path' is required")
-        combined = self._root + '/' + path.lstrip('/')
         parts = []
-        for part in combined.split('/'):
+        for part in (self._root + '/' + path.lstrip('/')).split('/'):
             if part == '' or part == '.':
                 continue
             elif part == '..':
@@ -211,22 +197,17 @@ def _exists(path):
 
 
 def _rmtree(path):
-    """Recursively delete a directory tree (MicroPython has no shutil)."""
     for name in os.listdir(path):
         child = path.rstrip('/') + '/' + name
         try:
             s = os.stat(child)
-            if s[0] & _STAT_MODE_DIR:
-                _rmtree(child)
-            else:
-                os.remove(child)
+            _rmtree(child) if (s[0] & _STAT_MODE_DIR) else os.remove(child)
         except OSError:
             pass
     os.rmdir(path)
 
 
 def _oserror_code(exc):
-    """Map OSError errno to a VFS error code string."""
     errno = exc.args[0] if exc.args else 0
     if errno == 2:  return 'FileNotFound'
     if errno == 17: return 'FileExists'

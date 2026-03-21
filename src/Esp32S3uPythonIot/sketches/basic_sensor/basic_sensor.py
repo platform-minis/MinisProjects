@@ -10,7 +10,7 @@ The values below are used as fallbacks when running manually.
 """
 
 from minis_iot import MinisIoT
-from minis_mqtt_vfs import MinisMqttVfs
+from vfs import Vfs
 import time
 
 # ─── Configuration (override via MinisConfig.py) ──────────────────────────────
@@ -38,7 +38,7 @@ minis.set_wifi(MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD)
 minis.set_heartbeat_interval(60)
 
 # ─── VFS extension — exposes internal filesystem over MQTT ───────────────────
-MinisMqttVfs(minis, root='/')
+Vfs(minis, root='/')
 
 print('Connecting to MyCastle...')
 if not minis.begin(15000):
