@@ -10,7 +10,7 @@ The values below are used as fallbacks when running manually.
 """
 
 from minis_iot import MinisIoT
-from vfs import Vfs
+from minis_vfs import Vfs
 import time
 
 # ─── Configuration (override via MinisConfig.py) ──────────────────────────────

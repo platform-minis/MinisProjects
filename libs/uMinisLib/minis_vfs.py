@@ -1,5 +1,5 @@
 """
-vfs.py — VFS extension for MinisIoT (MicroPython)
+minis_vfs.py — VFS extension for MinisIoT (MicroPython)
 
 Exposes the device's internal filesystem over MQTT using the MyCastle VFS
 protocol.  The server can browse, read, write, and manage files on the device
