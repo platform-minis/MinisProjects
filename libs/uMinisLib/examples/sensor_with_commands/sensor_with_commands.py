@@ -22,8 +22,8 @@ except ImportError:
     MINIS_WIFI_PASSWORD = 'MyWiFiPassword'
     MINIS_DEVICE_SN     = 'dev-relay1'
 
-MYCASTLE_HOST = '192.168.1.100'
-MYCASTLE_PORT = 1902
+MYCASTLE_HOST = '192.168.0.207'
+MYCASTLE_PORT = 1884
 USER_ID       = 'marcin'
 
 RELAY_PIN            = Pin(26, Pin.OUT, value=0)

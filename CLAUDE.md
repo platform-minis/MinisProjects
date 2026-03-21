@@ -14,8 +14,8 @@ Baza wiedzy o moich projektach DIY.
         - `sketches/` — szkice uPython
         - `docs/` — dokumentacja projektu
 - `libs/` : Biblioteki współdzielone
-    - `libs/MinisLib/` — Arduino (C++): biblioteka IoT dla platformy MyCastle (MQTT over WebSocket)
-    - `libs/uMinisLib/` — MicroPython: biblioteka IoT dla platformy MyCastle (MQTT over WebSocket)
+    - `libs/MinisLib/` — Arduino (C++): biblioteka IoT dla platformy MyCastle (MQTT over TCP)
+    - `libs/uMinisLib/` — MicroPython: biblioteka IoT dla platformy MyCastle (MQTT over TCP)
     - `libs/MinisLib2/` — lokalna (nie w repozytorium)
     - `libs/arduino_lib_pubsubclient/` — git submodule: Arduino PubSubClient
 - `scripts/generate-index.js` — generuje `index.json` z `project.json` każdego projektu; uruchom przez `npm run index`
@@ -38,7 +38,9 @@ Baza wiedzy o moich projektach DIY.
 ```
 
 Dla bibliotek Arduino: `name` + `version` (z managera) lub `url` (git-url install).
-Dla bibliotek uPython: `url` (raw GitHub) + `remoteName` (nazwa pliku na urządzeniu).
+Dla bibliotek uPython: `url` + `remoteName` (nazwa pliku na urządzeniu). Pole `url` może być raw GitHub URL lub embedded base64 (`data:text/plain;base64,...` — zawartość zakodowana inline, używane gdy projekt ma być self-contained lub podczas dev).
+
+Każda biblioteka uPython to osobny wpis w `libraries`. Jeśli projekt używa rozszerzeń (`vkbd.py`, `vmouse.py`), każde z nich musi mieć własny wpis z `url` i `remoteName`.
 
 ### Language/Stack Specific
 W zależności od projektu.
@@ -126,11 +128,11 @@ ESP32-S3 MicroPython — interfejs tekstowy (curses-like) na ESP32-S3.
 
 ### 12. Esp32S3uPythonIot
 
-ESP32-S3 MicroPython IoT dla platformy MyCastle. Łączy się przez MQTT over WebSocket, wysyła telemetrię, obsługuje komendy. Biblioteka: uMinisLib (`minis_iot.py`).
+ESP32-S3 MicroPython IoT dla platformy MyCastle. Łączy się przez MQTT over plain TCP, wysyła telemetrię, obsługuje komendy. Biblioteka: uMinisLib (`minis_iot.py`).
 
 - **Platforma:** ESP32-S3 (MicroPython)
 - **Moduł:** esp32-s3-pico
-- **Biblioteka:** `libs/uMinisLib/minis_iot.py` (wgrywana automatycznie przy deploy)
+- **Biblioteki:** `libs/uMinisLib/minis_iot.py` (wymagana zawsze). Rozszerzenia (`vkbd.py`, `vmouse.py`) dodawane jako oddzielne wpisy w `libraries[].url+remoteName` gdy projekt ich używa.
 
 ### 13. RPiPico2TestPlatform
 

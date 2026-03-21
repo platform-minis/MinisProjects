@@ -1,8 +1,8 @@
 """
-basic_sensor.py — MinisIoT uPython example
+basic_sensor.py — MinisIoT uPython example z VFS
 
 Sends temperature and humidity to MyCastle every 10 seconds.
-No command handling.
+Exposes the device's internal filesystem over MQTT via MinisMqttVfs.
 
 When deployed via MyCastle a MinisConfig.py is injected automatically with:
     MINIS_DEVICE_SN, MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD, MINIS_CONFIG
@@ -10,6 +10,7 @@ The values below are used as fallbacks when running manually.
 """
 
 from minis_iot import MinisIoT
+from minis_mqtt_vfs import MinisMqttVfs
 import time
 
 # ─── Configuration (override via MinisConfig.py) ──────────────────────────────
@@ -35,6 +36,9 @@ minis = MinisIoT(MYCASTLE_HOST, MYCASTLE_PORT, USER_ID, MINIS_DEVICE_SN)
 minis.set_debug(True)
 minis.set_wifi(MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD)
 minis.set_heartbeat_interval(60)
+
+# ─── VFS extension — exposes internal filesystem over MQTT ───────────────────
+MinisMqttVfs(minis, root='/')
 
 print('Connecting to MyCastle...')
 if not minis.begin(15000):

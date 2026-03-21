@@ -12,7 +12,20 @@
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(bash -c \"cd /home/mhersztowski/myprojects/claude/MyCastle && npx tsc --noEmit -p app/mycastle-web/tsconfig.json 2>&1 | grep ''error TS'' | grep -v node_modules | head -20\")",
       "Bash(grep -rn \"telemetry.*payloadSchema\\\\|payloadSchema.*telemetry\" /home/mhersztowski/myprojects/claude/MyCastle --include=*.ts)",
-      "Bash(2)"
+      "Bash(2)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD --stat)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- CLAUDE.md)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle show HEAD:app/mycastle-web/src/modules/pygameblockly/PygameBlocklyService.ts)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle show HEAD:app/mycastle-backend/src/modules/pygame/PygameService.ts)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle show HEAD:app/mycastle-web/src/pages/minis-user/PygameProjectPage.tsx)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle show HEAD:app/mycastle-backend/src/modules/upython/MicroPythonCliDocker.ts)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- app/mycastle-web/src/services/MinisApiService.ts)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- app/mycastle-backend/src/App.ts)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- packages/web-client/src/vfs/)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- packages/web-client/src/vfs/vfsMountPresets.ts)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- app/mycastle-web/src/AppRoot.tsx)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- packages/web-client/src/monaco/agent/engine/AgentEngine.ts)",
+      "Bash(git -C /home/mhersztowski/myprojects/claude/MyCastle diff 88f13e3..HEAD -- packages/web-client/src/monaco/agent/types.ts)"
     ],
     "additionalDirectories": [
       "/home/mhersztowski/myprojects/claude/MyCastle/app/client/operations",
@@ -20,7 +33,14 @@
       "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-backend/src/modules/iot",
       "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-backend/src",
       "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-web/src/pages/minis-user/iot",
-      "/home/mhersztowski/myprojects/claude/MyCastle/packages/web-client/src/vfs"
+      "/home/mhersztowski/myprojects/claude/MyCastle/packages/web-client/src/vfs",
+      "/home/mhersztowski/myprojects/claude/MyCastle/packages/core/src/vfs",
+      "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-web/src/modules/pygameblockly/generator",
+      "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-web/src/modules/pygameblockly/blocks",
+      "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-web/src/modules/pygameblockly",
+      "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-web/src/pages/minis-user",
+      "/home/mhersztowski/myprojects/claude/MyCastle/app/mycastle-web/src",
+      "/home/mhersztowski/myprojects/claude/MyCastle"
     ]
   }
 }
