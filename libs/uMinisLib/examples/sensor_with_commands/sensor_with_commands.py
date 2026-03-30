@@ -16,11 +16,11 @@ import time
 
 # ─── Configuration (override via MinisConfig.py) ──────────────────────────────
 try:
-    from MinisConfig import MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD, MINIS_DEVICE_SN
+    from MinisConfig import MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD, MINIS_DEVICE_NAME
 except ImportError:
     MINIS_WIFI_SSID     = 'MyWiFiNetwork'
     MINIS_WIFI_PASSWORD = 'MyWiFiPassword'
-    MINIS_DEVICE_SN     = 'dev-relay1'
+    MINIS_DEVICE_NAME   = 'dev-relay1'
 
 MYCASTLE_HOST = '192.168.0.207'
 MYCASTLE_PORT = 1884
@@ -48,7 +48,7 @@ def handle_command(cmd_id, name, payload):
         minis.ack_command(cmd_id, False, 'Unknown command: ' + name)
 
 # ─── MinisIoT instance ────────────────────────────────────────────────────────
-minis = MinisIoT(MYCASTLE_HOST, MYCASTLE_PORT, USER_ID, MINIS_DEVICE_SN)
+minis = MinisIoT(MYCASTLE_HOST, MYCASTLE_PORT, USER_ID, MINIS_DEVICE_NAME)
 minis.set_debug(True)
 minis.set_wifi(MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD)
 minis.on_command(handle_command)

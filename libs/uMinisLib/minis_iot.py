@@ -18,7 +18,7 @@ Quick start::
         time.sleep(10)
 
 When deployed via MyCastle a MinisConfig.py is injected with:
-    MINIS_DEVICE_SN, MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD
+    MINIS_DEVICE_NAME, MINIS_WIFI_SSID, MINIS_WIFI_PASSWORD
 """
 
 import network
@@ -119,6 +119,8 @@ class MinisIoT:
         self._extensions     = {}
         # extension_type → req topic string
         self._ext_req_topics = {}
+        # entity_id → IotEntity instance (writable entities handle their own commands)
+        self._entities = {}
 
     # ── Configuration (call before begin()) ───────────────────────────────────
 
@@ -126,6 +128,24 @@ class MinisIoT:
         """Set WiFi credentials. If not called, WiFi must be already connected."""
         self._ssid     = ssid
         self._password = password
+
+    def add_entity(self, entity):
+        """
+        Register an IotEntity.
+
+        Entities are announced in the hello message so MyCastle renders
+        the appropriate UI controls. Writable entity types (SwitchEntity,
+        NumberEntity, ButtonEntity, SelectEntity) intercept incoming commands
+        whose name matches the entity id and call the entity callback —
+        no manual ack_command() is required.
+
+        Read-only entities (SensorEntity, BinarySensorEntity) are only
+        metadata declarations; their values must be reported via
+        send_telemetry() using the entity id as the metric key.
+
+        :param entity: An IotEntity instance from minis_entities.
+        """
+        self._entities[entity.id] = entity
 
     def add_extension(self, ext_type, callback):
         """
@@ -293,8 +313,11 @@ class MinisIoT:
                 payload['extensions'] = [
                     {'type': t, 'enabled': True} for t in self._extensions
                 ]
+            if self._entities:
+                payload['entities'] = [e.to_dict() for e in self._entities.values()]
             self._client.publish(self._t_hello, json.dumps(payload), qos=1)
-            self._log('Hello sent (extensions={})', list(self._extensions.keys()))
+            self._log('Hello sent (extensions={} entities={})',
+                      list(self._extensions.keys()), list(self._entities.keys()))
             return True
         except Exception as e:
             self._log('sendHello error: {}', e)
@@ -344,7 +367,7 @@ class MinisIoT:
         if not self._connected:
             return False
         try:
-            payload = {'id': cmd_id, 'status': 'EXECUTED' if success else 'FAILED'}
+            payload = {'id': cmd_id, 'status': 'ACKNOWLEDGED' if success else 'FAILED'}
             if not success and reason:
                 payload['reason'] = reason
             self._client.publish(self._t_cmd_ack, json.dumps(payload), qos=1)
@@ -398,7 +421,7 @@ class MinisIoT:
                 debug=self._debug,
             )
             self._client.connect(timeout_ms)
-            if self._cmd_cb:
+            if self._cmd_cb or self._entities:
                 self._client.subscribe(self._t_command, qos=1)
                 self._log('Subscribed: {}', self._t_command)
             for ext_type, req_topic in self._ext_req_topics.items():
@@ -434,15 +457,30 @@ class MinisIoT:
                 return
 
         # ── Command ──────────────────────────────────────────────────────────
-        if topic != self._t_command or not self._cmd_cb:
+        if topic != self._t_command:
             return
         try:
             doc      = json.loads(payload_str)
             cmd_id   = doc.get('id',      '')
             cmd_name = doc.get('name',    '')
             cmd_pl   = doc.get('payload', {})
-            self._log('CMD [{}] id={}', cmd_name, cmd_id)
-            self._cmd_cb(cmd_id, cmd_name, cmd_pl)
+
+            # Entity commands: auto-dispatch + auto-ack, skip user callback
+            entity = self._entities.get(cmd_name)
+            if entity is not None:
+                self._log('ENTITY CMD [{}] id={}', cmd_name, cmd_id)
+                try:
+                    entity.handle_command(cmd_pl)
+                    self.ack_command(cmd_id, True)
+                except Exception as e:
+                    self._log('entity handle_command error: {}', e)
+                    self.ack_command(cmd_id, False, str(e))
+                return
+
+            # User-defined commands
+            if self._cmd_cb:
+                self._log('CMD [{}] id={}', cmd_name, cmd_id)
+                self._cmd_cb(cmd_id, cmd_name, cmd_pl)
         except Exception as e:
             self._log('dispatch error: {}', e)
 
