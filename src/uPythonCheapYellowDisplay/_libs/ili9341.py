@@ -109,7 +109,7 @@ class ILI9341:
         self._cmd(_COLMOD);  self._data(b'\x55')   # 16-bit RGB565
         # MADCTL: MY MX MV ML BGR MH 0 0
         # Tuned for CYD (ESP32-2432S028) ILI9341 panel orientation
-        madctl = (0x08, 0xA8, 0xC8, 0x68)[rotation & 3]
+        madctl = (0x08, 0xE8, 0x48, 0x28)[rotation & 3]
         self._cmd(_MADCTL);  self._data(bytes([madctl]))
         self._cmd(_DISPON)
 
