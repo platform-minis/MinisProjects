@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-03-16",
+  "updatedAt": "2026-03-30",
   "repoUrl": "https://github.com/platform-minis/MinisProjects",
   "projects": [
     {
@@ -461,6 +461,31 @@
         "FlashMode": "qio",
         "FlashFreq": "80",
         "FlashSize": "8M",
+        "UploadSpeed": "921600",
+        "PSRAM": "opi",
+        "DebugLevel": "none",
+        "EraseFlash": "none"
+      }
+    },
+    {
+      "id": "esp32-s3-zero",
+      "name": "ESP32-S3 Zero",
+      "vendor": "Waveshare",
+      "description": "Ultra-compact ESP32-S3 board in Zero form factor. 4MB Flash, 2MB OPI PSRAM, native USB (HWCDC). Requires PSRAM=opi — without it the chip (ESP32-S3FH4R2) crashes on boot.",
+      "platform": "Arduino",
+      "boardProfileKey": "esp32s3_zero",
+      "fqbn": "esp32:esp32:esp32s3",
+      "arduinoOptions": {
+        "USBMode": "hwcdc",
+        "CDCOnBoot": "cdc",
+        "MSCOnBoot": "default",
+        "DFUOnBoot": "default",
+        "UploadMode": "default",
+        "PartitionScheme": "default",
+        "CPUFreq": "240",
+        "FlashMode": "qio",
+        "FlashFreq": "80",
+        "FlashSize": "4M",
         "UploadSpeed": "921600",
         "PSRAM": "opi",
         "DebugLevel": "none",
