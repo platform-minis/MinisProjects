@@ -179,6 +179,51 @@
       "readmePath": "src/Esp32S3uPythonCurses/README.md"
     },
     {
+      "id": "Esp32S3uPythonDisplay",
+      "name": "ESP32-S3-uPython-Display",
+      "description": "ESP32-S3 MicroPython virtual display examples using minis_display.py. Frames are streamed via MQTT and rendered in the MyCastle browser widget (Virtual Display page).",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-s3-pico",
+      "version": "1.0.0",
+      "tags": ["display", "esp32s3", "uPython", "mqtt", "nano-gui"],
+      "libraries": [
+        {
+          "url": "https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/minis_iot.py",
+          "remoteName": "minis_iot.py"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/minis_display.py",
+          "remoteName": "minis_display.py"
+        }
+      ],
+      "path": "src/Esp32S3uPythonDisplay",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "hello_display",
+          "files": ["src/Esp32S3uPythonDisplay/sketches/hello_display/hello_display.py"]
+        },
+        {
+          "name": "primitives",
+          "files": ["src/Esp32S3uPythonDisplay/sketches/primitives/primitives.py"]
+        },
+        {
+          "name": "clock_display",
+          "files": ["src/Esp32S3uPythonDisplay/sketches/clock_display/clock_display.py"]
+        },
+        {
+          "name": "sensor_bars",
+          "files": ["src/Esp32S3uPythonDisplay/sketches/sensor_bars/sensor_bars.py"]
+        },
+        {
+          "name": "animation",
+          "files": ["src/Esp32S3uPythonDisplay/sketches/animation/animation.py"]
+        }
+      ],
+      "readmePath": null
+    },
+    {
       "id": "Esp32S3uPythonIot",
       "name": "ESP32-S3-uPython-IoT",
       "description": "ESP32-S3 MicroPython IoT project for MyCastle platform.",
