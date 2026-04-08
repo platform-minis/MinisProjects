@@ -551,9 +551,8 @@ Lekcja 7  ──  Szablon do własnych projektów
 
 ## Platforma
 
-- **Mikrokontroler:** ESP32-S3 (moduł `esp32s3zero`)
+- **Mikrokontroler:** ESP32-S3 (moduł `esp32-s3-pico`)
 - **Język:** MicroPython
 - **Środowisko:** MyCastle / Thonny / mpremote
 - **Napięcie logiczne:** 3,3 V
 - **Zasilanie:** USB 5 V → regulator na płytce → 3,3 V
-- **Wbudowany LED RGB:** WS2812 na GP21 (neopixel — nieużywany w tym kursie)

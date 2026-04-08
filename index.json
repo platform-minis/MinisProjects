@@ -121,7 +121,7 @@
       "name": "ESP32-S3-uPythonCurses",
       "description": "ESP32-S3 test project for demonstrating functionality.",
       "softwarePlatform": "uPython",
-      "moduleId": "esp32s3zero",
+      "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
       "tags": [
         "test",

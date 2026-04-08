@@ -5,5 +5,5 @@
   "version": "1.0.0",
   "softwarePlatform": "uPython",
   "tags": ["test", "esp32s3", "uPython"],
-  "moduleId": "esp32s3zero"
+  "moduleId": "esp32-s3-pico"
 }
