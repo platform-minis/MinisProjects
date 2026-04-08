@@ -142,6 +142,8 @@ Klasyfikacja:      CIEMNO   NORMALNIE    JASNO
 
 ## Lekcje
 
+Każda lekcja pokazana jest w dwóch postaciach: **bloczki Blockly** (wizualny edytor) oraz **kod MicroPython** (wygenerowany automatycznie).
+
 ---
 
 ### Lekcja 1 — Zapalenie diody LED
@@ -152,6 +154,35 @@ Klasyfikacja:      CIEMNO   NORMALNIE    JASNO
 Program konfiguruje pin 11 jako wyjście, a następnie w funkcji `setup()` ustawia go w stan HIGH (3,3 V). Dioda zapala się i pozostaje zapalona przez cały czas działania programu. Pętla `loop()` jest pusta — nic się nie zmienia po inicjalizacji.
 
 **Schemat połączenia:** jak w sekcji *Połączenie diody LED*, pin GP11.
+
+**Bloczki Blockly:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  [Pin Init]  pin=11  tryb=OUT           ║
+║  [Pin Set]   pin=11  → 1               ║
+║  [Print]     "Led is On"               ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════╗
+║  (pusty)                                ║
+╚═════════════════════════════════════════╝
+```
+
+**Kod MicroPython:**
+
+```python
+from machine import Pin
+
+_pin_11 = Pin(11, mode=Pin.OUT)
+
+def setup():
+    _pin_11.value(1)
+    print('Led is On')
+
+def loop():
+    pass
+```
 
 **Czego uczysz się:**
 
@@ -179,6 +210,39 @@ ______|           |_______|           |_______|
       ↑ ON        ↑ OFF   ↑ ON        ↑ OFF
 ```
 
+**Bloczki Blockly:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  [Pin Init]  pin=11  tryb=OUT           ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════╗
+║  [Pin Set]   pin=11  → 1               ║
+║  [Sleep]     1000 ms                   ║
+║  [Pin Set]   pin=11  → 0               ║
+║  [Sleep]     1000 ms                   ║
+╚═════════════════════════════════════════╝
+```
+
+**Kod MicroPython:**
+
+```python
+from machine import Pin
+import time
+
+_pin_11 = Pin(11, mode=Pin.OUT)
+
+def setup():
+    pass
+
+def loop():
+    _pin_11.value(1)
+    time.sleep_ms(1000)
+    _pin_11.value(0)
+    time.sleep_ms(1000)
+```
+
 **Czego uczysz się:**
 
 - Moduł `time` i funkcja `sleep_ms()`
@@ -200,6 +264,53 @@ Trzy diody zapalają się jedna po drugiej w określonej kolejności:
 4. Cykl wraca do punktu 1
 
 **Schemat połączenia:** jak w sekcji *Połączenie trzech diod LED*.
+
+**Bloczki Blockly:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  [Pin Init]  pin=12  tryb=OUT           ║
+║  [Pin Init]  pin=13  tryb=OUT           ║
+║  [Pin Init]  pin=14  tryb=OUT           ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════╗
+║  [Pin Set]   pin=14  → 1   (zielona)   ║
+║  [Sleep]     3000 ms                   ║
+║  [Pin Set]   pin=14  → 0               ║
+║  [Pin Set]   pin=13  → 1   (żółta)     ║
+║  [Sleep]     1000 ms                   ║
+║  [Pin Set]   pin=13  → 0               ║
+║  [Pin Set]   pin=12  → 1   (czerwona)  ║
+║  [Sleep]     3000 ms                   ║
+║  [Pin Set]   pin=12  → 0               ║
+╚═════════════════════════════════════════╝
+```
+
+**Kod MicroPython:**
+
+```python
+from machine import Pin
+import time
+
+_pin_12 = Pin(12, mode=Pin.OUT)
+_pin_13 = Pin(13, mode=Pin.OUT)
+_pin_14 = Pin(14, mode=Pin.OUT)
+
+def setup():
+    pass
+
+def loop():
+    _pin_14.value(1)
+    time.sleep_ms(3000)
+    _pin_14.value(0)
+    _pin_13.value(1)
+    time.sleep_ms(1000)
+    _pin_13.value(0)
+    _pin_12.value(1)
+    time.sleep_ms(3000)
+    _pin_12.value(0)
+```
 
 **Czego uczysz się:**
 
@@ -225,6 +336,46 @@ Konsola:              ↑ "Button pressed" × 4    ↑
 ```
 
 **Schemat połączenia:** jak w sekcji *Połączenie przycisku*, plus LED na GP11.
+
+**Bloczki Blockly:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  [Pin Init]  pin=11  tryb=OUT           ║
+║  [Pin Init]  pin=16  tryb=IN            ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════════════════╗
+║  ╔══ Jeżeli  [Pin Get pin=16] == 1 ══════════════╗  ║
+║  ║  [Pin Set]   pin=11  → 1                      ║  ║
+║  ║  [Print]     "Button pressed"                 ║  ║
+║  ╠══ W przeciwnym razie ══════════════════════════╣  ║
+║  ║  [Pin Set]   pin=11  → 0                      ║  ║
+║  ╚════════════════════════════════════════════════╝  ║
+║  [Sleep]     100 ms                                  ║
+╚══════════════════════════════════════════════════════╝
+```
+
+**Kod MicroPython:**
+
+```python
+from machine import Pin
+import time
+
+_pin_11 = Pin(11, mode=Pin.OUT)
+_pin_16 = Pin(16, mode=Pin.IN)
+
+def setup():
+    pass
+
+def loop():
+    if _pin_16.value() == 1:
+        _pin_11.value(1)
+        print('Button pressed')
+    else:
+        _pin_11.value(0)
+    time.sleep_ms(100)
+```
 
 **Czego uczysz się:**
 
@@ -261,6 +412,52 @@ BRIGHT
 
 **Schemat połączenia:** jak w sekcji *Połączenie fotoopornika*.
 
+**Bloczki Blockly:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  [ADC Init]  pin=7  tłumienie=11dB      ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════════════════╗
+║  [Ustaw]  Light = [ADC Read pin=7]                  ║
+║  [Print]  "Light level" + Light                     ║
+║  ╔══ Jeżeli  Light < 1000 ══════════════════════╗   ║
+║  ║  [Print]  "DARK"                             ║   ║
+║  ╠══ W przeciwnym razie jeżeli  Light < 2500 ═══╣   ║
+║  ║  [Print]  "NORMAL"                          ║   ║
+║  ╠══ W przeciwnym razie ════════════════════════╣   ║
+║  ║  [Print]  "BRIGHT"                          ║   ║
+║  ╚══════════════════════════════════════════════╝   ║
+║  [Sleep]  500 ms                                    ║
+╚═════════════════════════════════════════════════════╝
+```
+
+**Kod MicroPython:**
+
+```python
+from machine import Pin, ADC
+import time
+
+_adc_7 = ADC(Pin(7), atten=ADC.ATTN_11DB)
+Light = None
+
+def setup():
+    pass
+
+def loop():
+    global Light
+    Light = _adc_7.read()
+    print('Light level' + str(Light))
+    if Light < 1000:
+        print('DARK')
+    elif Light < 2500:
+        print('NORMAL')
+    else:
+        print('BRIGHT')
+    time.sleep_ms(500)
+```
+
 **Czego uczysz się:**
 
 - Klasa `ADC` i parametr `atten`
@@ -276,6 +473,28 @@ BRIGHT
 
 **Co się dzieje:**
 Lekcja zawiera tylko czysty szablon z pustymi funkcjami `setup()` i `loop()` oraz obsługą wyjątku przy zatrzymaniu (`KeyboardInterrupt`). Brak gotowej implementacji — to miejsce na Twój własny program.
+
+**Bloczki Blockly:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  (pusty — dodaj tu inicjalizację)       ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════╗
+║  (pusty — dodaj tu logikę programu)     ║
+╚═════════════════════════════════════════╝
+```
+
+**Kod MicroPython:**
+
+```python
+def setup():
+    pass
+
+def loop():
+    pass
+```
 
 **Czego uczysz się:**
 
@@ -332,8 +551,9 @@ Lekcja 7  ──  Szablon do własnych projektów
 
 ## Platforma
 
-- **Mikrokontroler:** ESP32-S3 (moduł `esp32-s3-pico`)
+- **Mikrokontroler:** ESP32-S3 (moduł `esp32s3zero`)
 - **Język:** MicroPython
 - **Środowisko:** MyCastle / Thonny / mpremote
 - **Napięcie logiczne:** 3,3 V
 - **Zasilanie:** USB 5 V → regulator na płytce → 3,3 V
+- **Wbudowany LED RGB:** WS2812 na GP21 (neopixel — nieużywany w tym kursie)
