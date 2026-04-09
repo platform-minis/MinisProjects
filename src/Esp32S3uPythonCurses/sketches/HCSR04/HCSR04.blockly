@@ -1,0 +1,256 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_start">start</variable>
+    <variable id="var_duration">duration</variable>
+    <variable id="var_dist">dist</variable>
+  </variables>
+
+  <!-- ─── Function: measure_distance() ─────────────────────────────────── -->
+  <block type="procedures_defreturn" id="fn_measure" x="420" y="50">
+    <mutation></mutation>
+    <field name="NAME">measure_distance</field>
+    <statement name="STACK">
+      <!-- TRIG LOW 2µs (clear any previous pulse) -->
+      <block type="upy_pin_set_value" id="fn_trig_low1">
+        <field name="PIN">5</field>
+        <value name="VALUE">
+          <shadow type="math_number" id="fn_trig_low1v"><field name="NUM">0</field></shadow>
+        </value>
+        <next>
+          <block type="upy_sleep_us" id="fn_sleep2">
+            <value name="US">
+              <shadow type="math_number" id="fn_sleep2v"><field name="NUM">2</field></shadow>
+            </value>
+            <next>
+              <!-- TRIG HIGH 10µs trigger pulse -->
+              <block type="upy_pin_set_value" id="fn_trig_high">
+                <field name="PIN">5</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="fn_trig_highv"><field name="NUM">1</field></shadow>
+                </value>
+                <next>
+                  <block type="upy_sleep_us" id="fn_sleep10">
+                    <value name="US">
+                      <shadow type="math_number" id="fn_sleep10v"><field name="NUM">10</field></shadow>
+                    </value>
+                    <next>
+                      <!-- TRIG LOW — end of trigger pulse -->
+                      <block type="upy_pin_set_value" id="fn_trig_low2">
+                        <field name="PIN">5</field>
+                        <value name="VALUE">
+                          <shadow type="math_number" id="fn_trig_low2v"><field name="NUM">0</field></shadow>
+                        </value>
+                        <next>
+                          <!-- Wait until ECHO goes HIGH (sensor starts returning pulse) -->
+                          <block type="controls_whileUntil" id="fn_wait_high">
+                            <field name="MODE">UNTIL</field>
+                            <value name="BOOL">
+                              <block type="logic_compare" id="fn_cmp_high">
+                                <field name="OP">EQ</field>
+                                <value name="A">
+                                  <block type="upy_pin_get_value" id="fn_echo_read1">
+                                    <field name="PIN">4</field>
+                                  </block>
+                                </value>
+                                <value name="B">
+                                  <block type="math_number" id="fn_cmp_highv"><field name="NUM">1</field></block>
+                                </value>
+                              </block>
+                            </value>
+                            <next>
+                              <!-- Record start time -->
+                              <block type="variables_set" id="fn_set_start">
+                                <field name="VAR" id="var_start">start</field>
+                                <value name="VALUE">
+                                  <block type="upy_ticks_us" id="fn_ticks1"/>
+                                </value>
+                                <next>
+                                  <!-- Wait until ECHO goes LOW (sensor pulse ended) -->
+                                  <block type="controls_whileUntil" id="fn_wait_low">
+                                    <field name="MODE">UNTIL</field>
+                                    <value name="BOOL">
+                                      <block type="logic_compare" id="fn_cmp_low">
+                                        <field name="OP">EQ</field>
+                                        <value name="A">
+                                          <block type="upy_pin_get_value" id="fn_echo_read2">
+                                            <field name="PIN">4</field>
+                                          </block>
+                                        </value>
+                                        <value name="B">
+                                          <block type="math_number" id="fn_cmp_lowv"><field name="NUM">0</field></block>
+                                        </value>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <!-- duration = ticks_us() - start -->
+                                      <block type="variables_set" id="fn_set_dur">
+                                        <field name="VAR" id="var_duration">duration</field>
+                                        <value name="VALUE">
+                                          <block type="math_arithmetic" id="fn_diff">
+                                            <field name="OP">MINUS</field>
+                                            <value name="A">
+                                              <block type="upy_ticks_us" id="fn_ticks2"/>
+                                            </value>
+                                            <value name="B">
+                                              <block type="variables_get" id="fn_get_start">
+                                                <field name="VAR" id="var_start">start</field>
+                                              </block>
+                                            </value>
+                                          </block>
+                                        </value>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+    <!-- return duration / 58  (sound round-trip → cm) -->
+    <value name="RETURN">
+      <block type="math_arithmetic" id="fn_return_div">
+        <field name="OP">DIVIDE</field>
+        <value name="A">
+          <block type="variables_get" id="fn_get_dur">
+            <field name="VAR" id="var_duration">duration</field>
+          </block>
+        </value>
+        <value name="B">
+          <block type="math_number" id="fn_div58"><field name="NUM">58</field></block>
+        </value>
+      </block>
+    </value>
+  </block>
+
+  <!-- ─── Setup ────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <!-- TRIG pin (GP5) as output -->
+      <block type="upy_pin_init" id="setup_trig">
+        <field name="PIN">5</field>
+        <field name="MODE">OUT</field>
+        <field name="PULL">NONE</field>
+        <next>
+          <!-- ECHO pin (GP4) as input -->
+          <block type="upy_pin_init" id="setup_echo">
+            <field name="PIN">4</field>
+            <field name="MODE">IN</field>
+            <field name="PULL">NONE</field>
+            <next>
+              <block type="upy_print" id="setup_print">
+                <value name="TEXT">
+                  <block type="text" id="setup_print_v">
+                    <field name="TEXT">HC-SR04 ready  TRIG=GP5  ECHO=GP4</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ─────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="360">
+    <statement name="DO">
+      <!-- dist = measure_distance() -->
+      <block type="variables_set" id="loop_set_dist">
+        <field name="VAR" id="var_dist">dist</field>
+        <value name="VALUE">
+          <block type="procedures_callreturn" id="loop_call_measure">
+            <mutation name="measure_distance"></mutation>
+          </block>
+        </value>
+        <next>
+          <!-- if dist > 400 or dist < 2 → out of range; else → print cm -->
+          <block type="controls_if" id="loop_if">
+            <mutation else="1"></mutation>
+            <value name="IF0">
+              <block type="logic_operation" id="loop_or">
+                <field name="OP">OR</field>
+                <value name="A">
+                  <block type="logic_compare" id="loop_gt400">
+                    <field name="OP">GT</field>
+                    <value name="A">
+                      <block type="variables_get" id="loop_dist_a">
+                        <field name="VAR" id="var_dist">dist</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="loop_400v"><field name="NUM">400</field></block>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="logic_compare" id="loop_lt2">
+                    <field name="OP">LT</field>
+                    <value name="A">
+                      <block type="variables_get" id="loop_dist_b">
+                        <field name="VAR" id="var_dist">dist</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="loop_2v"><field name="NUM">2</field></block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <statement name="DO0">
+              <block type="upy_print" id="loop_print_oor">
+                <value name="TEXT">
+                  <block type="text" id="loop_oor_v">
+                    <field name="TEXT">Out of range</field>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <statement name="ELSE">
+              <block type="upy_print" id="loop_print_dist">
+                <value name="TEXT">
+                  <block type="text_join" id="loop_join">
+                    <mutation items="3"></mutation>
+                    <value name="ADD0">
+                      <block type="text" id="loop_label">
+                        <field name="TEXT">Distance: </field>
+                      </block>
+                    </value>
+                    <value name="ADD1">
+                      <block type="variables_get" id="loop_dist_show">
+                        <field name="VAR" id="var_dist">dist</field>
+                      </block>
+                    </value>
+                    <value name="ADD2">
+                      <block type="text" id="loop_unit">
+                        <field name="TEXT"> cm</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <next>
+              <block type="upy_sleep_ms" id="loop_sleep">
+                <value name="MS">
+                  <shadow type="math_number" id="loop_sleep_v"><field name="NUM">500</field></shadow>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+</xml>
