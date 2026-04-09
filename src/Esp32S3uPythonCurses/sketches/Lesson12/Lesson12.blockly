@@ -1,0 +1,179 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_temp">temp</variable>
+    <variable id="var_hum">hum</variable>
+  </variables>
+
+  <!-- ─── Function: read_temperature() → number ────────────────────────── -->
+  <!-- DHT11 has no Blockly block — implementation lives in Code mode.      -->
+  <!-- The function definition shows the call pattern; return 0 is a stub.  -->
+  <block type="procedures_defreturn" id="fn_temp" x="520" y="50">
+    <mutation></mutation>
+    <field name="NAME">read_temperature</field>
+    <statement name="STACK">
+      <block type="upy_print" id="fn_temp_note">
+        <value name="TEXT">
+          <block type="text" id="fn_temp_note_v">
+            <field name="TEXT">DHT11: switch to Code mode for real reading</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+    <value name="RETURN">
+      <block type="math_number" id="fn_temp_stub">
+        <field name="NUM">0</field>
+      </block>
+    </value>
+  </block>
+
+  <!-- ─── Function: read_humidity() → number ──────────────────────────── -->
+  <block type="procedures_defreturn" id="fn_hum" x="520" y="300">
+    <mutation></mutation>
+    <field name="NAME">read_humidity</field>
+    <statement name="STACK">
+      <block type="upy_print" id="fn_hum_note">
+        <value name="TEXT">
+          <block type="text" id="fn_hum_note_v">
+            <field name="TEXT">DHT11: switch to Code mode for real reading</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+    <value name="RETURN">
+      <block type="math_number" id="fn_hum_stub">
+        <field name="NUM">0</field>
+      </block>
+    </value>
+  </block>
+
+  <!-- ─── Setup ────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <!-- DHT data pin (GP3) as input -->
+      <block type="upy_pin_init" id="setup_dht">
+        <field name="PIN">3</field>
+        <field name="MODE">IN</field>
+        <field name="PULL">NONE</field>
+        <next>
+          <block type="upy_print" id="setup_print">
+            <value name="TEXT">
+              <block type="text" id="setup_print_v">
+                <field name="TEXT">DHT11 ready  DATA=GP3</field>
+              </block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ─────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="280">
+    <statement name="DO">
+      <!-- temp = read_temperature() -->
+      <block type="variables_set" id="loop_set_temp">
+        <field name="VAR" id="var_temp">temp</field>
+        <value name="VALUE">
+          <block type="procedures_callreturn" id="loop_call_temp">
+            <mutation name="read_temperature"></mutation>
+          </block>
+        </value>
+        <next>
+          <!-- hum = read_humidity() -->
+          <block type="variables_set" id="loop_set_hum">
+            <field name="VAR" id="var_hum">hum</field>
+            <value name="VALUE">
+              <block type="procedures_callreturn" id="loop_call_hum">
+                <mutation name="read_humidity"></mutation>
+              </block>
+            </value>
+            <next>
+              <!-- Print "Temp: {temp} C   Hum: {hum} %" -->
+              <block type="upy_print" id="loop_print">
+                <value name="TEXT">
+                  <block type="text_join" id="loop_join">
+                    <mutation items="5"></mutation>
+                    <value name="ADD0">
+                      <block type="text" id="loop_t0"><field name="TEXT">Temp: </field></block>
+                    </value>
+                    <value name="ADD1">
+                      <block type="variables_get" id="loop_temp_show">
+                        <field name="VAR" id="var_temp">temp</field>
+                      </block>
+                    </value>
+                    <value name="ADD2">
+                      <block type="text" id="loop_t2"><field name="TEXT"> C   Hum: </field></block>
+                    </value>
+                    <value name="ADD3">
+                      <block type="variables_get" id="loop_hum_show">
+                        <field name="VAR" id="var_hum">hum</field>
+                      </block>
+                    </value>
+                    <value name="ADD4">
+                      <block type="text" id="loop_t4"><field name="TEXT"> %</field></block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+                  <!-- Warn if temp > 30 or hum > 80 -->
+                  <block type="controls_if" id="loop_warn">
+                    <mutation></mutation>
+                    <value name="IF0">
+                      <block type="logic_operation" id="loop_or">
+                        <field name="OP">OR</field>
+                        <value name="A">
+                          <block type="logic_compare" id="loop_hot">
+                            <field name="OP">GT</field>
+                            <value name="A">
+                              <block type="variables_get" id="loop_temp_hot">
+                                <field name="VAR" id="var_temp">temp</field>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <block type="math_number" id="loop_30v"><field name="NUM">30</field></block>
+                            </value>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="logic_compare" id="loop_humid">
+                            <field name="OP">GT</field>
+                            <value name="A">
+                              <block type="variables_get" id="loop_hum_humid">
+                                <field name="VAR" id="var_hum">hum</field>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <block type="math_number" id="loop_80v"><field name="NUM">80</field></block>
+                            </value>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <statement name="DO0">
+                      <block type="upy_print" id="loop_warn_print">
+                        <value name="TEXT">
+                          <block type="text" id="loop_warn_v">
+                            <field name="TEXT">WARNING: high temp or humidity!</field>
+                          </block>
+                        </value>
+                      </block>
+                    </statement>
+                    <next>
+                      <!-- DHT11 needs at least 2 s between readings -->
+                      <block type="upy_sleep_ms" id="loop_sleep">
+                        <value name="MS">
+                          <shadow type="math_number" id="loop_sleep_v"><field name="NUM">2000</field></shadow>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+</xml>

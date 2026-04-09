@@ -27,6 +27,7 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | **Pull-down resistor** | A resistor (usually 10 kΩ) connecting a pin to GND, ensuring a LOW state when the button is released |
 | **LDR (photoresistor)** | Light Dependent Resistor — resistance decreases as light increases; darker = higher resistance |
 | **Voltage divider** | Two resistors in series between power and GND; the voltage at their junction is proportional to the ratio of their values |
+| **DHT11** | Digital temperature and humidity sensor — communicates over a single-wire protocol; built-in MicroPython `dht` module handles the protocol automatically |
 | **HC-SR04** | Ultrasonic distance sensor — emits a 40 kHz burst and measures the echo travel time to calculate distance (2–400 cm range) |
 | **PIR sensor** | Passive Infrared sensor — detects movement by sensing changes in infrared radiation emitted by warm objects; output goes HIGH on motion |
 | **TRIG** | Trigger pin of HC-SR04 — a 10 µs HIGH pulse starts a measurement |
@@ -43,6 +44,7 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 
 | Pin | Mode | Component | Lessons |
 | --- | ---- | --------- | ------- |
+| 3 | Digital in/out | DHT11 DATA | Lesson 12 |
 | 4 | Digital input | PIR motion sensor (OUT) | Lesson 11 |
 | 4 | Digital output | ULN2003 IN1 (stepper motor) | Lesson 8 |
 | 5 | Digital output | ULN2003 IN2 (stepper motor) | Lesson 8 |
@@ -197,6 +199,32 @@ ESP32-S3 Pico
 ```text
 GP18 ──── (+) terminal of passive buzzer
 GND  ──── (−) terminal of passive buzzer
+```
+
+---
+
+### DHT11 temperature and humidity sensor (Lesson 12)
+
+```text
+ESP32-S3 Pico        DHT11 module
+┌──────────────┐    ┌──────────────┐
+│         3V3  ├────┤ VCC (+)      │
+│         GND  ├────┤ GND (−)      │
+│         GP3  ├────┤ DATA (S)     │
+└──────────────┘    └──────────────┘
+```
+
+> **Pull-up resistor:** The DHT11 DATA line requires a 4.7–10 kΩ pull-up to 3.3 V. Most breakout modules already include it on the board. If you use a bare sensor (4-pin package), add a 10 kΩ resistor between DATA and 3.3 V.
+> **Minimum interval:** Do not call `measure()` more often than once every 1 second (recommended 2 s). Faster polling returns stale or erroneous values.
+
+**Bare sensor vs module:**
+
+```text
+Bare DHT11 (4 pins, left to right — flat side facing you):
+  Pin 1 → VCC (3.3 V)
+  Pin 2 → DATA  ──[ 10kΩ ]── VCC
+  Pin 3 → NC (not connected)
+  Pin 4 → GND
 ```
 
 ---
