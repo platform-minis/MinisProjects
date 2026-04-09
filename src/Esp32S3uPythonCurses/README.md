@@ -27,6 +27,11 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | **Pull-down resistor** | A resistor (usually 10 kΩ) connecting a pin to GND, ensuring a LOW state when the button is released |
 | **LDR (photoresistor)** | Light Dependent Resistor — resistance decreases as light increases; darker = higher resistance |
 | **Voltage divider** | Two resistors in series between power and GND; the voltage at their junction is proportional to the ratio of their values |
+| **HC-SR04** | Ultrasonic distance sensor — emits a 40 kHz burst and measures the echo travel time to calculate distance (2–400 cm range) |
+| **PIR sensor** | Passive Infrared sensor — detects movement by sensing changes in infrared radiation emitted by warm objects; output goes HIGH on motion |
+| **TRIG** | Trigger pin of HC-SR04 — a 10 µs HIGH pulse starts a measurement |
+| **ECHO** | Echo pin of HC-SR04 — remains HIGH for a duration proportional to the measured distance |
+| **time_pulse_us()** | MicroPython function that measures the duration (in µs) of a pulse on a pin |
 | **setup()** | Initialization function called once at program start |
 | **loop()** | Main loop function called repeatedly |
 | **sleep_ms(n)** | Pauses program execution for *n* milliseconds |
@@ -38,9 +43,12 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 
 | Pin | Mode | Component | Lessons |
 | --- | ---- | --------- | ------- |
+| 4 | Digital input | PIR motion sensor (OUT) | Lesson 11 |
 | 4 | Digital output | ULN2003 IN1 (stepper motor) | Lesson 8 |
 | 5 | Digital output | ULN2003 IN2 (stepper motor) | Lesson 8 |
+| 5 | Digital output | HC-SR04 TRIG | Lesson 10 |
 | 6 | Digital output | ULN2003 IN3 (stepper motor) | Lesson 8 |
+| 4 | Digital input | HC-SR04 ECHO | Lesson 10 |
 | 7 | ADC input | Photoresistor (LDR) | Lesson 6 |
 | 19 | Digital input | VS1838B IR receiver (data) | Lesson 5 |
 | 11 | Digital output | LED | Lesson 1, 2, 4 |
@@ -189,6 +197,61 @@ ESP32-S3 Pico
 ```text
 GP18 ──── (+) terminal of passive buzzer
 GND  ──── (−) terminal of passive buzzer
+```
+
+---
+
+### HC-SR04 ultrasonic distance sensor (Lesson 10)
+
+```text
+ESP32-S3 Pico        HC-SR04
+┌──────────────┐    ┌─────────┐
+│         3V3  ├────┤ VCC     │
+│         GND  ├────┤ GND     │
+│         GP5  ├────┤ TRIG    │
+│         GP4  ├────┤ ECHO    │
+└──────────────┘    └─────────┘
+```
+
+> **Voltage note:** The HC-SR04 operates at 5 V but its ECHO pin outputs 5 V logic. On a 3.3 V board like the ESP32-S3, power the module from 3.3 V — this also lowers the ECHO output to ~3.3 V, which is safe to connect directly to a GPIO input pin.
+
+**How it works:**
+
+```text
+   TRIG: ──┐ 10 µs ┌──────────────────────────────── LOW
+           └───────┘
+
+   ECHO: ────────────────┐          ┌─────────────────── LOW
+                         │←────────→│
+                         │ duration │ = distance × 2 / 343 m/s
+                         └──────────┘
+         HIGH when echo received
+
+   distance [cm] = duration [µs] / 58
+```
+
+---
+
+### PIR motion sensor (Lesson 11)
+
+```text
+ESP32-S3 Pico        PIR module
+┌──────────────┐    ┌──────────────┐
+│         3V3  ├────┤ VCC          │
+│         GND  ├────┤ GND          │
+│         GP4  ├────┤ OUT (signal) │
+└──────────────┘    └──────────────┘
+
+GP11 ──── 330Ω ──── LED (+) ──── LED (−) ──── GND
+```
+
+> **Most PIR modules** (e.g. HC-SR501) accept 5 V or 3.3 V and output a 3.3 V-compatible HIGH signal — they can be connected directly to any GPIO input pin. Check your module's datasheet.
+
+**Behavior:**
+
+```text
+No motion:   OUT ── LOW  (0 V)
+Motion:      OUT ── HIGH (3.3 V)  for 2–10 s (adjustable via onboard potentiometer)
 ```
 
 ---
@@ -1217,6 +1280,200 @@ C4=262  D4=294  E4=330  F4=349  G4=392  A4=440  B4=494  C5=523
 - Difference between passive and active buzzers
 - Controlling pitch with `freq()` and volume/silence with `duty()`
 - Building a simple melody loop in MicroPython
+
+---
+
+### Lesson 10 — HC-SR04 ultrasonic distance sensor
+
+**Goal:** Measure distance using an ultrasonic sensor by writing a reusable `measure_distance()` function and calling it from the main loop.
+
+**What happens:**
+`setup()` initialises GP5 as output (TRIG) and GP4 as input (ECHO). Every 500 ms the loop calls `measure_distance()`, which sends a 10 µs trigger pulse, waits for the ECHO pin to go HIGH (start of echo), records the time with `ticks_us()`, waits for ECHO to go LOW, calculates the elapsed time, and returns the distance in centimetres (`duration / 58`). The result is printed; values outside 2–400 cm are reported as "Out of range".
+
+**Components used:**
+
+- **HC-SR04** (or compatible HY-SRF05, US-016, etc.)
+- Optional: **LED** on GP11 with 330 Ω resistor as a proximity indicator
+
+**Wiring:**
+
+```text
+ESP32-S3 Pico        HC-SR04
+┌──────────────┐    ┌─────────┐
+│         3V3  ├────┤ VCC     │
+│         GND  ├────┤ GND     │
+│         GP5  ├────┤ TRIG    │
+│         GP4  ├────┤ ECHO    │
+└──────────────┘    └─────────┘
+```
+
+**Blockly blocks:**
+
+```text
+╔══ 🔧 FUNCTION  measure_distance  [return value] ════════════╗
+║  [Pin Set]  pin=5  value=0                                  ║
+║  [Sleep µs]  2                                              ║
+║  [Pin Set]  pin=5  value=1                                  ║
+║  [Sleep µs]  10                                             ║
+║  [Pin Set]  pin=5  value=0                                  ║
+║  [Repeat until]  pin 4 == 1                                 ║
+║  set start = [ticks µs]                                     ║
+║  [Repeat until]  pin 4 == 0                                 ║
+║  set duration = [ticks µs] − start                          ║
+║  return  duration ÷ 58                                      ║
+╚═════════════════════════════════════════════════════════════╝
+
+╔══ ▶ START ══════════════════════════════════════════════════╗
+║  [Pin Init]  pin=5  OUT                                     ║
+║  [Pin Init]  pin=4  IN                                      ║
+║  [Print]  "HC-SR04 ready  TRIG=GP5  ECHO=GP4"               ║
+╚═════════════════════════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════════════════════════╗
+║  set dist = [Call  measure_distance]                        ║
+║  [If]  dist > 400  OR  dist < 2                             ║
+║  ║  [Print]  "Out of range"                                 ║
+║  [Else]                                                     ║
+║  ║  [Print]  "Distance: " + dist + " cm"                    ║
+║  [Sleep]  500 ms                                            ║
+╚═════════════════════════════════════════════════════════════╝
+```
+
+**MicroPython code:**
+
+```python
+from machine import Pin
+import time
+
+_pin_5 = Pin(5, mode=Pin.OUT)   # TRIG
+_pin_4 = Pin(4, mode=Pin.IN)    # ECHO
+
+def measure_distance():
+    _pin_5.value(0)
+    time.sleep_us(2)
+    _pin_5.value(1)
+    time.sleep_us(10)
+    _pin_5.value(0)
+    while not (_pin_4.value() == 1):
+        pass
+    start = time.ticks_us()
+    while not (_pin_4.value() == 0):
+        pass
+    duration = time.ticks_us() - start
+    return duration / 58
+
+def setup():
+    print('HC-SR04 ready  TRIG=GP5  ECHO=GP4')
+
+def loop():
+    dist = measure_distance()
+    if dist > 400 or dist < 2:
+        print('Out of range')
+    else:
+        print('Distance: ' + str(dist) + ' cm')
+    time.sleep_ms(500)
+```
+
+> **Distance formula:** Sound travels at ~343 m/s. The echo time is a round trip (there and back), so `distance = (duration_µs × 0.0343) / 2 ≈ duration_µs / 58` gives centimetres. Division by 58 is the standard shortcut for air at ~20 °C.
+>
+> **Timeout:** If nothing reflects the pulse, ECHO stays LOW and the `while` loop spins forever. For production code replace the busy-wait loops with `machine.time_pulse_us(pin, level, timeout_us)` which has a built-in timeout.
+
+**What you learn:**
+
+- Defining and calling a function with a return value (`procedures_defreturn`)
+- Measuring elapsed time with `ticks_us()`
+- Using `controls_whileUntil` to wait for a pin state change
+- The HC-SR04 trigger/echo protocol
+
+---
+
+### Lesson 11 — PIR motion sensor
+
+**Goal:** Detect motion with a passive infrared sensor using a `is_motion_detected()` boolean function and react by lighting an LED.
+
+**What happens:**
+`setup()` initialises GP4 as input (PIR signal) and GP11 as output (LED), then turns the LED off. Every 100 ms the loop calls `is_motion_detected()`, which returns `True` when the PIR output pin is HIGH. If motion is detected the LED lights up and "Motion detected!" is printed; otherwise the LED turns off.
+
+**Components used:**
+
+- **PIR motion sensor module** (e.g. HC-SR501, AM312, or similar 3.3 V-compatible module)
+- **LED** on GP11 with 330 Ω resistor
+
+**Wiring:**
+
+```text
+ESP32-S3 Pico        PIR module
+┌──────────────┐    ┌──────────────┐
+│         3V3  ├────┤ VCC          │
+│         GND  ├────┤ GND          │
+│         GP4  ├────┤ OUT (signal) │
+└──────────────┘    └──────────────┘
+
+GP11 ──── 330Ω ──── LED (+)
+                        │
+                    LED (−) ──── GND
+```
+
+**Blockly blocks:**
+
+```text
+╔══ 🔧 FUNCTION  is_motion_detected  [return value] ══════════╗
+║  return  [Pin Read  pin=4]  ==  1                           ║
+╚═════════════════════════════════════════════════════════════╝
+
+╔══ ▶ START ══════════════════════════════════════════════════╗
+║  [Pin Init]  pin=4   IN                                     ║
+║  [Pin Init]  pin=11  OUT                                    ║
+║  [Pin Set]   pin=11  0                                      ║
+║  [Print]  "PIR ready  PIR=GP4  LED=GP11"                    ║
+╚═════════════════════════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════════════════════════╗
+║  set motion = [Call  is_motion_detected]                    ║
+║  [If]  motion                                               ║
+║  ║  [Pin Set]  pin=11  1                                    ║
+║  ║  [Print]  "Motion detected!"                             ║
+║  [Else]                                                     ║
+║  ║  [Pin Set]  pin=11  0                                    ║
+║  [Sleep]  100 ms                                            ║
+╚═════════════════════════════════════════════════════════════╝
+```
+
+**MicroPython code:**
+
+```python
+from machine import Pin
+import time
+
+_pin_4  = Pin(4,  mode=Pin.IN)   # PIR signal
+_pin_11 = Pin(11, mode=Pin.OUT)  # LED
+
+def is_motion_detected():
+    return _pin_4.value() == 1
+
+def setup():
+    _pin_11.value(0)
+    print('PIR ready  PIR=GP4  LED=GP11')
+
+def loop():
+    motion = is_motion_detected()
+    if motion:
+        _pin_11.value(1)
+        print('Motion detected!')
+    else:
+        _pin_11.value(0)
+    time.sleep_ms(100)
+```
+
+> **Sensitivity adjustment:** Most HC-SR501 modules have two potentiometers on the back — one controls detection range (3–7 m) and the other controls the hold time (how long the output stays HIGH after motion stops, 3–300 s). Adjust them with a small screwdriver before testing.
+>
+> **Warm-up time:** PIR sensors need 30–60 seconds after power-on to stabilise. During this period the output may briefly pulse HIGH — this is normal.
+
+**What you learn:**
+
+- Wrapping a pin read in a boolean function (`procedures_defreturn` returning a comparison)
+- Calling a function whose result drives an `if/else` block
+- How a PIR passive infrared sensor works
 
 ---
 
