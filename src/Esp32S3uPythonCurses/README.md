@@ -906,8 +906,9 @@ def loop():
     result = _recv_nec()
     if result:
         addr, cmd = result
+        key = _IR_KEYS.get(cmd, f'0x{cmd:02X}')
         _led.value(1)
-        print(f'addr=0x{addr:02X}  cmd=0x{cmd:02X}  key={_IR_KEYS.get(cmd, "?")}')
+        print(key)
         time.sleep_ms(80)
         _led.value(0)
 ```
