@@ -171,6 +171,13 @@
           ]
         },
         {
+          "name": "Lesson5",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson5/Lesson5.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson5/Lesson5.py"
+          ]
+        },
+        {
           "name": "Lesson6",
           "files": [
             "src/Esp32S3uPythonCurses/sketches/Lesson6/Lesson6.blockly",

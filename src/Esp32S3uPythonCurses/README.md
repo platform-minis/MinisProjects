@@ -42,6 +42,7 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | 5 | Digital output | ULN2003 IN2 (stepper motor) | Lesson 8 |
 | 6 | Digital output | ULN2003 IN3 (stepper motor) | Lesson 8 |
 | 7 | ADC input | Photoresistor (LDR) | Lesson 6 |
+| 19 | Digital input | VS1838B IR receiver (data) | Lesson 5 |
 | 11 | Digital output | LED | Lesson 1, 2, 4 |
 | 12 | Digital output | LED (red) | Lesson 3 |
 | 13 | Digital output | LED (yellow) | Lesson 3 |
@@ -122,6 +123,34 @@ GND ──────────┘         │
                         │
                    read .value()
 ```
+
+---
+
+### IR receiver — VS1838B (Lesson 5)
+
+```text
+VS1838B (front view — flat side facing you)
+┌─────────────┐
+│  ○   ○   ○  │
+│  │   │   │  │
+│ OUT  GND  VCC│
+│  │   │   │  │
+│  │   │   │  │
+  GP19  GND  3V3
+```
+
+> **VS1838B pinout** (flat side facing you, pins down): left = OUT (signal), middle = GND, right = VCC (3.3 V).
+
+```text
+ESP32-S3 Pico
+┌──────────────┐
+│        GP19  ├──── OUT  (VS1838B left pin)
+│         3V3  ├──── VCC  (VS1838B right pin)
+│         GND  ├──── GND  (VS1838B middle pin)
+└──────────────┘
+```
+
+> **No extra resistor or capacitor needed** — the VS1838B module has internal filtering and a 3.3 V-compatible output that connects directly to any GPIO input pin.
 
 ---
 
@@ -770,6 +799,127 @@ def loop():
 - The `.value()` method for reading state
 - `if/else` conditional inside a loop
 - 100 ms delay as a simple debounce
+
+---
+
+### Lesson 5 — IR keyboard (NEC remote)
+
+**Goal:** Receive and decode NEC infrared signals from a TV remote — print the button name to the REPL each time a key is pressed.
+
+> **Note:** This lesson has no meaningful Blockly representation — NEC decoding requires precise timing measurements that are handled in Python only. Open the sketch in **Code mode** to see and run the full implementation.
+
+**What happens:**
+The VS1838B IR receiver module converts modulated 38 kHz infrared signals into digital pulses on GP19. Each button press on the remote produces a NEC frame: a 9 ms start burst, a 4.5 ms gap, and 32 bits of data (address + command). The program measures pulse widths with `machine.time_pulse_us`, decodes the bits, looks up the command byte in a dictionary, and prints the result. The LED on GP11 flashes briefly on each received key.
+
+**Components used:**
+
+- **VS1838B** IR receiver module (or similar 38 kHz demodulator)
+- **IR remote control** using NEC protocol (common 21-key mini remote)
+- **LED + 330 Ω resistor** on GP11 (from Lesson 1, optional feedback)
+
+**Wiring:**
+
+```text
+ESP32-S3 Pico          VS1838B
+┌────────────┐        ┌──────────────────────┐
+│      GP19  ├───────►│ OUT  (left pin)       │
+│       3V3  ├───────►│ VCC  (right pin)      │
+│       GND  ├───────►│ GND  (middle pin)     │
+└────────────┘        └──────────────────────┘
+```
+
+**NEC protocol overview:**
+
+```text
+Start burst   Start space   32 data bits          Stop
+│←─ 9 ms ─→│←─ 4.5 ms ─→│ addr │~addr │ cmd │~cmd │← 562 µs →
+
+Bit 0:  │← 562 µs →│←  562 µs  →│
+Bit 1:  │← 562 µs →│← 1687 µs →│
+```
+
+Each NEC frame carries:
+
+- **addr** (8 bits) — device address (0x00 for most mini remotes)
+- **~addr** (8 bits) — inverted address (checksum)
+- **cmd** (8 bits) — button code
+- **~cmd** (8 bits) — inverted command (checksum)
+
+**Button map for common 21-key mini remote (address = 0x00):**
+
+```text
+┌───────┬───────┬───────┐
+│ CH-   │  CH   │  CH+  │   0x45  0x46  0x47
+├───────┼───────┼───────┤
+│ PREV  │ NEXT  │ PLAY  │   0x44  0x40  0x43
+├───────┼───────┼───────┤
+│ VOL-  │ VOL+  │  EQ   │   0x07  0x15  0x09
+├───────┼───────┼───────┤
+│   0   │ 100+  │ 200+  │   0x16  0x19  0x0D
+├───────┼───────┼───────┤
+│   1   │   2   │   3   │   0x0C  0x18  0x5E
+├───────┼───────┼───────┤
+│   4   │   5   │   6   │   0x08  0x1C  0x5A
+├───────┼───────┼───────┤
+│   7   │   8   │   9   │   0x42  0x52  0x4A
+└───────┴───────┴───────┘
+```
+
+**MicroPython code:**
+
+```python
+from machine import Pin, time_pulse_us
+import time
+
+_ir  = Pin(19, Pin.IN)   # VS1838B data output
+_led = Pin(11, Pin.OUT)  # LED feedback
+
+_IR_KEYS = {
+    0x45: 'CH-',  0x46: 'CH',   0x47: 'CH+',
+    0x44: 'PREV', 0x40: 'NEXT', 0x43: 'PLAY',
+    0x07: 'VOL-', 0x15: 'VOL+', 0x09: 'EQ',
+    0x16: '0',    0x19: '100+', 0x0D: '200+',
+    0x0C: '1',    0x18: '2',    0x5E: '3',
+    0x08: '4',    0x1C: '5',    0x5A: '6',
+    0x42: '7',    0x52: '8',    0x4A: '9',
+}
+
+def _recv_nec():
+    t = time_pulse_us(_ir, 0, 14000)        # 9 ms start burst
+    if not 7500 < t < 10500: return None
+    t = time_pulse_us(_ir, 1, 6000)         # 4.5 ms start space
+    if not 3500 < t < 5500: return None
+    bits = 0
+    for i in range(32):
+        if not 200 < time_pulse_us(_ir, 0, 2000) < 900:
+            return None
+        t = time_pulse_us(_ir, 1, 2500)     # 562 µs = 0, 1687 µs = 1
+        if t < 200: return None
+        bits |= (1 if t > 1000 else 0) << i
+    return bits & 0xFF, (bits >> 16) & 0xFF  # addr, cmd
+
+def setup():
+    _led.value(0)
+    print('IR ready — press a button')
+
+def loop():
+    result = _recv_nec()
+    if result:
+        addr, cmd = result
+        _led.value(1)
+        print(f'addr=0x{addr:02X}  cmd=0x{cmd:02X}  key={_IR_KEYS.get(cmd, "?")}')
+        time.sleep_ms(80)
+        _led.value(0)
+```
+
+> **Different remote?** If you have a different NEC remote, run the sketch first, press each button, and note the `cmd=0xXX` values printed. Update the `_IR_KEYS` dictionary with your own codes. The `addr` byte identifies the device — it will be the same for all buttons on one remote.
+
+**What you learn:**
+
+- Receiving and decoding IR signals with `machine.time_pulse_us`
+- NEC IR protocol — frame structure, bit timing
+- Dictionary lookups to map numeric codes to human-readable labels
+- Interrupt-free polling decoder pattern
 
 ---
 
