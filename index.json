@@ -204,6 +204,13 @@
             "src/Esp32S3uPythonCurses/sketches/Lesson9/Lesson9.blockly",
             "src/Esp32S3uPythonCurses/sketches/Lesson9/Lesson9.py"
           ]
+        },
+        {
+          "name": "HCSR04",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/HCSR04/HCSR04.blockly",
+            "src/Esp32S3uPythonCurses/sketches/HCSR04/HCSR04.py"
+          ]
         }
       ],
       "readmePath": "src/Esp32S3uPythonCurses/README.md"
