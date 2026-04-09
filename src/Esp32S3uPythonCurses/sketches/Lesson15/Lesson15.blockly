@@ -1,0 +1,13 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="upy_start" id="HelloWorldStart" x="50" y="90">
+    <statement name="DO">
+      <block type="upy_print" id="HelloWorldPrint">
+        <value name="TEXT">
+          <block type="text" id="HelloWorldText">
+            <field name="TEXT">Hello World</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>
