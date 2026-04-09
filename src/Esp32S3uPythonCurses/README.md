@@ -144,6 +144,369 @@ Category:    DARK     NORMAL      BRIGHT
 
 ---
 
+## Breadboard Wiring Guide
+
+### How a breadboard works
+
+A breadboard lets you build circuits without soldering. Components and wires plug into holes that are connected internally in a fixed pattern.
+
+```text
+       Columns →
+       a    b    c    d    e    GAP    f    g    h    i    j
+  1  [ ]──[ ]──[ ]──[ ]──[ ]         [ ]──[ ]──[ ]──[ ]──[ ]
+  2  [ ]──[ ]──[ ]──[ ]──[ ]         [ ]──[ ]──[ ]──[ ]──[ ]
+  3  [ ]──[ ]──[ ]──[ ]──[ ]         [ ]──[ ]──[ ]──[ ]──[ ]
+  4  [ ]──[ ]──[ ]──[ ]──[ ]         [ ]──[ ]──[ ]──[ ]──[ ]
+  5  [ ]──[ ]──[ ]──[ ]──[ ]         [ ]──[ ]──[ ]──[ ]──[ ]
+R
+o
+w
+s
+↓
+```
+
+**Rules:**
+
+- All 5 holes in the same **row** on one side (a–e or f–j) are **connected** to each other
+- The **gap** in the middle separates the two halves — no connection across it
+- Holes in the same **column** but different rows are **not** connected
+- The **+** and **−** rails running along the long edges are each one continuous wire — use them for 3.3 V and GND
+
+```text
++ ════════════════════════════════════════════════ +  ← all connected (3.3 V)
+- ════════════════════════════════════════════════ -  ← all connected (GND)
+
+  a   b   c   d   e       f   g   h   i   j
+[ ]─[ ]─[ ]─[ ]─[ ]   [ ]─[ ]─[ ]─[ ]─[ ]   row 1
+[ ]─[ ]─[ ]─[ ]─[ ]   [ ]─[ ]─[ ]─[ ]─[ ]   row 2
+[ ]─[ ]─[ ]─[ ]─[ ]   [ ]─[ ]─[ ]─[ ]─[ ]   row 3
+```
+
+> **Tip:** Use a short wire (jumper) from the ESP32-S3 `3V3` pin to the `+` rail, and from `GND` to the `−` rail. Then use those rails as your power source throughout the board.
+
+---
+
+### LED + resistor on breadboard (Lessons 1, 2, 4)
+
+**Components needed:**
+
+- 1× LED (any color)
+- 1× resistor 330 Ω (orange–orange–brown stripes)
+- 2× jumper wire (male-to-male)
+
+**Identifying LED legs:**
+
+```text
+      Anode (+)   Cathode (−)
+          │            │
+          │            │
+         longer       shorter
+          leg          leg
+           \          /
+            \        /
+             [  LED  ]
+                │
+          flat side = cathode (−)
+```
+
+**Step-by-step breadboard layout:**
+
+```text
++ ══════════════════════════════ +
+- ══════════════════════════════ -
+
+      a     b     c     d     e
+ 5  [GP11]─[GP11]─[ ]──[ ]──[ ]     ← wire from GP11 lands here (e.g. row 5a)
+ 6  [RES ]─[RES ]─[ ]──[ ]──[ ]     ← resistor: one leg in 5a, other leg in 6a
+ 7  [LED+]─[LED+]─[ ]──[ ]──[ ]     ← LED anode (+, longer leg) in 6a, cathode in 7a
+ 8  [GND ]─[GND ]─[ ]──[ ]──[ ]     ← wire from 7a to − rail
+```
+
+Clearer layout (each row = one breadboard row, letters = columns):
+
+```text
+        a        b        c        d        e
+ 1    [===]    [   ]    [   ]    [   ]    [   ]    ← 1a: wire from GP11
+ 2    [===]    [   ]    [   ]    [   ]    [   ]    ← 2a: resistor leg 1
+ 3    [===]    [   ]    [   ]    [   ]    [   ]    ← 3a: resistor leg 2 + LED anode (+)
+ 4    [===]    [   ]    [   ]    [   ]    [   ]    ← 4a: LED cathode (−)
+ 5    [===]    [   ]    [   ]    [   ]    [   ]    ← 5a: wire to GND rail
+
+ Connections:
+   GP11 pin  →  wire  →  row 1a
+   row 1a    ────────────  row 2a   (same row: connected)
+   row 2a  ──[330Ω]──  row 3a
+   row 3a  ──  LED anode (+, long leg)  ──  row 4a  (LED cathode, short leg)
+   row 4a    →  wire  →  − rail (GND)
+```
+
+**Actual connection sequence:**
+
+```text
+Step 1: plug a jumper wire from ESP32-S3 GP11 → breadboard row 1, column a
+Step 2: insert resistor (330 Ω) between row 1a and row 3a
+        (resistor spans 2 rows — that's fine, it bridges them)
+Step 3: insert LED — long leg (anode +) into row 3a,
+                     short leg (cathode −) into row 4a
+Step 4: plug a jumper wire from row 4a → − (GND) rail
+Step 5: connect ESP32-S3 GND pin → − rail  (if not done already)
+```
+
+**Side view (one column):**
+
+```text
+GP11 ──wire──[row 1]──[330Ω]──[row 3]──LED+  LED−──[row 4]──wire── GND rail
+```
+
+---
+
+### Three LEDs on breadboard (Lesson 3)
+
+**Components needed:**
+
+- 3× LED (green, yellow, red)
+- 3× resistor 330 Ω
+- 6× jumper wire
+
+Each LED + resistor pair follows the same pattern as above, placed on separate rows:
+
+```text
+        a         b         c         d         e
+  1   [GP14]    [   ]    [   ]    [   ]    [   ]   ← wire from GP14
+  2   [ R  ]    [   ]    [   ]    [   ]    [   ]   ← 330 Ω resistor
+  3   [LED+]    [   ]    [   ]    [   ]    [   ]   ← green LED anode
+  4   [LED−]────────────────────────────────wire──► GND rail
+
+  6   [GP13]    [   ]    [   ]    [   ]    [   ]   ← wire from GP13
+  7   [ R  ]    [   ]    [   ]    [   ]    [   ]   ← 330 Ω resistor
+  8   [LED+]    [   ]    [   ]    [   ]    [   ]   ← yellow LED anode
+  9   [LED−]────────────────────────────────wire──► GND rail
+
+ 11   [GP12]    [   ]    [   ]    [   ]    [   ]   ← wire from GP12
+ 12   [ R  ]    [   ]    [   ]    [   ]    [   ]   ← 330 Ω resistor
+ 13   [LED+]    [   ]    [   ]    [   ]    [   ]   ← red LED anode
+ 14   [LED−]────────────────────────────────wire──► GND rail
+```
+
+> Leave a gap of at least one empty row between each LED group to avoid accidentally connecting components.
+
+---
+
+### Tactile button on breadboard (Lesson 4)
+
+**Understanding the button legs:**
+
+A tactile (push) button has 4 legs arranged in two pairs. The two legs on the **same side** are always connected internally. Pressing the button connects the **left pair** to the **right pair**.
+
+```text
+     Top view of button
+
+     leg A ──┐     ┌── leg C
+             │     │
+     leg B ──┘     └── leg D
+      (A─B always connected)  (C─D always connected)
+      pressing button connects A/B to C/D
+```
+
+**Orienting on the breadboard:**
+
+Place the button so it **straddles the centre gap** — one pair of legs on the left half (columns a–e), the other pair on the right half (columns f–j). This way the two sides are only connected when the button is pressed.
+
+```text
+         a    b    c    d    e         f    g    h    i    j
+  5    [   ] [   ] [A ] [   ] [   ] | [C ] [   ] [   ] [   ] [   ]
+  6    [   ] [   ] [B ] [   ] [   ] | [D ] [   ] [   ] [   ] [   ]
+                    ↑                   ↑
+               left pair            right pair
+               (A─B joined)         (C─D joined)
+               press → A─B─C─D all joined
+```
+
+**Full button + pull-down resistor layout:**
+
+```text
+        a     b     c     d     e           f     g     h     i     j
+  5   [   ] [   ] [ A ] [   ] [   ]  |  [ C ] [   ] [   ] [   ] [   ]
+  6   [   ] [   ] [ B ] [   ] [   ]  |  [ D ] [   ] [   ] [   ] [   ]
+
+  Connections:
+   3.3V rail  →  wire  →  row 5c  (leg A / left-top of button)
+   row 6c  (leg B / left-bottom)  →  wire  →  GP16
+   row 6c                         →  10 kΩ  →  GND rail   (pull-down)
+```
+
+**Step-by-step:**
+
+```text
+Step 1: press button into breadboard so it straddles the centre gap
+        left legs in columns c (rows 5 and 6), right legs in column f (rows 5 and 6)
+Step 2: wire from + rail (3.3 V) → row 5c  (top-left leg of button)
+Step 3: wire from row 6c         → GP16 on ESP32-S3
+Step 4: insert 10 kΩ resistor between row 6c and − rail (GND)
+        this is the pull-down — it keeps GP16 LOW when button is not pressed
+Step 5: connect ESP32-S3 3V3 → + rail,  GND → − rail  (if not done)
+```
+
+**Signal logic:**
+
+```text
+Button released:  3.3V ──[BTN open]── GP16 ──[10kΩ]── GND   → GP16 reads 0
+Button pressed:   3.3V ──[BTN closed]─ GP16 ──[10kΩ]── GND  → GP16 reads 1
+```
+
+> **Why pull-down?** Without the resistor, GP16 would be "floating" when the button is released — it could read random 0s and 1s from electrical noise. The pull-down resistor anchors it firmly to 0 (LOW).
+
+---
+
+## Communication Protocols
+
+Modern microcontrollers like ESP32-S3 communicate with sensors, displays, and other peripherals using standard serial protocols. The three most common are **UART**, **SPI**, and **I2C**. Each has different wiring, speed, and use cases.
+
+---
+
+### UART — Universal Asynchronous Receiver-Transmitter
+
+UART is the simplest serial protocol — two devices talk directly to each other using just two wires.
+
+**Wires:**
+
+| Signal | Direction | Description |
+| ------ | --------- | ----------- |
+| TX | → | Transmit — data sent by this device |
+| RX | ← | Receive — data received by this device |
+| GND | — | Common ground (always required) |
+
+**Key rules:**
+
+- TX of one device connects to RX of the other (cross-wired)
+- Both sides must agree on the same **baud rate** (e.g. 9600, 115200 bps)
+- No clock wire — timing is derived from the agreed baud rate
+- Point-to-point only: one sender, one receiver
+
+```text
+ESP32-S3                Peripheral
+  TX  ────────────────►  RX
+  RX  ◄────────────────  TX
+  GND ─────────────────  GND
+```
+
+**Typical use cases:** GPS modules, Bluetooth serial, debug console, communication between two microcontrollers.
+
+**MicroPython example:**
+
+```python
+from machine import UART
+uart = UART(1, baudrate=9600, tx=17, rx=18)
+uart.write('Hello\n')
+data = uart.read(32)
+```
+
+---
+
+### I2C — Inter-Integrated Circuit
+
+I2C uses only **two wires** and supports **multiple devices** on the same bus. Each device has a unique 7-bit address so the master can address them individually.
+
+**Wires:**
+
+| Signal | Description |
+| ------ | ----------- |
+| SDA | Serial Data — bidirectional data line |
+| SCL | Serial Clock — clock generated by the master |
+| GND | Common ground |
+
+**Key rules:**
+
+- One master (ESP32-S3), many slaves (sensors, displays…)
+- Both SDA and SCL require **pull-up resistors** to 3.3 V (typically 4.7 kΩ) — many breakout boards include them
+- Typical speeds: 100 kHz (standard), 400 kHz (fast)
+- Each slave has a fixed address (printed in its datasheet, e.g. `0x3C` for SSD1306 OLED)
+
+```text
+ESP32-S3        Sensor A       Sensor B       Display
+  SDA ──────────── SDA ───────── SDA ────────── SDA
+  SCL ──────────── SCL ───────── SCL ────────── SCL
+  GND ──────────── GND ───────── GND ────────── GND
+  3V3 ──[4.7kΩ]── SDA
+  3V3 ──[4.7kΩ]── SCL
+```
+
+**Typical use cases:** temperature/humidity sensors (DHT, BMP280, SHT31), OLED displays (SSD1306), real-time clocks (DS3231), accelerometers (MPU6050).
+
+**MicroPython example:**
+
+```python
+from machine import I2C, Pin
+i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400_000)
+devices = i2c.scan()          # returns list of found addresses
+print([hex(d) for d in devices])
+data = i2c.readfrom(0x3C, 4) # read 4 bytes from device at address 0x3C
+```
+
+---
+
+### SPI — Serial Peripheral Interface
+
+SPI is the fastest of the three protocols. It uses **4 wires** and is full-duplex (sends and receives simultaneously). Like I2C it supports multiple slaves, but each slave needs its own **CS** (Chip Select) wire.
+
+**Wires:**
+
+| Signal | Alternative name | Description |
+| ------ | ---------------- | ----------- |
+| MOSI | SDO, TX | Master Out Slave In — data from master to slave |
+| MISO | SDI, RX | Master In Slave Out — data from slave to master |
+| SCK | CLK | Clock — generated by the master |
+| CS | SS, CE | Chip Select — one wire per slave, active LOW |
+
+```text
+ESP32-S3       Slave A          Slave B
+  MOSI ──────── MOSI ─────────── MOSI
+  MISO ──────── MISO ─────────── MISO
+  SCK  ──────── SCK  ─────────── SCK
+  GP10 ──────── CS               (high = inactive)
+  GP11 ───────────────────────── CS
+  GND  ──────── GND  ─────────── GND
+```
+
+**Key rules:**
+
+- No pull-up resistors needed
+- Typical speeds: 1–50 MHz (much faster than I2C)
+- Each additional slave needs one extra CS pin on the master
+- Full-duplex: master and slave exchange data simultaneously
+
+**Typical use cases:** SD card readers, TFT displays (ILI9341, ST7789), flash memory, high-speed sensors.
+
+**MicroPython example:**
+
+```python
+from machine import SPI, Pin
+spi = SPI(1, baudrate=10_000_000, polarity=0, phase=0,
+          sck=Pin(18), mosi=Pin(23), miso=Pin(19))
+cs = Pin(10, Pin.OUT, value=1)   # CS idle HIGH
+
+cs.value(0)                      # select slave
+spi.write(b'\x9F')               # send command
+result = spi.read(3)             # read 3 bytes response
+cs.value(1)                      # deselect slave
+```
+
+---
+
+### Protocol comparison
+
+| Feature | UART | I2C | SPI |
+| ------- | ---- | --- | --- |
+| Wires | 2 (+ GND) | 2 (+ GND) | 4 (+ 1 per slave) |
+| Max devices | 2 (point-to-point) | ~127 | unlimited (1 CS per slave) |
+| Speed | 115 kbps typical | up to 400 kHz | up to 50 MHz |
+| Pull-ups needed | No | Yes (4.7 kΩ) | No |
+| Full-duplex | No | No | Yes |
+| Complexity | Simplest | Medium | Medium |
+| Typical use | Debug, GPS, BT | Sensors, OLED | Displays, SD card |
+
+---
+
 ## Lessons
 
 Each lesson is shown in two forms: **Blockly blocks** (visual editor) and **MicroPython code** (auto-generated).
