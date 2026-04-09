@@ -1068,6 +1068,42 @@ def loop():
 
 ---
 
+### Lesson 7 — Project template
+
+**Goal:** A starting point for your own experiments.
+
+**What happens:**
+The lesson contains only a clean template with empty `setup()` and `loop()` functions and a `KeyboardInterrupt` handler. No functionality is implemented — this is the place for your own program.
+
+**Blockly blocks:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  (empty — add initialization here)      ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════╗
+║  (empty — add program logic here)       ║
+╚═════════════════════════════════════════╝
+```
+
+**MicroPython code:**
+
+```python
+def setup():
+    pass
+
+def loop():
+    pass
+```
+
+**What you learn:**
+
+- The standard structure of every MicroPython program in this course
+- Handling `KeyboardInterrupt` (Ctrl+C) — safe program termination
+
+---
+
 ### Lesson 8 — Stepper motor (fan)
 
 **Goal:** Drive a 28BYJ-48 stepper motor through a ULN2003 driver — continuous rotation simulating a fan blade.
@@ -1474,42 +1510,6 @@ def loop():
 - Wrapping a pin read in a boolean function (`procedures_defreturn` returning a comparison)
 - Calling a function whose result drives an `if/else` block
 - How a PIR passive infrared sensor works
-
----
-
-### Lesson 7 — Project template
-
-**Goal:** A starting point for your own experiments.
-
-**What happens:**
-The lesson contains only a clean template with empty `setup()` and `loop()` functions and a `KeyboardInterrupt` handler. No functionality is implemented — this is the place for your own program.
-
-**Blockly blocks:**
-
-```text
-╔══ ▶ START ══════════════════════════════╗
-║  (empty — add initialization here)      ║
-╚═════════════════════════════════════════╝
-
-╔══ 🔁 FOREVER ═══════════════════════════╗
-║  (empty — add program logic here)       ║
-╚═════════════════════════════════════════╝
-```
-
-**MicroPython code:**
-
-```python
-def setup():
-    pass
-
-def loop():
-    pass
-```
-
-**What you learn:**
-
-- The standard structure of every MicroPython program in this course
-- Handling `KeyboardInterrupt` (Ctrl+C) — safe program termination
 
 ---
 
