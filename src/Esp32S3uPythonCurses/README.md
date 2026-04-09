@@ -38,12 +38,16 @@ Praktyczny kurs programowania mikrokontrolera **ESP32-S3** w języku **MicroPyth
 
 | Pin | Tryb | Komponent | Lekcje |
 | --- | ---- | --------- | ------ |
+| 4 | Wyjście cyfrowe | ULN2003 IN1 (silnik krokowy) | Lekcja 8 |
+| 5 | Wyjście cyfrowe | ULN2003 IN2 (silnik krokowy) | Lekcja 8 |
+| 6 | Wyjście cyfrowe | ULN2003 IN3 (silnik krokowy) | Lekcja 8 |
 | 7 | ADC wejście | Fotoopornik (LDR) | Lekcja 6 |
 | 11 | Wyjście cyfrowe | Dioda LED | Lekcja 1, 2, 4 |
 | 12 | Wyjście cyfrowe | Dioda LED (czerwona) | Lekcja 3 |
 | 13 | Wyjście cyfrowe | Dioda LED (żółta) | Lekcja 3 |
 | 14 | Wyjście cyfrowe | Dioda LED (zielona) | Lekcja 3 |
 | 16 | Wejście cyfrowe | Przycisk taktowy | Lekcja 4 |
+| 17 | Wyjście cyfrowe | ULN2003 IN4 (silnik krokowy) | Lekcja 8 |
 
 ---
 
@@ -467,6 +471,124 @@ def loop():
 
 ---
 
+### Lekcja 8 — Silnik krokowy (wiatraczek)
+
+**Cel:** Sterowanie silnikiem krokowym 28BYJ-48 przez sterownik ULN2003 — ciągły obrót symulujący wiatraczek.
+
+**Co się dzieje:**
+Program wysyła na 4 piny kolejne kombinacje napięć zgodnie z sekwencją pełnokrokową. Każde z 4 pobudzeń obraca silnik o jeden krok — powtarzane bez przerwy dają ciągły obrót wału. Opóźnienie 3 ms między krokami wyznacza prędkość obrotów (~83 obr/min przy przełożeniu 64:1 silnika 28BYJ-48).
+
+**Użyte komponenty:**
+
+- Silnik krokowy **28BYJ-48** (5 V, unipolarny)
+- Sterownik **ULN2003** (płytka z 4 diodami + złączem do silnika)
+
+**Schemat połączenia:**
+
+```text
+ESP32-S3 Pico          ULN2003            28BYJ-48
+┌────────────┐       ┌──────────┐        ┌────────┐
+│       GP4  ├──────►│ IN1      │        │        │
+│       GP5  ├──────►│ IN2      ├───────►│ cewki  │
+│       GP6  ├──────►│ IN3      │        │        │
+│      GP17  ├──────►│ IN4      │        └────────┘
+│            │       │          │
+│       GND  ├──────►│ GND      │
+└────────────┘       │ 5V  ◄────┼── 5V (USB lub zewnętrzne)
+                     └──────────┘
+```
+
+> **Ważne:** Silnik 28BYJ-48 wymaga zasilania **5 V** — podłącz pin `5V` płytki ESP32-S3 (prosto z USB) do `5V` sterownika ULN2003, nie `3V3`. Sygnały logiczne GP4–GP17 (3,3 V) są w pełni kompatybilne z wejściami ULN2003.
+
+**Sekwencja pełnokrokowa (4 kroki):**
+
+```text
+Krok │ IN1(GP4) │ IN2(GP5) │ IN3(GP6) │ IN4(GP17)
+─────┼──────────┼──────────┼──────────┼──────────
+  1  │    1     │    0     │    1     │    0
+  2  │    0     │    1     │    1     │    0
+  3  │    0     │    1     │    0     │    1
+  4  │    1     │    0     │    0     │    1
+```
+
+**Bloczki Blockly:**
+
+```text
+╔══ ▶ START ══════════════════════════════╗
+║  [Pin Init]  pin=4   tryb=OUT           ║
+║  [Pin Init]  pin=5   tryb=OUT           ║
+║  [Pin Init]  pin=6   tryb=OUT           ║
+║  [Pin Init]  pin=17  tryb=OUT           ║
+╚═════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════╗
+║  -- krok 1 --                           ║
+║  [Pin Set]   pin=4   → 1               ║
+║  [Pin Set]   pin=5   → 0               ║
+║  [Pin Set]   pin=6   → 1               ║
+║  [Pin Set]   pin=17  → 0               ║
+║  [Sleep]     3 ms                       ║
+║  -- krok 2 --                           ║
+║  [Pin Set]   pin=4   → 0               ║
+║  [Pin Set]   pin=5   → 1               ║
+║  [Pin Set]   pin=6   → 1               ║
+║  [Pin Set]   pin=17  → 0               ║
+║  [Sleep]     3 ms                       ║
+║  -- krok 3 --                           ║
+║  [Pin Set]   pin=4   → 0               ║
+║  [Pin Set]   pin=5   → 1               ║
+║  [Pin Set]   pin=6   → 0               ║
+║  [Pin Set]   pin=17  → 1               ║
+║  [Sleep]     3 ms                       ║
+║  -- krok 4 --                           ║
+║  [Pin Set]   pin=4   → 1               ║
+║  [Pin Set]   pin=5   → 0               ║
+║  [Pin Set]   pin=6   → 0               ║
+║  [Pin Set]   pin=17  → 1               ║
+║  [Sleep]     3 ms                       ║
+╚═════════════════════════════════════════╝
+```
+
+**Kod MicroPython:**
+
+```python
+from machine import Pin
+import time
+
+_pin_4  = Pin(4,  mode=Pin.OUT)   # IN1
+_pin_5  = Pin(5,  mode=Pin.OUT)   # IN2
+_pin_6  = Pin(6,  mode=Pin.OUT)   # IN3
+_pin_17 = Pin(17, mode=Pin.OUT)   # IN4
+
+def setup():
+    pass
+
+def loop():
+    # Krok 1
+    _pin_4.value(1); _pin_5.value(0); _pin_6.value(1); _pin_17.value(0)
+    time.sleep_ms(3)
+    # Krok 2
+    _pin_4.value(0); _pin_5.value(1); _pin_6.value(1); _pin_17.value(0)
+    time.sleep_ms(3)
+    # Krok 3
+    _pin_4.value(0); _pin_5.value(1); _pin_6.value(0); _pin_17.value(1)
+    time.sleep_ms(3)
+    # Krok 4
+    _pin_4.value(1); _pin_5.value(0); _pin_6.value(0); _pin_17.value(1)
+    time.sleep_ms(3)
+```
+
+> **Regulacja prędkości:** Zmień wartość `sleep_ms(3)` — mniejsza wartość = szybciej, większa = wolniej. Poniżej 2 ms silnik może gubić kroki. Powyżej 10 ms obroty będą wyraźnie wolniejsze.
+
+**Czego uczysz się:**
+
+- Sterowanie silnikiem krokowym przez sterownik tranzystorowy (ULN2003)
+- Sekwencja pełnokrokowa — pojęcie kroku i cewki
+- Wpływ opóźnienia między krokami na prędkość obrotową
+- Zasilanie komponentów 5 V z płytki mikrokontrolera
+
+---
+
 ### Lekcja 7 — Szablon projektu
 
 **Cel:** Punkt startowy do własnych eksperymentów.
@@ -545,6 +667,7 @@ Lekcja 3  ──  Wiele wyjść + sekwencja (3× LED)
 Lekcja 4  ──  Wejście cyfrowe + sterowanie (przycisk → LED)
 Lekcja 6  ──  Wejście analogowe ADC (fotoopornik)
 Lekcja 7  ──  Szablon do własnych projektów
+Lekcja 8  ──  Silnik krokowy 28BYJ-48 (wiatraczek)
 ```
 
 ---

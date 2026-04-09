@@ -5,5 +5,14 @@
   "version": "1.0.0",
   "softwarePlatform": "uPython",
   "tags": ["test", "esp32s3", "uPython"],
-  "moduleId": "esp32-s3-pico"
+  "moduleId": "esp32-s3-pico",
+  "sketches": [
+    { "name": "Lesson1" },
+    { "name": "Lesson2" },
+    { "name": "Lesson3" },
+    { "name": "Lesson4" },
+    { "name": "Lesson6" },
+    { "name": "Lesson7" },
+    { "name": "Lesson8" }
+  ]
 }

@@ -1,0 +1,190 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="upy_start" id="L8_start" x="50" y="50">
+    <statement name="DO">
+      <block type="upy_pin_init" id="L8_pi1">
+        <field name="PIN">4</field>
+        <field name="MODE">OUT</field>
+        <field name="PULL">NONE</field>
+        <next>
+          <block type="upy_pin_init" id="L8_pi2">
+            <field name="PIN">5</field>
+            <field name="MODE">OUT</field>
+            <field name="PULL">NONE</field>
+            <next>
+              <block type="upy_pin_init" id="L8_pi3">
+                <field name="PIN">6</field>
+                <field name="MODE">OUT</field>
+                <field name="PULL">NONE</field>
+                <next>
+                  <block type="upy_pin_init" id="L8_pi4">
+                    <field name="PIN">17</field>
+                    <field name="MODE">OUT</field>
+                    <field name="PULL">NONE</field>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="L8_forever" x="50" y="280">
+    <statement name="DO">
+      <block type="upy_pin_set_value" id="L8_s1_p1">
+        <field name="PIN">4</field>
+        <value name="VALUE">
+          <shadow type="math_number" id="L8_s1_p1v"><field name="NUM">1</field></shadow>
+        </value>
+        <next>
+          <block type="upy_pin_set_value" id="L8_s1_p2">
+            <field name="PIN">5</field>
+            <value name="VALUE">
+              <shadow type="math_number" id="L8_s1_p2v"><field name="NUM">0</field></shadow>
+            </value>
+            <next>
+              <block type="upy_pin_set_value" id="L8_s1_p3">
+                <field name="PIN">6</field>
+                <value name="VALUE">
+                  <shadow type="math_number" id="L8_s1_p3v"><field name="NUM">1</field></shadow>
+                </value>
+                <next>
+                  <block type="upy_pin_set_value" id="L8_s1_p4">
+                    <field name="PIN">17</field>
+                    <value name="VALUE">
+                      <shadow type="math_number" id="L8_s1_p4v"><field name="NUM">0</field></shadow>
+                    </value>
+                    <next>
+                      <block type="upy_sleep_ms" id="L8_sl1">
+                        <value name="MS">
+                          <shadow type="math_number" id="L8_sl1v"><field name="NUM">3</field></shadow>
+                        </value>
+                        <next>
+                          <block type="upy_pin_set_value" id="L8_s2_p1">
+                            <field name="PIN">4</field>
+                            <value name="VALUE">
+                              <shadow type="math_number" id="L8_s2_p1v"><field name="NUM">0</field></shadow>
+                            </value>
+                            <next>
+                              <block type="upy_pin_set_value" id="L8_s2_p2">
+                                <field name="PIN">5</field>
+                                <value name="VALUE">
+                                  <shadow type="math_number" id="L8_s2_p2v"><field name="NUM">1</field></shadow>
+                                </value>
+                                <next>
+                                  <block type="upy_pin_set_value" id="L8_s2_p3">
+                                    <field name="PIN">6</field>
+                                    <value name="VALUE">
+                                      <shadow type="math_number" id="L8_s2_p3v"><field name="NUM">1</field></shadow>
+                                    </value>
+                                    <next>
+                                      <block type="upy_pin_set_value" id="L8_s2_p4">
+                                        <field name="PIN">17</field>
+                                        <value name="VALUE">
+                                          <shadow type="math_number" id="L8_s2_p4v"><field name="NUM">0</field></shadow>
+                                        </value>
+                                        <next>
+                                          <block type="upy_sleep_ms" id="L8_sl2">
+                                            <value name="MS">
+                                              <shadow type="math_number" id="L8_sl2v"><field name="NUM">3</field></shadow>
+                                            </value>
+                                            <next>
+                                              <block type="upy_pin_set_value" id="L8_s3_p1">
+                                                <field name="PIN">4</field>
+                                                <value name="VALUE">
+                                                  <shadow type="math_number" id="L8_s3_p1v"><field name="NUM">0</field></shadow>
+                                                </value>
+                                                <next>
+                                                  <block type="upy_pin_set_value" id="L8_s3_p2">
+                                                    <field name="PIN">5</field>
+                                                    <value name="VALUE">
+                                                      <shadow type="math_number" id="L8_s3_p2v"><field name="NUM">1</field></shadow>
+                                                    </value>
+                                                    <next>
+                                                      <block type="upy_pin_set_value" id="L8_s3_p3">
+                                                        <field name="PIN">6</field>
+                                                        <value name="VALUE">
+                                                          <shadow type="math_number" id="L8_s3_p3v"><field name="NUM">0</field></shadow>
+                                                        </value>
+                                                        <next>
+                                                          <block type="upy_pin_set_value" id="L8_s3_p4">
+                                                            <field name="PIN">17</field>
+                                                            <value name="VALUE">
+                                                              <shadow type="math_number" id="L8_s3_p4v"><field name="NUM">1</field></shadow>
+                                                            </value>
+                                                            <next>
+                                                              <block type="upy_sleep_ms" id="L8_sl3">
+                                                                <value name="MS">
+                                                                  <shadow type="math_number" id="L8_sl3v"><field name="NUM">3</field></shadow>
+                                                                </value>
+                                                                <next>
+                                                                  <block type="upy_pin_set_value" id="L8_s4_p1">
+                                                                    <field name="PIN">4</field>
+                                                                    <value name="VALUE">
+                                                                      <shadow type="math_number" id="L8_s4_p1v"><field name="NUM">1</field></shadow>
+                                                                    </value>
+                                                                    <next>
+                                                                      <block type="upy_pin_set_value" id="L8_s4_p2">
+                                                                        <field name="PIN">5</field>
+                                                                        <value name="VALUE">
+                                                                          <shadow type="math_number" id="L8_s4_p2v"><field name="NUM">0</field></shadow>
+                                                                        </value>
+                                                                        <next>
+                                                                          <block type="upy_pin_set_value" id="L8_s4_p3">
+                                                                            <field name="PIN">6</field>
+                                                                            <value name="VALUE">
+                                                                              <shadow type="math_number" id="L8_s4_p3v"><field name="NUM">0</field></shadow>
+                                                                            </value>
+                                                                            <next>
+                                                                              <block type="upy_pin_set_value" id="L8_s4_p4">
+                                                                                <field name="PIN">17</field>
+                                                                                <value name="VALUE">
+                                                                                  <shadow type="math_number" id="L8_s4_p4v"><field name="NUM">1</field></shadow>
+                                                                                </value>
+                                                                                <next>
+                                                                                  <block type="upy_sleep_ms" id="L8_sl4">
+                                                                                    <value name="MS">
+                                                                                      <shadow type="math_number" id="L8_sl4v"><field name="NUM">3</field></shadow>
+                                                                                    </value>
+                                                                                  </block>
+                                                                                </next>
+                                                                              </block>
+                                                                            </next>
+                                                                          </block>
+                                                                        </next>
+                                                                      </block>
+                                                                    </next>
+                                                                  </block>
+                                                                </next>
+                                                              </block>
+                                                            </next>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </next>
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

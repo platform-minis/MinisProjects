@@ -183,6 +183,13 @@
             "src/Esp32S3uPythonCurses/sketches/Lesson7/Lesson7.blockly",
             "src/Esp32S3uPythonCurses/sketches/Lesson7/Lesson7.py"
           ]
+        },
+        {
+          "name": "Lesson8",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson8/Lesson8.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson8/Lesson8.py"
+          ]
         }
       ],
       "readmePath": "src/Esp32S3uPythonCurses/README.md"
