@@ -227,7 +227,8 @@
           ]
         }
       ],
-      "readmePath": "src/Esp32S3uPythonCurses/README.md"
+      "readmePath": "src/Esp32S3uPythonCurses/README.md",
+      "projectScriptPath": "src/Esp32S3uPythonCurses/project.js"
     },
     {
       "id": "Esp32S3uPythonDisplay",
