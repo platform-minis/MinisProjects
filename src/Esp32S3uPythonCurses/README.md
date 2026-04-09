@@ -48,6 +48,7 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | 14 | Digital output | LED (green) | Lesson 3 |
 | 16 | Digital input | Tactile button | Lesson 4 |
 | 17 | Digital output | ULN2003 IN4 (stepper motor) | Lesson 8 |
+| 18 | PWM output | Passive buzzer | Lesson 9 |
 
 ---
 
@@ -140,6 +141,25 @@ How it works: the LDR and fixed resistor form a voltage divider. In the **dark**
 Light level:  │░░░░░░░░░│▒▒▒▒▒▒▒▒▒│█████████│
 ADC reading:  0       1000       2500      4095
 Category:    DARK     NORMAL      BRIGHT
+```
+
+---
+
+### Passive buzzer connection (Lesson 9)
+
+```text
+ESP32-S3 Pico
+┌──────────────┐
+│        GP18  ├──── (+) Buzzer (−) ──── GND
+│         GND  ├──────────────────────────┘
+└──────────────┘
+```
+
+> **Passive vs active buzzer:** A **passive** buzzer has no internal oscillator — it needs a PWM signal to vibrate at a specific frequency (pitch). An **active** buzzer has an internal oscillator and only needs power to beep. Lesson 9 uses a **passive** buzzer so you can control the pitch via PWM. No resistor is needed — the buzzer's internal coil already limits current.
+
+```text
+GP18 ──── (+) terminal of passive buzzer
+GND  ──── (−) terminal of passive buzzer
 ```
 
 ---
@@ -952,6 +972,103 @@ def loop():
 
 ---
 
+### Lesson 9 — Passive buzzer (melody)
+
+**Goal:** Generate musical tones using PWM — play a repeating three-note arpeggio (C–E–G) on a passive buzzer.
+
+**What happens:**
+PWM is initialized on GP18. Each loop iteration sets three successive frequencies — 262 Hz (C4), 330 Hz (E4), 392 Hz (G4) — each held for 200 ms, then the duty cycle is set to 0 to produce a 500 ms silence before the next cycle. The ESP32-S3 hardware PWM timer generates the square wave signal directly, so the CPU is not busy during each tone.
+
+**Components used:**
+
+- **Passive buzzer** (3–5 V rated, any impedance 8–32 Ω)
+
+**Wiring:**
+
+```text
+ESP32-S3 Pico
+┌──────────────┐
+│        GP18  ├──── (+) Passive buzzer (−) ──── GND
+│         GND  ├─────────────────────────────────┘
+└──────────────┘
+```
+
+**Note frequencies used:**
+
+```text
+Note │ Frequency │ Description
+─────┼───────────┼────────────
+C4   │  262 Hz   │ Middle C
+E4   │  330 Hz   │ Major third above C
+G4   │  392 Hz   │ Perfect fifth above C
+```
+
+**Blockly blocks:**
+
+```text
+╔══ ▶ START ══════════════════════════════════╗
+║  [PWM Init]  pin=18  freq=262  duty=0       ║
+╚═════════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════════╗
+║  [PWM Set freq]  pin=18  262 Hz             ║
+║  [PWM Set duty]  pin=18  512  (50%)         ║
+║  [Sleep]  200 ms                            ║
+║  [PWM Set freq]  pin=18  330 Hz             ║
+║  [Sleep]  200 ms                            ║
+║  [PWM Set freq]  pin=18  392 Hz             ║
+║  [Sleep]  200 ms                            ║
+║  [PWM Set duty]  pin=18  0  (silent)        ║
+║  [Sleep]  500 ms                            ║
+╚═════════════════════════════════════════════╝
+```
+
+**MicroPython code:**
+
+```python
+from machine import Pin, PWM
+import time
+
+# Passive buzzer on GP18 — duty=0 on init keeps it silent
+_pwm_18 = PWM(Pin(18), freq=262, duty=0)
+
+def setup():
+    pass
+
+def loop():
+    # C4 = 262 Hz
+    _pwm_18.freq(262)
+    _pwm_18.duty(512)
+    time.sleep_ms(200)
+    # E4 = 330 Hz
+    _pwm_18.freq(330)
+    time.sleep_ms(200)
+    # G4 = 392 Hz
+    _pwm_18.freq(392)
+    time.sleep_ms(200)
+    # Silence
+    _pwm_18.duty(0)
+    time.sleep_ms(500)
+```
+
+> **duty vs freq:** `duty(512)` sets the PWM duty cycle to ~50 % (512 out of 1023), which gives the loudest signal for a square wave. `freq()` changes only the pitch — you don't need to call `duty()` again between notes. To silence the buzzer use `duty(0)` rather than changing the frequency.
+>
+> **Experimenting:** Try changing the three frequencies to other values from the table below to compose your own melody. Any integer between 20 Hz and 20 000 Hz will work.
+
+```text
+Common note frequencies (octave 4):
+C4=262  D4=294  E4=330  F4=349  G4=392  A4=440  B4=494  C5=523
+```
+
+**What you learn:**
+
+- Generating audio signals with hardware PWM
+- Difference between passive and active buzzers
+- Controlling pitch with `freq()` and volume/silence with `duty()`
+- Building a simple melody loop in MicroPython
+
+---
+
 ### Lesson 7 — Project template
 
 **Goal:** A starting point for your own experiments.
@@ -1032,6 +1149,168 @@ Lesson 6  ──  Analog ADC input (photoresistor)
 Lesson 7  ──  Project template
 Lesson 8  ──  Stepper motor 28BYJ-48 (fan)
 ```
+
+---
+
+## Using the Terminal in MyCastle Minis
+
+MyCastle provides a built-in MicroPython REPL terminal accessible directly from the browser — no external tools needed. You can upload sketches, run code interactively, and monitor output all from one place.
+
+---
+
+### Opening a project
+
+1. Log in to MyCastle and go to **Electronics → MicroPython** in the left menu
+2. Find the **ESP32-S3 uPython Curses** project and click it
+3. The project page opens with the Blockly editor on the left and the code editor on the right
+4. Select a lesson from the **sketch list** at the top (e.g. `Lesson1`)
+
+---
+
+### Uploading and running a sketch
+
+Click the **Upload** button (top right of the project page). The upload dialog opens:
+
+```text
+┌─────────────────────────────────────────────────────┐
+│  Upload to Device                                   │
+│                                                     │
+│  [SERIAL REPL]   [WEBREPL]                         │
+│                                                     │
+│  Device: Esp32S3Pico-XXXX  ·  WiFi: ···           │
+│  Baud rate:  [ 115200 ▼ ]                          │
+│                                                     │
+│  Upload mode:                                       │
+│  ● Run only    ○ Save as main.py                   │
+│                                                     │
+│  ┌───────────────────────────────────────────────┐  │
+│  │ REPL terminal output                          │  │
+│  │ > OK                                          │  │
+│  │   Led is On                                   │  │
+│  │   Done.                                       │  │
+│  └───────────────────────────────────────────────┘  │
+│                                          [ UPLOAD ]  │
+└─────────────────────────────────────────────────────┘
+```
+
+**Connection tabs:**
+
+| Tab | When to use |
+| --- | ----------- |
+| **Serial REPL** | Board connected via USB cable to the computer running MyCastle |
+| **WebREPL** | Board connected over WiFi (must be configured first on the device) |
+
+**Upload modes:**
+
+| Mode | What it does |
+| ---- | ------------ |
+| **Run only** | Sends the code to the board and runs it immediately. Nothing is saved — on reset the board returns to its previous state. Use this for quick testing. |
+| **Save as main.py** | Saves the code as `main.py` on the board's filesystem. The code will run automatically every time the board powers on. Use this when the sketch is ready. |
+
+> Libraries (e.g. `minis_iot.py`, `minis_display.py`) are always written to the filesystem even in **Run only** mode — they are required for `import` statements to work.
+
+---
+
+### Serial REPL — keyboard shortcuts
+
+The REPL terminal at the bottom of the upload dialog is a live MicroPython console. Use these key combinations to control the board:
+
+| Shortcut | Action |
+| -------- | ------ |
+| `Ctrl + C` | **Interrupt** — stops the currently running program (sends KeyboardInterrupt) |
+| `Ctrl + D` | **Soft reset** — restarts MicroPython without a hardware reset; runs `main.py` if it exists |
+| `Ctrl + B` | **Exit raw REPL** — returns to the normal interactive prompt `>>>` |
+| `Ctrl + E` | **Paste mode** — lets you paste multiple lines of code at once; end with `Ctrl + D` |
+| `↑ / ↓` | Navigate **command history** (previous / next command) |
+| `Tab` | **Auto-complete** — press after a partial name to complete it (e.g. `Pi` + Tab → `Pin`) |
+
+---
+
+### Interactive REPL — testing code line by line
+
+After the sketch finishes (or after pressing `Ctrl + C`), the `>>>` prompt appears. You can type Python directly:
+
+```text
+>>> from machine import Pin
+>>> led = Pin(11, Pin.OUT)
+>>> led.value(1)          # LED turns on
+>>> led.value(0)          # LED turns off
+>>> import time
+>>> time.sleep_ms(500)
+>>> led.value(1)
+```
+
+This is useful for:
+
+- **Testing a single command** before putting it in a sketch
+- **Checking pin state** after a program runs
+- **Exploring modules** — type `help()` or `help('modules')` to see what is available
+- **Debugging** — print variable values, check ADC readings, etc.
+
+```text
+>>> from machine import ADC, Pin
+>>> adc = ADC(Pin(7), atten=ADC.ATTN_11DB)
+>>> adc.read()
+1823
+>>> adc.read()
+2104
+```
+
+---
+
+### Filesystem management via REPL
+
+MicroPython has a small built-in filesystem (LittleFS) on the board's flash memory. You can manage files from the REPL:
+
+```text
+>>> import os
+>>> os.listdir('/')          # list files in root
+['boot.py', 'main.py', 'minis_iot.py']
+
+>>> os.remove('main.py')     # delete a file
+
+>>> f = open('notes.txt', 'w')
+>>> f.write('Hello')
+>>> f.close()
+
+>>> f = open('notes.txt', 'r')
+>>> print(f.read())
+Hello
+```
+
+---
+
+### Common workflow
+
+```text
+1. Open project page in MyCastle Minis
+        ↓
+2. Select a lesson sketch from the list
+        ↓
+3. Edit code in the editor (right panel) or blocks (left panel)
+        ↓
+4. Click Upload → select Serial REPL → mode: Run only
+        ↓
+5. Watch output in the REPL terminal
+        ↓
+6. Press Ctrl+C to stop, adjust code, upload again
+        ↓
+7. When satisfied → Upload → mode: Save as main.py
+        ↓
+8. Unplug USB — board runs the sketch automatically on power-up
+```
+
+---
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| ------- | ------------ | --- |
+| Port not found | USB cable not connected or wrong cable (charge-only) | Use a data USB cable; check device manager |
+| `OSError: [Errno 16]` | Port busy (another tool has it open) | Close Thonny, mpremote, or other serial monitors |
+| Upload hangs | Board stuck in running program | Press `Ctrl + C` in terminal first, then upload |
+| `ImportError` after save | Library not on board | Upload with a sketch that includes the library |
+| Board not responding | Firmware crash | Press reset button on the board, then try again |
 
 ---
 

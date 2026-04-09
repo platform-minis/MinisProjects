@@ -1,0 +1,85 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <block type="upy_start" id="L9_start" x="50" y="50">
+    <statement name="DO">
+      <block type="upy_pwm_init" id="L9_pwm_init">
+        <field name="PIN">18</field>
+        <value name="FREQ">
+          <shadow type="math_number" id="L9_pwm_init_freq"><field name="NUM">262</field></shadow>
+        </value>
+        <value name="DUTY">
+          <shadow type="math_number" id="L9_pwm_init_duty"><field name="NUM">0</field></shadow>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="L9_forever" x="50" y="280">
+    <statement name="DO">
+      <block type="upy_pwm_freq" id="L9_f1">
+        <field name="PIN">18</field>
+        <value name="FREQ">
+          <shadow type="math_number" id="L9_f1v"><field name="NUM">262</field></shadow>
+        </value>
+        <next>
+          <block type="upy_pwm_duty" id="L9_d1">
+            <field name="PIN">18</field>
+            <value name="DUTY">
+              <shadow type="math_number" id="L9_d1v"><field name="NUM">512</field></shadow>
+            </value>
+            <next>
+              <block type="upy_sleep_ms" id="L9_sl1">
+                <value name="MS">
+                  <shadow type="math_number" id="L9_sl1v"><field name="NUM">200</field></shadow>
+                </value>
+                <next>
+                  <block type="upy_pwm_freq" id="L9_f2">
+                    <field name="PIN">18</field>
+                    <value name="FREQ">
+                      <shadow type="math_number" id="L9_f2v"><field name="NUM">330</field></shadow>
+                    </value>
+                    <next>
+                      <block type="upy_sleep_ms" id="L9_sl2">
+                        <value name="MS">
+                          <shadow type="math_number" id="L9_sl2v"><field name="NUM">200</field></shadow>
+                        </value>
+                        <next>
+                          <block type="upy_pwm_freq" id="L9_f3">
+                            <field name="PIN">18</field>
+                            <value name="FREQ">
+                              <shadow type="math_number" id="L9_f3v"><field name="NUM">392</field></shadow>
+                            </value>
+                            <next>
+                              <block type="upy_sleep_ms" id="L9_sl3">
+                                <value name="MS">
+                                  <shadow type="math_number" id="L9_sl3v"><field name="NUM">200</field></shadow>
+                                </value>
+                                <next>
+                                  <block type="upy_pwm_duty" id="L9_d2">
+                                    <field name="PIN">18</field>
+                                    <value name="DUTY">
+                                      <shadow type="math_number" id="L9_d2v"><field name="NUM">0</field></shadow>
+                                    </value>
+                                    <next>
+                                      <block type="upy_sleep_ms" id="L9_sl4">
+                                        <value name="MS">
+                                          <shadow type="math_number" id="L9_sl4v"><field name="NUM">500</field></shadow>
+                                        </value>
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>
