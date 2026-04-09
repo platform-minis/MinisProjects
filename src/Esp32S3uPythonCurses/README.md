@@ -1,59 +1,59 @@
-# Kurs MicroPython — ESP32-S3 Pico
+# MicroPython Course — ESP32-S3 Pico
 
-Praktyczny kurs programowania mikrokontrolera **ESP32-S3** w języku **MicroPython**. Każda lekcja to osobny szkic — program wgrywany bezpośrednio na płytkę. Lekcje ułożone są od najprostszych do bardziej zaawansowanych i stopniowo wprowadzają nowe elementy elektroniczne oraz techniki programowania.
-
----
-
-## Wymagania wstępne
-
-- Płytka **ESP32-S3 Pico** z wgranym firmware MicroPython
-- Środowisko **MyCastle** (lub dowolny klient REPL np. Thonny / mpremote)
-- Podstawowa znajomość Pythona (zmienne, pętle, instrukcje warunkowe)
+A hands-on programming course for the **ESP32-S3** microcontroller using **MicroPython**. Each lesson is a separate sketch — a program uploaded directly to the board. Lessons are ordered from simplest to more advanced, gradually introducing new electronic components and programming techniques.
 
 ---
 
-## Słownik pojęć
+## Prerequisites
 
-| Pojęcie | Opis |
-| ------- | ---- |
-| **GPIO** | General Purpose Input/Output — pin mikrokontrolera, który może pełnić funkcję wejścia lub wyjścia cyfrowego |
-| **Pin.OUT** | Tryb wyjściowy pinu — mikrokontroler steruje napięciem (0 V lub 3,3 V) |
-| **Pin.IN** | Tryb wejściowy pinu — mikrokontroler odczytuje stan zewnętrznego sygnału |
-| **ADC** | Analog-to-Digital Converter — przetwornik analogowo-cyfrowy; zamienia napięcie (0–3,3 V) na liczbę całkowitą |
-| **ATTN_11DB** | Ustawienie tłumienia ADC pozwalające mierzyć napięcia do ~3,9 V zamiast domyślnych ~1,1 V |
-| **LED** | Light Emitting Diode — dioda elektroluminescencyjna; świeci gdy przez nią płynie prąd |
-| **Rezystor ograniczający** | Element szeregowy z LED zapobiegający przepaleniu — typowo 220–330 Ω |
-| **Przycisk taktowy** | Mechaniczny przełącznik zwierający dwa punkty obwodu po wciśnięciu |
-| **Rezystor pull-down** | Rezystor (zwykle 10 kΩ) łączący pin z masą (GND), gwarantujący stan LOW gdy przycisk jest zwolniony |
-| **Fotoopornik (LDR)** | Light Dependent Resistor — rezystor zmieniający swoją rezystancję zależnie od natężenia światła; ciemniej = wyższy opór |
-| **Dzielnik napięcia** | Układ dwóch rezystorów szeregowo między zasilaniem a masą; na ich styku pobiera się napięcie proporcjonalne do proporcji oporów |
-| **setup()** | Funkcja inicjalizacyjna wywoływana jednorazowo po starcie programu |
-| **loop()** | Funkcja głównej pętli wywoływana wielokrotnie bez przerwy |
-| **sleep_ms(n)** | Wstrzymanie wykonania programu na *n* milisekund |
-| **REPL** | Read-Eval-Print Loop — interaktywna konsola MicroPythona |
+- **ESP32-S3 Pico** board with MicroPython firmware flashed
+- **MyCastle** environment (or any REPL client e.g. Thonny / mpremote)
+- Basic knowledge of Python (variables, loops, conditionals)
 
 ---
 
-## Przegląd użytych pinów
+## Glossary
 
-| Pin | Tryb | Komponent | Lekcje |
-| --- | ---- | --------- | ------ |
-| 4 | Wyjście cyfrowe | ULN2003 IN1 (silnik krokowy) | Lekcja 8 |
-| 5 | Wyjście cyfrowe | ULN2003 IN2 (silnik krokowy) | Lekcja 8 |
-| 6 | Wyjście cyfrowe | ULN2003 IN3 (silnik krokowy) | Lekcja 8 |
-| 7 | ADC wejście | Fotoopornik (LDR) | Lekcja 6 |
-| 11 | Wyjście cyfrowe | Dioda LED | Lekcja 1, 2, 4 |
-| 12 | Wyjście cyfrowe | Dioda LED (czerwona) | Lekcja 3 |
-| 13 | Wyjście cyfrowe | Dioda LED (żółta) | Lekcja 3 |
-| 14 | Wyjście cyfrowe | Dioda LED (zielona) | Lekcja 3 |
-| 16 | Wejście cyfrowe | Przycisk taktowy | Lekcja 4 |
-| 17 | Wyjście cyfrowe | ULN2003 IN4 (silnik krokowy) | Lekcja 8 |
+| Term | Description |
+| ---- | ----------- |
+| **GPIO** | General Purpose Input/Output — a microcontroller pin that can act as a digital input or output |
+| **Pin.OUT** | Output mode — the microcontroller drives the voltage (0 V or 3.3 V) |
+| **Pin.IN** | Input mode — the microcontroller reads the state of an external signal |
+| **ADC** | Analog-to-Digital Converter — converts a voltage (0–3.3 V) into an integer value |
+| **ATTN_11DB** | ADC attenuation setting that allows measuring voltages up to ~3.9 V instead of the default ~1.1 V |
+| **LED** | Light Emitting Diode — emits light when current flows through it |
+| **Current-limiting resistor** | A resistor in series with an LED that prevents it from burning out — typically 220–330 Ω |
+| **Tactile button** | A mechanical switch that closes a circuit when pressed |
+| **Pull-down resistor** | A resistor (usually 10 kΩ) connecting a pin to GND, ensuring a LOW state when the button is released |
+| **LDR (photoresistor)** | Light Dependent Resistor — resistance decreases as light increases; darker = higher resistance |
+| **Voltage divider** | Two resistors in series between power and GND; the voltage at their junction is proportional to the ratio of their values |
+| **setup()** | Initialization function called once at program start |
+| **loop()** | Main loop function called repeatedly |
+| **sleep_ms(n)** | Pauses program execution for *n* milliseconds |
+| **REPL** | Read-Eval-Print Loop — the interactive MicroPython console |
 
 ---
 
-## Schematy połączeń
+## Pin Overview
 
-### Połączenie diody LED (Lekcje 1, 2, 4)
+| Pin | Mode | Component | Lessons |
+| --- | ---- | --------- | ------- |
+| 4 | Digital output | ULN2003 IN1 (stepper motor) | Lesson 8 |
+| 5 | Digital output | ULN2003 IN2 (stepper motor) | Lesson 8 |
+| 6 | Digital output | ULN2003 IN3 (stepper motor) | Lesson 8 |
+| 7 | ADC input | Photoresistor (LDR) | Lesson 6 |
+| 11 | Digital output | LED | Lesson 1, 2, 4 |
+| 12 | Digital output | LED (red) | Lesson 3 |
+| 13 | Digital output | LED (yellow) | Lesson 3 |
+| 14 | Digital output | LED (green) | Lesson 3 |
+| 16 | Digital input | Tactile button | Lesson 4 |
+| 17 | Digital output | ULN2003 IN4 (stepper motor) | Lesson 8 |
+
+---
+
+## Wiring Diagrams
+
+### LED connection (Lessons 1, 2, 4)
 
 ```text
 ESP32-S3 Pico
@@ -61,55 +61,55 @@ ESP32-S3 Pico
 │         GND  ├──────────────────────────────────┐
 │              │                                  │
 │        GP11  ├──[ R 330Ω ]──┤▶├──(cathode)    GND
-│              │               LED    (anoda → R)
+│              │               LED    (anode → R)
 └──────────────┘
 ```
 
-> **Ważne:** Zawsze łącz LED przez rezystor ograniczający (220–330 Ω). Bez niego prąd może przekroczyć dopuszczalny poziom i uszkodzić zarówno diodę, jak i pin GPIO.
+> **Important:** Always connect an LED through a current-limiting resistor (220–330 Ω). Without it, the current may exceed the safe limit and damage both the LED and the GPIO pin.
 
-Schemat (widok praktyczny):
+Practical view:
 
 ```text
-GP11 ──── Rezystor 330Ω ──── Anoda LED (+)
+GP11 ──── 330Ω resistor ──── LED anode (+)
                                    │
-                              Katoda LED (−)
+                              LED cathode (−)
                                    │
 GND ───────────────────────────────┘
 ```
 
 ---
 
-### Połączenie trzech diod LED (Lekcja 3)
+### Three LEDs connection (Lesson 3)
 
 ```text
-GP14 ── R 330Ω ──┤▶├── GND    (zielona)
-GP13 ── R 330Ω ──┤▶├── GND    (żółta)
-GP12 ── R 330Ω ──┤▶├── GND    (czerwona)
+GP14 ── R 330Ω ──┤▶├── GND    (green)
+GP13 ── R 330Ω ──┤▶├── GND    (yellow)
+GP12 ── R 330Ω ──┤▶├── GND    (red)
 ```
 
-Schemat blokowy sekwencji:
+Timing diagram:
 
 ```text
-Zielona (GP14) ─── 3 s ON ─── OFF ───────────────────────────▶
-Żółta   (GP13) ───────────── 1 s ON ─── OFF ─────────────────▶
-Czerwona(GP12) ──────────────────────── 3 s ON ─── OFF ──────▶
+Green  (GP14) ─── 3 s ON ─── OFF ───────────────────────────▶
+Yellow (GP13) ───────────── 1 s ON ─── OFF ─────────────────▶
+Red    (GP12) ──────────────────────── 3 s ON ─── OFF ──────▶
               0s              3s         4s          7s   ...
 ```
 
 ---
 
-### Połączenie przycisku (Lekcja 4)
+### Button connection (Lesson 4)
 
 ```text
-3,3 V ──── Przycisk ──── GP16
+3.3 V ──── Button ──── GP16
                   │
               R 10kΩ (pull-down)
                   │
                  GND
 ```
 
-Gdy przycisk **zwolniony**: GP16 podciągnięty do GND przez rezystor → stan LOW (0)
-Gdy przycisk **wciśnięty**: GP16 połączony z 3,3 V → stan HIGH (1)
+Button **released**: GP16 pulled to GND through resistor → LOW (0)
+Button **pressed**: GP16 connected to 3.3 V → HIGH (1)
 
 ```text
                ┌─────────┐
@@ -119,61 +119,61 @@ Gdy przycisk **wciśnięty**: GP16 połączony z 3,3 V → stan HIGH (1)
               │         │
 GND ──────────┘         │
                         │
-                   odczyt .value()
+                   read .value()
 ```
 
 ---
 
-### Połączenie fotoopornika — dzielnik napięcia (Lekcja 6)
+### Photoresistor — voltage divider (Lesson 6)
 
 ```text
-3,3 V ──── LDR (fotoopornik) ──┬──── GP7 (ADC)
-                               │
-                           R 10kΩ (stały)
-                               │
-                              GND
+3.3 V ──── LDR (photoresistor) ──┬──── GP7 (ADC)
+                                 │
+                             R 10kΩ (fixed)
+                                 │
+                                GND
 ```
 
-Zasada działania: fotoopornik i rezystor tworzą dzielnik napięcia. Gdy jest **ciemno**, opór LDR rośnie → napięcie na GP7 spada → odczyt ADC mały. Gdy jest **jasno**, opór LDR maleje → napięcie na GP7 rośnie → odczyt ADC duży.
+How it works: the LDR and fixed resistor form a voltage divider. In the **dark**, LDR resistance rises → voltage at GP7 drops → low ADC reading. In **bright light**, LDR resistance falls → voltage at GP7 rises → high ADC reading.
 
 ```text
-Natężenie światła:  │░░░░░░░░░│▒▒▒▒▒▒▒▒▒│█████████│
-Odczyt ADC:         0       1000       2500      4095
-Klasyfikacja:      CIEMNO   NORMALNIE    JASNO
+Light level:  │░░░░░░░░░│▒▒▒▒▒▒▒▒▒│█████████│
+ADC reading:  0       1000       2500      4095
+Category:    DARK     NORMAL      BRIGHT
 ```
 
 ---
 
-## Lekcje
+## Lessons
 
-Każda lekcja pokazana jest w dwóch postaciach: **bloczki Blockly** (wizualny edytor) oraz **kod MicroPython** (wygenerowany automatycznie).
+Each lesson is shown in two forms: **Blockly blocks** (visual editor) and **MicroPython code** (auto-generated).
 
 ---
 
-### Lekcja 1 — Zapalenie diody LED
+### Lesson 1 — Turn on an LED
 
-**Cel:** Zrozumienie podstawowej konfiguracji pinu jako wyjścia i jednorazowego ustawienia stanu HIGH.
+**Goal:** Understand basic pin output configuration and setting a HIGH state once at startup.
 
-**Co się dzieje:**
-Program konfiguruje pin 11 jako wyjście, a następnie w funkcji `setup()` ustawia go w stan HIGH (3,3 V). Dioda zapala się i pozostaje zapalona przez cały czas działania programu. Pętla `loop()` jest pusta — nic się nie zmienia po inicjalizacji.
+**What happens:**
+The program configures pin 11 as an output, then in `setup()` sets it HIGH (3.3 V). The LED turns on and stays on for the entire runtime. The `loop()` function is empty — nothing changes after initialization.
 
-**Schemat połączenia:** jak w sekcji *Połączenie diody LED*, pin GP11.
+**Wiring:** see *LED connection* section, pin GP11.
 
-**Bloczki Blockly:**
+**Blockly blocks:**
 
 ```text
 ╔══ ▶ START ══════════════════════════════╗
-║  [Pin Init]  pin=11  tryb=OUT           ║
+║  [Pin Init]  pin=11  mode=OUT           ║
 ║  [Pin Set]   pin=11  → 1               ║
 ║  [Print]     "Led is On"               ║
 ╚═════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ═══════════════════════════╗
-║  (pusty)                                ║
+║  (empty)                                ║
 ╚═════════════════════════════════════════╝
 ```
 
-**Kod MicroPython:**
+**MicroPython code:**
 
 ```python
 from machine import Pin
@@ -188,23 +188,23 @@ def loop():
     pass
 ```
 
-**Czego uczysz się:**
+**What you learn:**
 
-- Importowanie modułu `machine`
-- Tworzenie obiektu `Pin` w trybie `Pin.OUT`
-- Metoda `.value(1)` — ustawienie stanu HIGH
-- Struktura `setup()` / `loop()`
+- Importing the `machine` module
+- Creating a `Pin` object in `Pin.OUT` mode
+- The `.value(1)` method — setting a HIGH state
+- The `setup()` / `loop()` structure
 
 ---
 
-### Lekcja 2 — Migająca dioda LED (blink)
+### Lesson 2 — Blinking LED
 
-**Cel:** Wprowadzenie opóźnień czasowych i cyklicznego zmieniania stanu pinu.
+**Goal:** Introduce time delays and cyclic pin state changes.
 
-**Co się dzieje:**
-Dioda na pinie 11 włącza się na 1 sekundę, wyłącza się na 1 sekundę — i tak w kółko bez końca. Efekt to charakterystyczne „miganie".
+**What happens:**
+The LED on pin 11 turns on for 1 second, then off for 1 second — repeating indefinitely. This produces the classic blinking effect.
 
-**Diagram czasowy:**
+**Timing diagram:**
 
 ```text
 GP11:  ___________         ___________         _____
@@ -214,11 +214,11 @@ ______|           |_______|           |_______|
       ↑ ON        ↑ OFF   ↑ ON        ↑ OFF
 ```
 
-**Bloczki Blockly:**
+**Blockly blocks:**
 
 ```text
 ╔══ ▶ START ══════════════════════════════╗
-║  [Pin Init]  pin=11  tryb=OUT           ║
+║  [Pin Init]  pin=11  mode=OUT           ║
 ╚═════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ═══════════════════════════╗
@@ -229,7 +229,7 @@ ______|           |_______|           |_______|
 ╚═════════════════════════════════════════╝
 ```
 
-**Kod MicroPython:**
+**MicroPython code:**
 
 ```python
 from machine import Pin
@@ -247,51 +247,51 @@ def loop():
     time.sleep_ms(1000)
 ```
 
-**Czego uczysz się:**
+**What you learn:**
 
-- Moduł `time` i funkcja `sleep_ms()`
-- Cykliczne wykonywanie kodu w pętli `loop()`
-- Zmiana stanu pinu między 0 a 1
+- The `time` module and `sleep_ms()` function
+- Running code repeatedly in the `loop()` function
+- Toggling a pin between 0 and 1
 
 ---
 
-### Lekcja 3 — Sygnalizacja trzema diodami LED
+### Lesson 3 — Traffic light with three LEDs
 
-**Cel:** Sterowanie wieloma pinami, sekwencje z różnymi czasami, wizualne naśladowanie sygnalizatora świetlnego.
+**Goal:** Control multiple output pins, sequence with different timings, visually simulate a traffic light.
 
-**Co się dzieje:**
-Trzy diody zapalają się jedna po drugiej w określonej kolejności:
+**What happens:**
+Three LEDs turn on one after another in a fixed order:
 
-1. Zielona (GP14) świeci 3 sekundy
-2. Żółta (GP13) świeci 1 sekundę
-3. Czerwona (GP12) świeci 3 sekundy
-4. Cykl wraca do punktu 1
+1. Green (GP14) on for 3 seconds
+2. Yellow (GP13) on for 1 second
+3. Red (GP12) on for 3 seconds
+4. Cycle repeats from step 1
 
-**Schemat połączenia:** jak w sekcji *Połączenie trzech diod LED*.
+**Wiring:** see *Three LEDs connection* section.
 
-**Bloczki Blockly:**
+**Blockly blocks:**
 
 ```text
 ╔══ ▶ START ══════════════════════════════╗
-║  [Pin Init]  pin=12  tryb=OUT           ║
-║  [Pin Init]  pin=13  tryb=OUT           ║
-║  [Pin Init]  pin=14  tryb=OUT           ║
+║  [Pin Init]  pin=12  mode=OUT           ║
+║  [Pin Init]  pin=13  mode=OUT           ║
+║  [Pin Init]  pin=14  mode=OUT           ║
 ╚═════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ═══════════════════════════╗
-║  [Pin Set]   pin=14  → 1   (zielona)   ║
+║  [Pin Set]   pin=14  → 1   (green)     ║
 ║  [Sleep]     3000 ms                   ║
 ║  [Pin Set]   pin=14  → 0               ║
-║  [Pin Set]   pin=13  → 1   (żółta)     ║
+║  [Pin Set]   pin=13  → 1   (yellow)    ║
 ║  [Sleep]     1000 ms                   ║
 ║  [Pin Set]   pin=13  → 0               ║
-║  [Pin Set]   pin=12  → 1   (czerwona)  ║
+║  [Pin Set]   pin=12  → 1   (red)       ║
 ║  [Sleep]     3000 ms                   ║
 ║  [Pin Set]   pin=12  → 0               ║
 ╚═════════════════════════════════════════╝
 ```
 
-**Kod MicroPython:**
+**MicroPython code:**
 
 ```python
 from machine import Pin
@@ -316,51 +316,51 @@ def loop():
     _pin_12.value(0)
 ```
 
-**Czego uczysz się:**
+**What you learn:**
 
-- Deklaracja wielu pinów wyjściowych
-- Sekwencyjne sterowanie wieloma komponentami
-- Planowanie czasów w pętli
+- Declaring multiple output pins
+- Sequentially controlling multiple components
+- Timing design inside a loop
 
 ---
 
-### Lekcja 4 — Przycisk sterujący diodą LED
+### Lesson 4 — Button controlling an LED
 
-**Cel:** Odczytywanie stanu cyfrowego wejścia i reagowanie na działanie użytkownika.
+**Goal:** Read a digital input state and react to user interaction.
 
-**Co się dzieje:**
-Program co 100 ms sprawdza stan pinu 16 (przycisk). Jeśli pin ma stan HIGH (przycisk wciśnięty) — dioda LED na pinie 11 zapala się i w konsoli REPL pojawia się komunikat `Button pressed`. Jeśli przycisk jest zwolniony — dioda gaśnie.
+**What happens:**
+Every 100 ms the program checks the state of pin 16 (button). If the pin is HIGH (button pressed) — the LED on pin 11 turns on and `Button pressed` is printed to the REPL console. If the button is released — the LED turns off.
 
-**Diagram logiczny:**
+**Logic diagram:**
 
 ```text
-Stan GP16:  0  0  0  1  1  1  1  0  0  1  0
-Stan GP11:  0  0  0  1  1  1  1  0  0  1  0
-Konsola:              ↑ "Button pressed" × 4    ↑
+GP16 state:  0  0  0  1  1  1  1  0  0  1  0
+GP11 state:  0  0  0  1  1  1  1  0  0  1  0
+Console:               ↑ "Button pressed" × 4    ↑
 ```
 
-**Schemat połączenia:** jak w sekcji *Połączenie przycisku*, plus LED na GP11.
+**Wiring:** see *Button connection* section, plus LED on GP11.
 
-**Bloczki Blockly:**
+**Blockly blocks:**
 
 ```text
 ╔══ ▶ START ══════════════════════════════╗
-║  [Pin Init]  pin=11  tryb=OUT           ║
-║  [Pin Init]  pin=16  tryb=IN            ║
+║  [Pin Init]  pin=11  mode=OUT           ║
+║  [Pin Init]  pin=16  mode=IN            ║
 ╚═════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ═══════════════════════════════════════╗
-║  ╔══ Jeżeli  [Pin Get pin=16] == 1 ══════════════╗  ║
-║  ║  [Pin Set]   pin=11  → 1                      ║  ║
-║  ║  [Print]     "Button pressed"                 ║  ║
-║  ╠══ W przeciwnym razie ══════════════════════════╣  ║
-║  ║  [Pin Set]   pin=11  → 0                      ║  ║
-║  ╚════════════════════════════════════════════════╝  ║
-║  [Sleep]     100 ms                                  ║
+║  ╔══ If  [Pin Get pin=16] == 1 ═══════════════════╗  ║
+║  ║  [Pin Set]   pin=11  → 1                       ║  ║
+║  ║  [Print]     "Button pressed"                  ║  ║
+║  ╠══ Else ══════════════════════════════════════════╣  ║
+║  ║  [Pin Set]   pin=11  → 0                       ║  ║
+║  ╚═════════════════════════════════════════════════╝  ║
+║  [Sleep]     100 ms                                   ║
 ╚══════════════════════════════════════════════════════╝
 ```
 
-**Kod MicroPython:**
+**MicroPython code:**
 
 ```python
 from machine import Pin
@@ -381,29 +381,29 @@ def loop():
     time.sleep_ms(100)
 ```
 
-**Czego uczysz się:**
+**What you learn:**
 
-- Tworzenie pinu w trybie `Pin.IN`
-- Metoda `.value()` do odczytu stanu
-- Instrukcja warunkowa `if/else` w pętli
-- Opóźnienie 100 ms jako prosty debouncing
+- Creating a pin in `Pin.IN` mode
+- The `.value()` method for reading state
+- `if/else` conditional inside a loop
+- 100 ms delay as a simple debounce
 
 ---
 
-### Lekcja 6 — Pomiar natężenia światła (ADC)
+### Lesson 6 — Light level measurement (ADC)
 
-**Cel:** Odczyt sygnału analogowego, klasyfikacja wartości, wypisywanie wyników na konsolę.
+**Goal:** Read an analog signal, classify the value, and print results to the console.
 
-**Co się dzieje:**
-Co 500 ms program odczytuje wartość z przetwornika ADC na pinie 7 (fotoopornik). Wynik jest liczbą z zakresu 0–4095. Na podstawie wartości program wypisuje jedną z trzech klasyfikacji:
+**What happens:**
+Every 500 ms the program reads a value from the ADC on pin 7 (photoresistor). The result is an integer in the range 0–4095. Based on the value, one of three categories is printed:
 
-| Odczyt ADC | Klasyfikacja |
-| ---------- | ------------ |
-| < 1000 | DARK (ciemno) |
-| 1000 – 2499 | NORMAL (normalne) |
-| ≥ 2500 | BRIGHT (jasno) |
+| ADC reading | Category |
+| ----------- | -------- |
+| < 1000 | DARK |
+| 1000 – 2499 | NORMAL |
+| ≥ 2500 | BRIGHT |
 
-**Przykładowe wyjście REPL:**
+**Example REPL output:**
 
 ```text
 Light level2341
@@ -414,30 +414,30 @@ Light level3102
 BRIGHT
 ```
 
-**Schemat połączenia:** jak w sekcji *Połączenie fotoopornika*.
+**Wiring:** see *Photoresistor* section.
 
-**Bloczki Blockly:**
+**Blockly blocks:**
 
 ```text
 ╔══ ▶ START ══════════════════════════════╗
-║  [ADC Init]  pin=7  tłumienie=11dB      ║
+║  [ADC Init]  pin=7  attenuation=11dB   ║
 ╚═════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ═══════════════════════════════════════╗
-║  [Ustaw]  Light = [ADC Read pin=7]                  ║
+║  [Set]    Light = [ADC Read pin=7]                  ║
 ║  [Print]  "Light level" + Light                     ║
-║  ╔══ Jeżeli  Light < 1000 ══════════════════════╗   ║
-║  ║  [Print]  "DARK"                             ║   ║
-║  ╠══ W przeciwnym razie jeżeli  Light < 2500 ═══╣   ║
-║  ║  [Print]  "NORMAL"                          ║   ║
-║  ╠══ W przeciwnym razie ════════════════════════╣   ║
-║  ║  [Print]  "BRIGHT"                          ║   ║
-║  ╚══════════════════════════════════════════════╝   ║
-║  [Sleep]  500 ms                                    ║
-╚═════════════════════════════════════════════════════╝
+║  ╔══ If  Light < 1000 ════════════════════════════╗  ║
+║  ║  [Print]  "DARK"                               ║  ║
+║  ╠══ Else if  Light < 2500 ═══════════════════════╣  ║
+║  ║  [Print]  "NORMAL"                             ║  ║
+║  ╠══ Else ══════════════════════════════════════════╣  ║
+║  ║  [Print]  "BRIGHT"                             ║  ║
+║  ╚═════════════════════════════════════════════════╝  ║
+║  [Sleep]  500 ms                                      ║
+╚══════════════════════════════════════════════════════╝
 ```
 
-**Kod MicroPython:**
+**MicroPython code:**
 
 ```python
 from machine import Pin, ADC
@@ -462,48 +462,48 @@ def loop():
     time.sleep_ms(500)
 ```
 
-**Czego uczysz się:**
+**What you learn:**
 
-- Klasa `ADC` i parametr `atten`
-- Różnica między sygnałem cyfrowym a analogowym
-- Użycie zmiennych globalnych (`global`)
-- Klasyfikacja wartości ciągłych przez progi (`elif`)
+- The `ADC` class and the `atten` parameter
+- The difference between digital and analog signals
+- Using global variables (`global`)
+- Classifying continuous values with thresholds (`elif`)
 
 ---
 
-### Lekcja 8 — Silnik krokowy (wiatraczek)
+### Lesson 8 — Stepper motor (fan)
 
-**Cel:** Sterowanie silnikiem krokowym 28BYJ-48 przez sterownik ULN2003 — ciągły obrót symulujący wiatraczek.
+**Goal:** Drive a 28BYJ-48 stepper motor through a ULN2003 driver — continuous rotation simulating a fan blade.
 
-**Co się dzieje:**
-Program wysyła na 4 piny kolejne kombinacje napięć zgodnie z sekwencją pełnokrokową. Każde z 4 pobudzeń obraca silnik o jeden krok — powtarzane bez przerwy dają ciągły obrót wału. Opóźnienie 3 ms między krokami wyznacza prędkość obrotów (~83 obr/min przy przełożeniu 64:1 silnika 28BYJ-48).
+**What happens:**
+The program sends successive voltage combinations to 4 pins following the full-step sequence. Each of the 4 excitation patterns rotates the motor by one step — repeated without interruption this produces continuous shaft rotation. A 3 ms delay between steps sets the speed (~83 RPM with the 28BYJ-48 64:1 gear ratio).
 
-**Użyte komponenty:**
+**Components used:**
 
-- Silnik krokowy **28BYJ-48** (5 V, unipolarny)
-- Sterownik **ULN2003** (płytka z 4 diodami + złączem do silnika)
+- **28BYJ-48** stepper motor (5 V, unipolar)
+- **ULN2003** driver board (4 transistors + motor connector)
 
-**Schemat połączenia:**
+**Wiring:**
 
 ```text
 ESP32-S3 Pico          ULN2003            28BYJ-48
 ┌────────────┐       ┌──────────┐        ┌────────┐
 │       GP4  ├──────►│ IN1      │        │        │
-│       GP5  ├──────►│ IN2      ├───────►│ cewki  │
+│       GP5  ├──────►│ IN2      ├───────►│ coils  │
 │       GP6  ├──────►│ IN3      │        │        │
 │      GP17  ├──────►│ IN4      │        └────────┘
 │            │       │          │
 │       GND  ├──────►│ GND      │
-└────────────┘       │ 5V  ◄────┼── 5V (USB lub zewnętrzne)
+└────────────┘       │ 5V  ◄────┼── 5V (USB or external)
                      └──────────┘
 ```
 
-> **Ważne:** Silnik 28BYJ-48 wymaga zasilania **5 V** — podłącz pin `5V` płytki ESP32-S3 (prosto z USB) do `5V` sterownika ULN2003, nie `3V3`. Sygnały logiczne GP4–GP17 (3,3 V) są w pełni kompatybilne z wejściami ULN2003.
+> **Important:** The 28BYJ-48 requires **5 V** power — connect the `5V` pin of the ESP32-S3 board (directly from USB) to the `5V` input of the ULN2003, not `3V3`. The 3.3 V logic signals on GP4–GP17 are fully compatible with ULN2003 inputs.
 
-**Sekwencja pełnokrokowa (4 kroki):**
+**Full-step sequence (4 steps):**
 
 ```text
-Krok │ IN1(GP4) │ IN2(GP5) │ IN3(GP6) │ IN4(GP17)
+Step │ IN1(GP4) │ IN2(GP5) │ IN3(GP6) │ IN4(GP17)
 ─────┼──────────┼──────────┼──────────┼──────────
   1  │    1     │    0     │    1     │    0
   2  │    0     │    1     │    1     │    0
@@ -511,36 +511,36 @@ Krok │ IN1(GP4) │ IN2(GP5) │ IN3(GP6) │ IN4(GP17)
   4  │    1     │    0     │    0     │    1
 ```
 
-**Bloczki Blockly:**
+**Blockly blocks:**
 
 ```text
 ╔══ ▶ START ══════════════════════════════╗
-║  [Pin Init]  pin=4   tryb=OUT           ║
-║  [Pin Init]  pin=5   tryb=OUT           ║
-║  [Pin Init]  pin=6   tryb=OUT           ║
-║  [Pin Init]  pin=17  tryb=OUT           ║
+║  [Pin Init]  pin=4   mode=OUT           ║
+║  [Pin Init]  pin=5   mode=OUT           ║
+║  [Pin Init]  pin=6   mode=OUT           ║
+║  [Pin Init]  pin=17  mode=OUT           ║
 ╚═════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ═══════════════════════════╗
-║  -- krok 1 --                           ║
+║  -- step 1 --                           ║
 ║  [Pin Set]   pin=4   → 1               ║
 ║  [Pin Set]   pin=5   → 0               ║
 ║  [Pin Set]   pin=6   → 1               ║
 ║  [Pin Set]   pin=17  → 0               ║
 ║  [Sleep]     3 ms                       ║
-║  -- krok 2 --                           ║
+║  -- step 2 --                           ║
 ║  [Pin Set]   pin=4   → 0               ║
 ║  [Pin Set]   pin=5   → 1               ║
 ║  [Pin Set]   pin=6   → 1               ║
 ║  [Pin Set]   pin=17  → 0               ║
 ║  [Sleep]     3 ms                       ║
-║  -- krok 3 --                           ║
+║  -- step 3 --                           ║
 ║  [Pin Set]   pin=4   → 0               ║
 ║  [Pin Set]   pin=5   → 1               ║
 ║  [Pin Set]   pin=6   → 0               ║
 ║  [Pin Set]   pin=17  → 1               ║
 ║  [Sleep]     3 ms                       ║
-║  -- krok 4 --                           ║
+║  -- step 4 --                           ║
 ║  [Pin Set]   pin=4   → 1               ║
 ║  [Pin Set]   pin=5   → 0               ║
 ║  [Pin Set]   pin=6   → 0               ║
@@ -549,7 +549,7 @@ Krok │ IN1(GP4) │ IN2(GP5) │ IN3(GP6) │ IN4(GP17)
 ╚═════════════════════════════════════════╝
 ```
 
-**Kod MicroPython:**
+**MicroPython code:**
 
 ```python
 from machine import Pin
@@ -564,51 +564,51 @@ def setup():
     pass
 
 def loop():
-    # Krok 1
+    # Step 1
     _pin_4.value(1); _pin_5.value(0); _pin_6.value(1); _pin_17.value(0)
     time.sleep_ms(3)
-    # Krok 2
+    # Step 2
     _pin_4.value(0); _pin_5.value(1); _pin_6.value(1); _pin_17.value(0)
     time.sleep_ms(3)
-    # Krok 3
+    # Step 3
     _pin_4.value(0); _pin_5.value(1); _pin_6.value(0); _pin_17.value(1)
     time.sleep_ms(3)
-    # Krok 4
+    # Step 4
     _pin_4.value(1); _pin_5.value(0); _pin_6.value(0); _pin_17.value(1)
     time.sleep_ms(3)
 ```
 
-> **Regulacja prędkości:** Zmień wartość `sleep_ms(3)` — mniejsza wartość = szybciej, większa = wolniej. Poniżej 2 ms silnik może gubić kroki. Powyżej 10 ms obroty będą wyraźnie wolniejsze.
+> **Speed adjustment:** Change the `sleep_ms(3)` value — lower = faster, higher = slower. Below 2 ms the motor may miss steps. Above 10 ms rotation will be noticeably slow.
 
-**Czego uczysz się:**
+**What you learn:**
 
-- Sterowanie silnikiem krokowym przez sterownik tranzystorowy (ULN2003)
-- Sekwencja pełnokrokowa — pojęcie kroku i cewki
-- Wpływ opóźnienia między krokami na prędkość obrotową
-- Zasilanie komponentów 5 V z płytki mikrokontrolera
+- Driving a stepper motor through a transistor driver (ULN2003)
+- Full-step sequence — the concept of a step and a coil
+- How delay between steps affects rotational speed
+- Powering 5 V components from the microcontroller board
 
 ---
 
-### Lekcja 7 — Szablon projektu
+### Lesson 7 — Project template
 
-**Cel:** Punkt startowy do własnych eksperymentów.
+**Goal:** A starting point for your own experiments.
 
-**Co się dzieje:**
-Lekcja zawiera tylko czysty szablon z pustymi funkcjami `setup()` i `loop()` oraz obsługą wyjątku przy zatrzymaniu (`KeyboardInterrupt`). Brak gotowej implementacji — to miejsce na Twój własny program.
+**What happens:**
+The lesson contains only a clean template with empty `setup()` and `loop()` functions and a `KeyboardInterrupt` handler. No functionality is implemented — this is the place for your own program.
 
-**Bloczki Blockly:**
+**Blockly blocks:**
 
 ```text
 ╔══ ▶ START ══════════════════════════════╗
-║  (pusty — dodaj tu inicjalizację)       ║
+║  (empty — add initialization here)      ║
 ╚═════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ═══════════════════════════╗
-║  (pusty — dodaj tu logikę programu)     ║
+║  (empty — add program logic here)       ║
 ╚═════════════════════════════════════════╝
 ```
 
-**Kod MicroPython:**
+**MicroPython code:**
 
 ```python
 def setup():
@@ -618,33 +618,33 @@ def loop():
     pass
 ```
 
-**Czego uczysz się:**
+**What you learn:**
 
-- Standardowa struktura każdego programu MicroPython w tym kursie
-- Obsługa wyjątku `KeyboardInterrupt` (Ctrl+C) — bezpieczne zatrzymanie programu
+- The standard structure of every MicroPython program in this course
+- Handling `KeyboardInterrupt` (Ctrl+C) — safe program termination
 
 ---
 
-## Struktura każdego programu
+## Program structure
 
-Każdy szkic w tym kursie ma jednolity schemat:
+Every sketch in this course follows the same pattern:
 
 ```python
-from machine import Pin   # import modułów sprzętowych
-import time               # moduł czasu
+from machine import Pin   # hardware module imports
+import time               # time module
 
-# --- Konfiguracja pinów (globalna) ---
+# --- Pin configuration (global) ---
 _pin_XX = Pin(XX, mode=Pin.OUT)
 
-# --- Inicjalizacja jednorazowa ---
+# --- One-time initialization ---
 def setup():
-    pass  # kod wykonany raz po starcie
+    pass  # runs once at startup
 
-# --- Pętla główna ---
+# --- Main loop ---
 def loop():
-    pass  # kod wykonywany bez przerwy
+    pass  # runs repeatedly
 
-# --- Punkt wejścia ---
+# --- Entry point ---
 if __name__ == '__main__':
     try:
         setup()
@@ -654,28 +654,28 @@ if __name__ == '__main__':
         print(e)
 ```
 
-> `try/except` na końcu zapewnia, że naciśnięcie Ctrl+C w konsoli REPL bezpiecznie zatrzyma program zamiast wyrzucić nieobsłużony wyjątek.
+> The `try/except` block at the end ensures that pressing Ctrl+C in the REPL console safely stops the program instead of raising an unhandled exception.
 
 ---
 
-## Postęp kursu
+## Course progress
 
 ```text
-Lekcja 1  ──  Wyjście cyfrowe (LED ON)
-Lekcja 2  ──  Czas i cykl (LED blink)
-Lekcja 3  ──  Wiele wyjść + sekwencja (3× LED)
-Lekcja 4  ──  Wejście cyfrowe + sterowanie (przycisk → LED)
-Lekcja 6  ──  Wejście analogowe ADC (fotoopornik)
-Lekcja 7  ──  Szablon do własnych projektów
-Lekcja 8  ──  Silnik krokowy 28BYJ-48 (wiatraczek)
+Lesson 1  ──  Digital output (LED ON)
+Lesson 2  ──  Timing and cycle (LED blink)
+Lesson 3  ──  Multiple outputs + sequence (3× LED)
+Lesson 4  ──  Digital input + control (button → LED)
+Lesson 6  ──  Analog ADC input (photoresistor)
+Lesson 7  ──  Project template
+Lesson 8  ──  Stepper motor 28BYJ-48 (fan)
 ```
 
 ---
 
-## Platforma
+## Platform
 
-- **Mikrokontroler:** ESP32-S3 (moduł `esp32-s3-pico`)
-- **Język:** MicroPython
-- **Środowisko:** MyCastle / Thonny / mpremote
-- **Napięcie logiczne:** 3,3 V
-- **Zasilanie:** USB 5 V → regulator na płytce → 3,3 V
+- **Microcontroller:** ESP32-S3 (module `esp32-s3-pico`)
+- **Language:** MicroPython
+- **Environment:** MyCastle / Thonny / mpremote
+- **Logic voltage:** 3.3 V
+- **Power:** USB 5 V → on-board regulator → 3.3 V
