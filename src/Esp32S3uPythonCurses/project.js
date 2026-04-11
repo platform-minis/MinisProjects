@@ -1,5 +1,9 @@
 // project.js — custom Blockly blocks for Esp32S3uPythonCurses
-// Available variables: Blockly, generator, addCategory({ name, colour, blocks })
+// Available variables: Blockly, generator, addCategory({ name, colour, blocks }), Order, addLibrary({ url, remoteName })
+
+var RAW = 'https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/';
+addLibrary({ url: RAW + 'minis_iot.py',     remoteName: 'minis_iot.py' });
+addLibrary({ url: RAW + 'minis_display.py', remoteName: 'minis_display.py' });
 
 Blockly.defineBlocksWithJsonArray([
   {
@@ -70,39 +74,38 @@ Blockly.defineBlocksWithJsonArray([
   },
 ]);
 
-generator.forBlock['curses_init'] = function (_block, gen) {
-  gen.addImport('curses', 'import curses');
-  gen.addDeclaration('curses_stdscr', 'stdscr = curses.initscr()');
-  return '';
+generator.forBlock['curses_init'] = function (_block, g) {
+  g.addImport('curses', 'import curses');
+  return 'stdscr = curses.initscr()\n';
 };
 
-generator.forBlock['curses_deinit'] = function (_block, _gen) {
+generator.forBlock['curses_deinit'] = function (_block, _g) {
   return 'curses.endwin()\n';
 };
 
-generator.forBlock['curses_clear'] = function (_block, _gen) {
+generator.forBlock['curses_clear'] = function (_block, _g) {
   return 'stdscr.clear()\n';
 };
 
-generator.forBlock['curses_refresh'] = function (_block, _gen) {
+generator.forBlock['curses_refresh'] = function (_block, _g) {
   return 'stdscr.refresh()\n';
 };
 
-generator.forBlock['curses_print'] = function (block, gen) {
-  const row = gen.valueToCode(block, 'ROW', gen.ORDER_ATOMIC) || '0';
-  const col = gen.valueToCode(block, 'COL', gen.ORDER_ATOMIC) || '0';
-  const text = gen.valueToCode(block, 'TEXT', gen.ORDER_ATOMIC) || '""';
-  return `stdscr.addstr(${row}, ${col}, str(${text}))\n`;
+generator.forBlock['curses_print'] = function (block, g) {
+  var row = g.valueToCode(block, 'ROW', Order.NONE) || '0';
+  var col = g.valueToCode(block, 'COL', Order.NONE) || '0';
+  var text = g.valueToCode(block, 'TEXT', Order.NONE) || '""';
+  return 'stdscr.addstr(' + row + ', ' + col + ', str(' + text + '))\n';
 };
 
-generator.forBlock['curses_getkey'] = function (_block, _gen) {
-  return ['stdscr.getkey()', gen.ORDER_FUNCTION_CALL];
+generator.forBlock['curses_getkey'] = function (_block, _g) {
+  return ['stdscr.getkey()', Order.ATOMIC];
 };
 
-generator.forBlock['curses_move'] = function (block, gen) {
-  const row = gen.valueToCode(block, 'ROW', gen.ORDER_ATOMIC) || '0';
-  const col = gen.valueToCode(block, 'COL', gen.ORDER_ATOMIC) || '0';
-  return `stdscr.move(${row}, ${col})\n`;
+generator.forBlock['curses_move'] = function (block, g) {
+  var row = g.valueToCode(block, 'ROW', Order.NONE) || '0';
+  var col = g.valueToCode(block, 'COL', Order.NONE) || '0';
+  return 'stdscr.move(' + row + ', ' + col + ')\n';
 };
 
 addCategory({
