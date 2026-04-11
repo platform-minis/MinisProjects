@@ -42,9 +42,9 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 
 ## Microcontroller Pinout
 
-![Alt text](../../docs/Esp32S3Pico/esp32s3pico_pinout.gif "Esp32 S3 Pico Pinout Top")
+![Alt text](https://raw.githubusercontent.com/platform-minis/MinisProjects/refs/heads/main/docs/Esp32S3Pico/esp32s3pico_pinout.gif "Esp32 S3 Pico Pinout Top")
 
-![Alt text](../../docs/Esp32S3Pico/esp32s3pico_pinout_buttom.jpg "Esp32 S3 Pico Pinout Bottom")
+![Alt text](https://raw.githubusercontent.com/platform-minis/MinisProjects/refs/heads/main/docs/Esp32S3Pico/esp32s3pico_pinout_buttom.jpg "Esp32 S3 Pico Pinout Bottom")
 
 ## Pin Overview
 
