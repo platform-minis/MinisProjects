@@ -112,6 +112,33 @@
       "readmePath": "src/Esp32S3Test/docs/Esp32S3Test.md"
     },
     {
+      "id": "Esp32S3ZeroTest",
+      "name": "ESP32-S3-Zero-Test",
+      "description": "ESP32-S3 Zero test project for Waveshare ESP32-S3 Zero (4MB Flash, 2MB OPI PSRAM, native USB).",
+      "softwarePlatform": "Arduino",
+      "moduleId": "esp32-s3-zero",
+      "version": "1.0.0",
+      "tags": [
+        "test",
+        "esp32s3",
+        "zero",
+        "arduino"
+      ],
+      "libraries": [],
+      "path": "src/Esp32S3ZeroTest",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "Test1",
+          "files": [
+            "src/Esp32S3ZeroTest/src/Test1/Test1.ino"
+          ]
+        }
+      ],
+      "readmePath": null
+    },
+    {
       "id": "Esp32S3uPythonCurses",
       "name": "ESP32-S3-uPythonCurses",
       "description": "ESP32-S3 test project for demonstrating functionality.",

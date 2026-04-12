@@ -1,0 +1,10 @@
+{
+  "id": "Esp32S3ZeroTest",
+  "name": "ESP32-S3-Zero-Test",
+  "description": "ESP32-S3 Zero test project for Waveshare ESP32-S3 Zero (4MB Flash, 2MB OPI PSRAM, native USB).",
+  "version": "1.0.0",
+  "softwarePlatform": "Arduino",
+  "tags": ["test", "esp32s3", "zero", "arduino"],
+  "moduleId": "esp32-s3-zero",
+  "libraries": []
+}
