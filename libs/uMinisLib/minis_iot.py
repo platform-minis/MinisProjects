@@ -207,14 +207,19 @@ class MinisIoT:
 
     # ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    def begin(self, timeout_ms=15000):
+    def begin(self, timeout_ms=15000, wifi_timeout_ms=None):
         """
         Connect WiFi (if credentials set) + connect to MQTT broker.
         Returns True on success.
         If False is returned, loop() will retry automatically.
+
+        :param wifi_timeout_ms: WiFi connect timeout in ms. Defaults to timeout_ms.
+                                Set to a small value (e.g. 8000) to start faster
+                                when credentials may be wrong.
         """
         if self._ssid:
-            if not self._connect_wifi(timeout_ms):
+            wt = wifi_timeout_ms if wifi_timeout_ms is not None else timeout_ms
+            if not self._connect_wifi(wt):
                 self._log('WiFi failed — will retry in loop()')
                 return False
         return self._connect_mqtt(timeout_ms)
