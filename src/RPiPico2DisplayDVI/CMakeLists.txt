@@ -6,13 +6,12 @@ else()
     message(FATAL_ERROR "PICO_SDK_PATH environment variable not set")
 endif()
 
+set(PICO_BOARD "pico2" CACHE STRING "Pico board target")
+set(PICO_PLATFORM "rp2350-arm-s" CACHE STRING "Pico platform")
+
 project(RPiPico2DisplayDVI C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
-
-# Target: Raspberry Pi Pico 2 (RP2350)
-set(PICO_BOARD pico2)
-set(PICO_PLATFORM rp2350)
 
 include(FetchContent)
 

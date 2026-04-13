@@ -1,9 +1,11 @@
 {
   "id": "RPiPico2DisplayDVI",
   "name": "RPi Pico 2 Display DVI",
-  "description": "Raspberry Pi Pico 2 (RP2350) wyświetla obraz DVI/HDMI. Wykorzystuje PIO i DMA do generowania sygnału bez obciążenia CPU.",
+  "description": "Raspberry Pi Pico 2 (RP2350) wyświetla obraz DVI/HDMI 640×480 1bpp. Wykorzystuje PicoDVI (PIO + DMA + SIO TMDS) bez obciążenia CPU.",
   "version": "1.0.0",
-  "softwarePlatform": "cmake",
-  "tags": ["display", "dvi", "hdmi", "rp2350", "pio", "advanced"],
+  "softwarePlatform": "PicoSdk",
+  "boardKey": "pico2",
+  "tags": ["display", "dvi", "hdmi", "rp2350", "pio", "picodvi", "advanced"],
+  "sketches": ["main"],
   "moduleId": "rp2350-pico2"
 }

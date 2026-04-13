@@ -6,8 +6,8 @@ else()
     message(FATAL_ERROR "PICO_SDK_PATH environment variable not set")
 endif()
 
-set(PICO_BOARD pico2)
-set(PICO_PLATFORM rp2350-arm-s)
+set(PICO_BOARD "pico2" CACHE STRING "Pico board target")
+set(PICO_PLATFORM "rp2350-arm-s" CACHE STRING "Pico platform")
 
 project(PicoSdkBlinkPico2 C CXX ASM)
 set(CMAKE_C_STANDARD 11)
