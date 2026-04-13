@@ -1,0 +1,75 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="counter_var">counter</variable>
+  </variables>
+  <block type="upy_start" id="start_block" x="170" y="130">
+    <statement name="DO">
+      <block type="variables_set" id="init_counter">
+        <field name="VAR" id="counter_var">counter</field>
+        <value name="VALUE">
+          <block type="math_number" id="zero_val">
+            <field name="NUM">0</field>
+          </block>
+        </value>
+        <next>
+          <block type="upy_print" id="hello_print">
+            <value name="TEXT">
+              <block type="text" id="hello_text">
+                <field name="TEXT">ESP32-S3 Zero - Hello!</field>
+              </block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+  <block type="upy_forever" id="forever_block" x="170" y="370">
+    <statement name="DO">
+      <block type="upy_print" id="print_counter">
+        <value name="TEXT">
+          <block type="variables_get" id="get_counter">
+            <field name="VAR" id="counter_var">counter</field>
+          </block>
+        </value>
+        <next>
+          <block type="math_change" id="inc_counter">
+            <field name="VAR" id="counter_var">counter</field>
+            <value name="DELTA">
+              <shadow type="math_number" id="delta_val">
+                <field name="NUM">1</field>
+              </shadow>
+            </value>
+            <next>
+              <block type="upy_pin_on" id="led_on">
+                <field name="PIN">21</field>
+                <next>
+                  <block type="upy_sleep_ms" id="sleep1">
+                    <value name="MS">
+                      <shadow type="math_number" id="ms1">
+                        <field name="NUM">1000</field>
+                      </shadow>
+                    </value>
+                    <next>
+                      <block type="upy_pin_off" id="led_off">
+                        <field name="PIN">21</field>
+                        <next>
+                          <block type="upy_sleep_ms" id="sleep2">
+                            <value name="MS">
+                              <shadow type="math_number" id="ms2">
+                                <field name="NUM">1000</field>
+                              </shadow>
+                            </value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+</xml>

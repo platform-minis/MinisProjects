@@ -1,0 +1,12 @@
+{
+  "id": "Esp32S3ZerouPythonTest",
+  "name": "ESP32-S3-Zero-uPythonTest",
+  "description": "ESP32-S3 Zero MicroPython test project (Waveshare, 4MB Flash, 2MB OPI PSRAM, native USB).",
+  "version": "1.0.0",
+  "softwarePlatform": "uPython",
+  "tags": ["test", "esp32s3", "zero", "uPython"],
+  "moduleId": "esp32-s3-zero",
+  "sketches": [
+    { "name": "test1" }
+  ]
+}

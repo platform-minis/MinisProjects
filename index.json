@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-03-30",
+  "updatedAt": "2026-04-13",
   "repoUrl": "https://github.com/platform-minis/MinisProjects",
   "projects": [
     {
@@ -421,6 +421,34 @@
       ],
       "readmePath": "src/Esp32S3uPythonTest/README.md",
       "projectScriptPath": "src/Esp32S3uPythonTest/project.js"
+    },
+    {
+      "id": "Esp32S3ZerouPythonTest",
+      "name": "ESP32-S3-Zero-uPythonTest",
+      "description": "ESP32-S3 Zero MicroPython test project (Waveshare, 4MB Flash, 2MB OPI PSRAM, native USB).",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-s3-zero",
+      "version": "1.0.0",
+      "tags": [
+        "test",
+        "esp32s3",
+        "zero",
+        "uPython"
+      ],
+      "libraries": [],
+      "path": "src/Esp32S3Zero/uPythonTest",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "test1",
+          "files": [
+            "src/Esp32S3Zero/uPythonTest/sketches/test1/test1.blockly",
+            "src/Esp32S3Zero/uPythonTest/sketches/test1/test1.py"
+          ]
+        }
+      ],
+      "readmePath": null
     },
     {
       "id": "Esp32StreamingAudioPlayer",
