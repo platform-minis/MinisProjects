@@ -127,7 +127,7 @@
       "libraries": [],
       "path": "src/Esp32S3ZeroTest",
       "hasSrc": true,
-      "hasDocs": false,
+      "hasDocs": true,
       "sketches": [
         {
           "name": "Test1",
@@ -136,7 +136,7 @@
           ]
         }
       ],
-      "readmePath": null
+      "readmePath": "src/Esp32S3ZeroTest/docs/welcome.md"
     },
     {
       "id": "Esp32S3uPythonCurses",
@@ -259,7 +259,7 @@
       "libraries": [],
       "path": "src/Esp32S3uPythonDisplay",
       "hasSrc": true,
-      "hasDocs": false,
+      "hasDocs": true,
       "sketches": [
         {
           "name": "hello_display",
@@ -292,7 +292,7 @@
           ]
         }
       ],
-      "readmePath": null,
+      "readmePath": "src/Esp32S3uPythonDisplay/docs/welcome.md",
       "projectScriptPath": "src/Esp32S3uPythonDisplay/project.js"
     },
     {
@@ -438,7 +438,7 @@
       "libraries": [],
       "path": "src/Esp32S3Zero/uPythonTest",
       "hasSrc": true,
-      "hasDocs": false,
+      "hasDocs": true,
       "sketches": [
         {
           "name": "test1",
@@ -448,7 +448,7 @@
           ]
         }
       ],
-      "readmePath": null
+      "readmePath": "src/Esp32S3Zero/uPythonTest/docs/welcome.md"
     },
     {
       "id": "Esp32StreamingAudioPlayer",
