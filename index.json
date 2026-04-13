@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-04-13",
+  "updatedAt": "2026-04-13T00:00:00Z",
   "repoUrl": "https://github.com/platform-minis/MinisProjects",
   "projects": [
     {
@@ -624,6 +624,98 @@
       "hasDocs": true,
       "sketches": [],
       "readmePath": "src/SimpleCassettePlayerRecorder/docs/SimpleCassettePlayerRecorder.md"
+    },
+    {
+      "id": "PicoSdkBlinkPico",
+      "name": "Blink — Pico (RP2040)",
+      "description": "LED blink na Raspberry Pi Pico (RP2040). GPIO 25 — wbudowana dioda.",
+      "softwarePlatform": "PicoSdk",
+      "moduleId": "rp2040-pico",
+      "version": "1.0.0",
+      "tags": ["blink", "gpio", "rp2040", "beginner"],
+      "libraries": [],
+      "path": "src/PicoSdkBlinkPico",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "main",
+          "files": [
+            "src/PicoSdkBlinkPico/CMakeLists.txt",
+            "src/PicoSdkBlinkPico/src/CMakeLists.txt",
+            "src/PicoSdkBlinkPico/src/main.c"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PicoSdkBlinkPicoW",
+      "name": "Blink — Pico W (RP2040+WiFi)",
+      "description": "LED blink na Raspberry Pi Pico W (RP2040). LED sterowany przez układ CYW43 (pico_cyw43_arch).",
+      "softwarePlatform": "PicoSdk",
+      "moduleId": "rp2040-pico-w",
+      "version": "1.0.0",
+      "tags": ["blink", "cyw43", "wifi", "rp2040", "beginner"],
+      "libraries": [],
+      "path": "src/PicoSdkBlinkPicoW",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "main",
+          "files": [
+            "src/PicoSdkBlinkPicoW/CMakeLists.txt",
+            "src/PicoSdkBlinkPicoW/src/CMakeLists.txt",
+            "src/PicoSdkBlinkPicoW/src/main.c"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PicoSdkBlinkPico2",
+      "name": "Blink — Pico 2 (RP2350)",
+      "description": "LED blink na Raspberry Pi Pico 2 (RP2350). GPIO 25 — wbudowana dioda.",
+      "softwarePlatform": "PicoSdk",
+      "moduleId": "rp2350-pico2",
+      "version": "1.0.0",
+      "tags": ["blink", "gpio", "rp2350", "beginner"],
+      "libraries": [],
+      "path": "src/PicoSdkBlinkPico2",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "main",
+          "files": [
+            "src/PicoSdkBlinkPico2/CMakeLists.txt",
+            "src/PicoSdkBlinkPico2/src/CMakeLists.txt",
+            "src/PicoSdkBlinkPico2/src/main.c"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PicoSdkBlinkPico2W",
+      "name": "Blink — Pico 2 W (RP2350+WiFi)",
+      "description": "LED blink na Raspberry Pi Pico 2 W (RP2350). LED sterowany przez układ CYW43 (pico_cyw43_arch).",
+      "softwarePlatform": "PicoSdk",
+      "moduleId": "rp2350-pico2-w",
+      "version": "1.0.0",
+      "tags": ["blink", "cyw43", "wifi", "rp2350", "beginner"],
+      "libraries": [],
+      "path": "src/PicoSdkBlinkPico2W",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "main",
+          "files": [
+            "src/PicoSdkBlinkPico2W/CMakeLists.txt",
+            "src/PicoSdkBlinkPico2W/src/CMakeLists.txt",
+            "src/PicoSdkBlinkPico2W/src/main.c"
+          ]
+        }
+      ]
     }
   ],
   "modules": [
@@ -726,13 +818,20 @@
       "name": "Raspberry Pi Pico 2",
       "vendor": "Raspberry Pi",
       "description": "RP2350-based board. 4MB Flash, dual ARM Cortex-M33 or dual RISC-V Hazard3, 520KB SRAM. Supports PIO for custom peripherals.",
-      "platform": "cmake",
+      "platform": "PicoSdk",
       "boardProfileKey": "rp2350_pico2",
-      "cmakeOptions": {
-        "PICO_BOARD": "pico2",
-        "CMAKE_BUILD_TYPE": "Release",
-        "PICO_PLATFORM": "rp2350"
-      }
+      "picoBoard": "pico2",
+      "picoPlatform": "rp2350-arm-s"
+    },
+    {
+      "id": "rp2350-pico2-w",
+      "name": "Raspberry Pi Pico 2 W",
+      "vendor": "Raspberry Pi",
+      "description": "RP2350-based board with CYW43439 WiFi/BT chip. 4MB Flash, dual ARM Cortex-M33, 520KB SRAM. LED controlled via CYW43 wireless chip.",
+      "platform": "PicoSdk",
+      "boardProfileKey": "rp2350_pico2_w",
+      "picoBoard": "pico2_w",
+      "picoPlatform": "rp2350-arm-s"
     },
     {
       "id": "rp2040-pico",
@@ -753,6 +852,16 @@
         "usbstack": "picosdk",
         "boot2": "default"
       }
+    },
+    {
+      "id": "rp2040-pico-w",
+      "name": "Raspberry Pi Pico W",
+      "vendor": "Raspberry Pi",
+      "description": "RP2040-based board with CYW43439 WiFi/BT chip. 2MB Flash, dual ARM Cortex-M0+, 264KB SRAM. LED controlled via CYW43 wireless chip.",
+      "platform": "PicoSdk",
+      "boardProfileKey": "rp2040_pico_w",
+      "picoBoard": "pico_w",
+      "picoPlatform": "rp2040"
     }
   ]
 }

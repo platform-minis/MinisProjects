@@ -1,0 +1,11 @@
+{
+  "id": "PicoSdkBlinkPico2W",
+  "name": "Blink — Pico 2 W (RP2350+WiFi)",
+  "description": "LED blink na Raspberry Pi Pico 2 W (RP2350). LED sterowany przez układ CYW43 (pico_cyw43_arch).",
+  "version": "1.0.0",
+  "softwarePlatform": "PicoSdk",
+  "boardKey": "pico2_w",
+  "tags": ["blink", "cyw43", "wifi", "rp2350", "beginner"],
+  "sketches": ["main"],
+  "moduleId": "rp2350-pico2-w"
+}

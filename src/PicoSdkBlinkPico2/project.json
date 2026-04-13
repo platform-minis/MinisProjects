@@ -1,0 +1,11 @@
+{
+  "id": "PicoSdkBlinkPico2",
+  "name": "Blink — Pico 2 (RP2350)",
+  "description": "LED blink na Raspberry Pi Pico 2 (RP2350). GPIO 25 — wbudowana dioda.",
+  "version": "1.0.0",
+  "softwarePlatform": "PicoSdk",
+  "boardKey": "pico2",
+  "tags": ["blink", "gpio", "rp2350", "beginner"],
+  "sketches": ["main"],
+  "moduleId": "rp2350-pico2"
+}

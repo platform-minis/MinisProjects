@@ -1,0 +1,11 @@
+{
+  "id": "PicoSdkBlinkPico",
+  "name": "Blink — Pico (RP2040)",
+  "description": "LED blink na Raspberry Pi Pico (RP2040). GPIO 25 — wbudowana dioda.",
+  "version": "1.0.0",
+  "softwarePlatform": "PicoSdk",
+  "boardKey": "pico",
+  "tags": ["blink", "gpio", "rp2040", "beginner"],
+  "sketches": ["main"],
+  "moduleId": "rp2040-pico"
+}

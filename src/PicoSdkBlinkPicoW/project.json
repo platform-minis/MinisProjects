@@ -1,0 +1,11 @@
+{
+  "id": "PicoSdkBlinkPicoW",
+  "name": "Blink — Pico W (RP2040+WiFi)",
+  "description": "LED blink na Raspberry Pi Pico W (RP2040). LED sterowany przez układ CYW43 (pico_cyw43_arch).",
+  "version": "1.0.0",
+  "softwarePlatform": "PicoSdk",
+  "boardKey": "pico_w",
+  "tags": ["blink", "cyw43", "wifi", "rp2040", "beginner"],
+  "sketches": ["main"],
+  "moduleId": "rp2040-pico-w"
+}
