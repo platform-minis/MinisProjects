@@ -1,0 +1,81 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="upy_print" id="setup_print">
+        <value name="TEXT">
+          <block type="text" id="setup_print_v">
+            <field name="TEXT">Joystick ready   VRx=GP1  VRy=GP6  SW=GP8</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="200">
+    <statement name="DO">
+
+      <!-- Print "X:" + x + "  Y:" + y + "  " + direction -->
+      <block type="upy_print" id="loop_print_axes">
+        <value name="TEXT">
+          <block type="text_join" id="loop_join">
+            <mutation items="6"></mutation>
+            <value name="ADD0">
+              <block type="text" id="loop_t0"><field name="TEXT">X:</field></block>
+            </value>
+            <value name="ADD1">
+              <block type="joystick_read_x" id="loop_x"></block>
+            </value>
+            <value name="ADD2">
+              <block type="text" id="loop_t2"><field name="TEXT">  Y:</field></block>
+            </value>
+            <value name="ADD3">
+              <block type="joystick_read_y" id="loop_y"></block>
+            </value>
+            <value name="ADD4">
+              <block type="text" id="loop_t4"><field name="TEXT">  </field></block>
+            </value>
+            <value name="ADD5">
+              <block type="joystick_direction" id="loop_dir"></block>
+            </value>
+          </block>
+        </value>
+        <next>
+
+          <!-- if joystick_pressed → print "[BTN]" -->
+          <block type="controls_if" id="loop_if_btn">
+            <value name="IF0">
+              <block type="joystick_pressed" id="loop_btn"></block>
+            </value>
+            <statement name="DO0">
+              <block type="upy_print" id="loop_print_btn">
+                <value name="TEXT">
+                  <block type="text" id="loop_btn_v">
+                    <field name="TEXT">[BTN]</field>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <next>
+
+              <!-- sleep 200 ms -->
+              <block type="upy_sleep_ms" id="loop_sleep">
+                <value name="MS">
+                  <shadow type="math_number" id="loop_sleep_v">
+                    <field name="NUM">200</field>
+                  </shadow>
+                </value>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

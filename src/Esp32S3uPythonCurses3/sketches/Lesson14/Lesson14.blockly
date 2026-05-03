@@ -1,0 +1,149 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="lcd_init" id="setup_lcd_init">
+        <next>
+          <block type="lcd_write" id="setup_lcd_l1">
+            <field name="ROW">0</field>
+            <value name="TEXT">
+              <block type="text" id="setup_lcd_l1_v">
+                <field name="TEXT">KY-018 ready</field>
+              </block>
+            </value>
+            <next>
+              <block type="lcd_write" id="setup_lcd_l2">
+                <field name="ROW">1</field>
+                <value name="TEXT">
+                  <block type="text" id="setup_lcd_l2_v">
+                    <field name="TEXT">ADC=GP7</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="260">
+    <statement name="DO">
+
+      <!-- raw = KY-018 read -->
+      <block type="variables_set" id="loop_set_raw">
+        <field name="VAR">raw</field>
+        <value name="VALUE">
+          <block type="ky018_read" id="loop_ky018"></block>
+        </value>
+        <next>
+
+          <!-- LCD line 1: "Light: " + raw -->
+          <block type="lcd_write" id="loop_lcd_l1">
+            <field name="ROW">0</field>
+            <value name="TEXT">
+              <block type="text_join" id="loop_lcd_l1_join">
+                <mutation items="2"></mutation>
+                <value name="ADD0">
+                  <block type="text" id="loop_lcd_l1_prefix">
+                    <field name="TEXT">Light: </field>
+                  </block>
+                </value>
+                <value name="ADD1">
+                  <block type="variables_get" id="loop_lcd_l1_raw">
+                    <field name="VAR">raw</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <next>
+
+              <!-- LCD line 2: category -->
+              <block type="controls_if" id="loop_if_dark">
+                <mutation elseif="1" else="1"></mutation>
+                <value name="IF0">
+                  <block type="logic_compare" id="loop_cmp_dark">
+                    <field name="OP">LT</field>
+                    <value name="A">
+                      <block type="variables_get" id="loop_cmp_dark_raw">
+                        <field name="VAR">raw</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="loop_cmp_dark_val">
+                        <field name="NUM">1000</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <statement name="DO0">
+                  <block type="lcd_write" id="loop_lcd_dark">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="text" id="loop_lcd_dark_v">
+                        <field name="TEXT">DARK</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <value name="IF1">
+                  <block type="logic_compare" id="loop_cmp_normal">
+                    <field name="OP">LT</field>
+                    <value name="A">
+                      <block type="variables_get" id="loop_cmp_normal_raw">
+                        <field name="VAR">raw</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="loop_cmp_normal_val">
+                        <field name="NUM">2500</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <statement name="DO1">
+                  <block type="lcd_write" id="loop_lcd_normal">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="text" id="loop_lcd_normal_v">
+                        <field name="TEXT">NORMAL</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <statement name="ELSE">
+                  <block type="lcd_write" id="loop_lcd_bright">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="text" id="loop_lcd_bright_v">
+                        <field name="TEXT">BRIGHT</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <next>
+
+                  <!-- sleep 500 ms -->
+                  <block type="upy_sleep_ms" id="loop_sleep">
+                    <value name="MS">
+                      <shadow type="math_number" id="loop_sleep_v">
+                        <field name="NUM">500</field>
+                      </shadow>
+                    </value>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

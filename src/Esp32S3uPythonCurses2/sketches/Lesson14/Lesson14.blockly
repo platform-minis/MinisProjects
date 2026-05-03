@@ -1,0 +1,66 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_raw">raw</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="upy_print" id="setup_print">
+        <value name="TEXT">
+          <block type="text" id="setup_print_v">
+            <field name="TEXT">KY-018 ready   ADC=GP7</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="200">
+    <statement name="DO">
+
+      <!-- raw = ky018_read() -->
+      <block type="variables_set" id="loop_set_raw">
+        <field name="VAR" id="var_raw">raw</field>
+        <value name="VALUE">
+          <block type="ky018_read" id="loop_read"></block>
+        </value>
+        <next>
+
+          <!-- Print "Light: " + raw -->
+          <block type="upy_print" id="loop_print">
+            <value name="TEXT">
+              <block type="text_join" id="loop_join">
+                <mutation items="2"></mutation>
+                <value name="ADD0">
+                  <block type="text" id="loop_t0"><field name="TEXT">Light: </field></block>
+                </value>
+                <value name="ADD1">
+                  <block type="variables_get" id="loop_raw_show">
+                    <field name="VAR" id="var_raw">raw</field>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <next>
+
+              <!-- sleep 500 ms -->
+              <block type="upy_sleep_ms" id="loop_sleep">
+                <value name="MS">
+                  <shadow type="math_number" id="loop_sleep_v">
+                    <field name="NUM">500</field>
+                  </shadow>
+                </value>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

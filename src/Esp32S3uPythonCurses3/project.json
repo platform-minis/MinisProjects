@@ -1,0 +1,22 @@
+{
+  "id": "Esp32S3uPythonCurses3",
+  "name": "ESP32-S3 uPython Curses 3",
+  "description": "ESP32-S3 MicroPython course part 3 — same sensors as Part 2, all output on LCD1602 I2C display (SDA=GP21, SCL=GP22).",
+  "version": "1.0.0",
+  "softwarePlatform": "uPython",
+  "tags": ["esp32s3", "uPython", "lcd1602", "i2c", "max7219", "spi", "ky018", "adc", "dht11", "hcsr04", "hcsr501", "pir", "rc522", "rfid", "joystick"],
+  "moduleId": "esp32-s3-pico",
+  "libraries": [
+    { "url": "data:text/plain;base64,aW1wb3J0IHV0aW1lCgpjbGFzcyBMQ0QxNjAyOgogICAgIiIiUENGODU3NC1iYXNlZCBJMkMgTENEIDE2MDIgZHJpdmVyIGZvciBNaWNyb1B5dGhvbi4iIiIKCiAgICBkZWYgX19pbml0X18oc2VsZiwgaTJjLCBhZGRyPTB4MjcsIGNvbHM9MTYsIHJvd3M9Mik6CiAgICAgICAgc2VsZi5pMmMgID0gaTJjCiAgICAgICAgc2VsZi5hZGRyID0gYWRkcgogICAgICAgIHNlbGYuY29scyA9IGNvbHMKICAgICAgICBzZWxmLnJvd3MgPSByb3dzCiAgICAgICAgc2VsZi5fYmwgID0gMHgwOAogICAgICAgIHNlbGYuX2luaXQoKQoKICAgIGRlZiBfd3JpdGVfYnl0ZShzZWxmLCBiKToKICAgICAgICBzZWxmLmkyYy53cml0ZXRvKHNlbGYuYWRkciwgYnl0ZXMoW2IgfCBzZWxmLl9ibF0pKQoKICAgIGRlZiBfcHVsc2Uoc2VsZiwgYik6CiAgICAgICAgc2VsZi5fd3JpdGVfYnl0ZShiIHwgMHgwNCkKICAgICAgICB1dGltZS5zbGVlcF91cygxKQogICAgICAgIHNlbGYuX3dyaXRlX2J5dGUoYiAmIH4weDA0KQogICAgICAgIHV0aW1lLnNsZWVwX3VzKDUwKQoKICAgIGRlZiBfc2VuZDQoc2VsZiwgbmliYmxlKToKICAgICAgICBzZWxmLl93cml0ZV9ieXRlKG5pYmJsZSkKICAgICAgICBzZWxmLl9wdWxzZShuaWJibGUpCgogICAgZGVmIF9jbWQoc2VsZiwgZGF0YSwgbW9kZT0wKToKICAgICAgICBycyA9IG1vZGUgJiAweDAxCiAgICAgICAgc2VsZi5fc2VuZDQoKGRhdGEgJiAweEYwKSB8IHJzKQogICAgICAgIHNlbGYuX3NlbmQ0KCgoZGF0YSA8PCA0KSAmIDB4RjApIHwgcnMpCgogICAgZGVmIF9pbml0KHNlbGYpOgogICAgICAgIHV0aW1lLnNsZWVwX21zKDUwKQogICAgICAgIHNlbGYuX3NlbmQ0KDB4MzApCiAgICAgICAgdXRpbWUuc2xlZXBfbXMoNSkKICAgICAgICBzZWxmLl9zZW5kNCgweDMwKQogICAgICAgIHV0aW1lLnNsZWVwX3VzKDE1MCkKICAgICAgICBzZWxmLl9zZW5kNCgweDMwKQogICAgICAgIHNlbGYuX3NlbmQ0KDB4MjApCiAgICAgICAgc2VsZi5fY21kKDB4MjgpCiAgICAgICAgc2VsZi5fY21kKDB4MEMpCiAgICAgICAgc2VsZi5fY21kKDB4MDYpCiAgICAgICAgc2VsZi5fY21kKDB4MDEpCiAgICAgICAgdXRpbWUuc2xlZXBfbXMoMikKCiAgICBkZWYgY2xlYXIoc2VsZik6CiAgICAgICAgc2VsZi5fY21kKDB4MDEpCiAgICAgICAgdXRpbWUuc2xlZXBfbXMoMikKCiAgICBkZWYgYmFja2xpZ2h0KHNlbGYsIG9uPVRydWUpOgogICAgICAgIHNlbGYuX2JsID0gMHgwOCBpZiBvbiBlbHNlIDB4MDAKICAgICAgICBzZWxmLl93cml0ZV9ieXRlKDApCgogICAgZGVmIG1vdmVfdG8oc2VsZiwgY29sLCByb3cpOgogICAgICAgIG9mZnNldHMgPSBbMHgwMCwgMHg0MCwgMHgxNCwgMHg1NF0KICAgICAgICBzZWxmLl9jbWQoMHg4MCB8IChvZmZzZXRzW3JvdyAlIDRdICsgY29sKSkKCiAgICBkZWYgd3JpdGUoc2VsZiwgdGV4dCk6CiAgICAgICAgZm9yIGNoIGluIHN0cih0ZXh0KToKICAgICAgICAgICAgc2VsZi5fY21kKG9yZChjaCksIG1vZGU9MSkKCiAgICBkZWYgd3JpdGVfbGluZShzZWxmLCByb3csIHRleHQpOgogICAgICAgICIiIldyaXRlIHRleHQgcGFkZGVkL3RydW5jYXRlZCB0byAxNiBjaGFycyBvbiBnaXZlbiByb3cgKDAgb3IgMSkuIiIiCiAgICAgICAgc2VsZi5tb3ZlX3RvKDAsIHJvdykKICAgICAgICBzZWxmLndyaXRlKCd7OjwxNn0nLmZvcm1hdChzdHIodGV4dClbOjE2XSkpCg==", "remoteName": "lcd1602.py" },
+    { "url": "https://raw.githubusercontent.com/wendlers/micropython-mfrc522/master/mfrc522.py", "remoteName": "mfrc522.py" }
+  ],
+  "sketches": [
+    { "name": "Lesson13" },
+    { "name": "Lesson14" },
+    { "name": "Lesson15" },
+    { "name": "Lesson16" },
+    { "name": "Lesson17" },
+    { "name": "Lesson18" },
+    { "name": "Lesson19" }
+  ]
+}

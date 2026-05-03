@@ -1,0 +1,121 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="rc522_init" id="setup_rc522">
+        <next>
+          <block type="lcd_init" id="setup_lcd_init">
+            <next>
+              <block type="lcd_write" id="setup_lcd_l1">
+                <field name="ROW">0</field>
+                <value name="TEXT">
+                  <block type="text" id="setup_lcd_l1_v">
+                    <field name="TEXT">RFID reader</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="lcd_write" id="setup_lcd_l2">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="text" id="setup_lcd_l2_v">
+                        <field name="TEXT">Hold card...</field>
+                      </block>
+                    </value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="280">
+    <statement name="DO">
+
+      <!-- uid = RC-522 read UID -->
+      <block type="variables_set" id="loop_set_uid">
+        <field name="VAR">uid</field>
+        <value name="VALUE">
+          <block type="rc522_read_uid" id="loop_rc522"></block>
+        </value>
+        <next>
+
+          <!-- if uid != "" → show UID on LCD, else show "Hold card..." -->
+          <block type="controls_if" id="loop_if">
+            <mutation else="1"></mutation>
+            <value name="IF0">
+              <block type="logic_compare" id="loop_cmp_uid">
+                <field name="OP">NEQ</field>
+                <value name="A">
+                  <block type="variables_get" id="loop_uid_val">
+                    <field name="VAR">uid</field>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="text" id="loop_uid_empty">
+                    <field name="TEXT"></field>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <statement name="DO0">
+              <block type="lcd_write" id="loop_lcd_uid_l1">
+                <field name="ROW">0</field>
+                <value name="TEXT">
+                  <block type="text" id="loop_lcd_uid_l1_v">
+                    <field name="TEXT">UID:</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="lcd_write" id="loop_lcd_uid_l2">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="variables_get" id="loop_uid_get">
+                        <field name="VAR">uid</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="upy_sleep_ms" id="loop_sleep_uid">
+                        <value name="MS">
+                          <shadow type="math_number" id="loop_sleep_uid_v">
+                            <field name="NUM">1000</field>
+                          </shadow>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </statement>
+            <statement name="ELSE">
+              <block type="lcd_write" id="loop_lcd_hold">
+                <field name="ROW">1</field>
+                <value name="TEXT">
+                  <block type="text" id="loop_lcd_hold_v">
+                    <field name="TEXT">Hold card...</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="upy_sleep_ms" id="loop_sleep_idle">
+                    <value name="MS">
+                      <shadow type="math_number" id="loop_sleep_idle_v">
+                        <field name="NUM">100</field>
+                      </shadow>
+                    </value>
+                  </block>
+                </next>
+              </block>
+            </statement>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

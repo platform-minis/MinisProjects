@@ -1,0 +1,113 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="lcd_init" id="setup_lcd_init">
+        <next>
+          <block type="lcd_write" id="setup_lcd_l1">
+            <field name="ROW">0</field>
+            <value name="TEXT">
+              <block type="text" id="setup_lcd_l1_v">
+                <field name="TEXT">Joystick ready</field>
+              </block>
+            </value>
+            <next>
+              <block type="lcd_write" id="setup_lcd_l2">
+                <field name="ROW">1</field>
+                <value name="TEXT">
+                  <block type="text" id="setup_lcd_l2_v">
+                    <field name="TEXT">GP1 GP6 SW=GP8</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="260">
+    <statement name="DO">
+
+      <!-- LCD line 1: "X:" + x + " Y:" + y -->
+      <block type="lcd_write" id="loop_lcd_xy">
+        <field name="ROW">0</field>
+        <value name="TEXT">
+          <block type="text_join" id="loop_lcd_xy_join">
+            <mutation items="4"></mutation>
+            <value name="ADD0">
+              <block type="text" id="loop_lcd_x_prefix">
+                <field name="TEXT">X:</field>
+              </block>
+            </value>
+            <value name="ADD1">
+              <block type="joystick_read_x" id="loop_joy_x"></block>
+            </value>
+            <value name="ADD2">
+              <block type="text" id="loop_lcd_y_prefix">
+                <field name="TEXT"> Y:</field>
+              </block>
+            </value>
+            <value name="ADD3">
+              <block type="joystick_read_y" id="loop_joy_y"></block>
+            </value>
+          </block>
+        </value>
+        <next>
+
+          <!-- LCD line 2: direction + optional [BTN] -->
+          <block type="controls_if" id="loop_if_btn">
+            <mutation else="1"></mutation>
+            <value name="IF0">
+              <block type="joystick_pressed" id="loop_joy_btn"></block>
+            </value>
+            <statement name="DO0">
+              <block type="lcd_write" id="loop_lcd_dir_btn">
+                <field name="ROW">1</field>
+                <value name="TEXT">
+                  <block type="text_join" id="loop_lcd_dir_btn_join">
+                    <mutation items="2"></mutation>
+                    <value name="ADD0">
+                      <block type="joystick_direction" id="loop_joy_dir_btn"></block>
+                    </value>
+                    <value name="ADD1">
+                      <block type="text" id="loop_lcd_btn_suffix">
+                        <field name="TEXT"> [BTN]</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <statement name="ELSE">
+              <block type="lcd_write" id="loop_lcd_dir">
+                <field name="ROW">1</field>
+                <value name="TEXT">
+                  <block type="joystick_direction" id="loop_joy_dir"></block>
+                </value>
+              </block>
+            </statement>
+            <next>
+
+              <!-- sleep 200 ms -->
+              <block type="upy_sleep_ms" id="loop_sleep">
+                <value name="MS">
+                  <shadow type="math_number" id="loop_sleep_v">
+                    <field name="NUM">200</field>
+                  </shadow>
+                </value>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

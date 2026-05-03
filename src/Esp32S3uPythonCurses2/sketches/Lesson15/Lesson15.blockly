@@ -1,0 +1,143 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_temp">temp</variable>
+    <variable id="var_hum">hum</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="upy_print" id="setup_print">
+        <value name="TEXT">
+          <block type="text" id="setup_print_v">
+            <field name="TEXT">DHT11 ready  DATA=GP3</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="200">
+    <statement name="DO">
+
+      <!-- dht11_measure() — one call populates both temp and hum -->
+      <block type="dht11_measure" id="loop_measure">
+        <next>
+
+          <!-- temp = dht11_temp() -->
+          <block type="variables_set" id="loop_set_temp">
+            <field name="VAR" id="var_temp">temp</field>
+            <value name="VALUE">
+              <block type="dht11_temp" id="loop_read_temp"></block>
+            </value>
+            <next>
+
+              <!-- hum = dht11_hum() -->
+              <block type="variables_set" id="loop_set_hum">
+                <field name="VAR" id="var_hum">hum</field>
+                <value name="VALUE">
+                  <block type="dht11_hum" id="loop_read_hum"></block>
+                </value>
+                <next>
+
+                  <!-- Print "Temp: {temp} C   Hum: {hum} %" -->
+                  <block type="upy_print" id="loop_print">
+                    <value name="TEXT">
+                      <block type="text_join" id="loop_join">
+                        <mutation items="5"></mutation>
+                        <value name="ADD0">
+                          <block type="text" id="loop_t0"><field name="TEXT">Temp: </field></block>
+                        </value>
+                        <value name="ADD1">
+                          <block type="variables_get" id="loop_temp_show">
+                            <field name="VAR" id="var_temp">temp</field>
+                          </block>
+                        </value>
+                        <value name="ADD2">
+                          <block type="text" id="loop_t2"><field name="TEXT"> C   Hum: </field></block>
+                        </value>
+                        <value name="ADD3">
+                          <block type="variables_get" id="loop_hum_show">
+                            <field name="VAR" id="var_hum">hum</field>
+                          </block>
+                        </value>
+                        <value name="ADD4">
+                          <block type="text" id="loop_t4"><field name="TEXT"> %</field></block>
+                        </value>
+                      </block>
+                    </value>
+                    <next>
+
+                      <!-- Warn if temp > 30 or hum > 80 -->
+                      <block type="controls_if" id="loop_warn">
+                        <value name="IF0">
+                          <block type="logic_operation" id="loop_or">
+                            <field name="OP">OR</field>
+                            <value name="A">
+                              <block type="logic_compare" id="loop_hot">
+                                <field name="OP">GT</field>
+                                <value name="A">
+                                  <block type="variables_get" id="loop_temp_hot">
+                                    <field name="VAR" id="var_temp">temp</field>
+                                  </block>
+                                </value>
+                                <value name="B">
+                                  <block type="math_number" id="loop_30v"><field name="NUM">30</field></block>
+                                </value>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <block type="logic_compare" id="loop_humid">
+                                <field name="OP">GT</field>
+                                <value name="A">
+                                  <block type="variables_get" id="loop_hum_humid">
+                                    <field name="VAR" id="var_hum">hum</field>
+                                  </block>
+                                </value>
+                                <value name="B">
+                                  <block type="math_number" id="loop_80v"><field name="NUM">80</field></block>
+                                </value>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                        <statement name="DO0">
+                          <block type="upy_print" id="loop_warn_print">
+                            <value name="TEXT">
+                              <block type="text" id="loop_warn_v">
+                                <field name="TEXT">WARNING: high temp or humidity!</field>
+                              </block>
+                            </value>
+                          </block>
+                        </statement>
+                        <next>
+
+                          <!-- sleep 2000 ms — DHT11 needs at least 1 s between readings -->
+                          <block type="upy_sleep_ms" id="loop_sleep">
+                            <value name="MS">
+                              <shadow type="math_number" id="loop_sleep_v">
+                                <field name="NUM">2000</field>
+                              </shadow>
+                            </value>
+                          </block>
+
+                        </next>
+                      </block>
+
+                    </next>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

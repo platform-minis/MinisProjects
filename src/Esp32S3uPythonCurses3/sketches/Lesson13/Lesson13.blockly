@@ -1,0 +1,191 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="max7219_init" id="setup_init">
+        <next>
+          <block type="max7219_clear" id="setup_clear">
+            <next>
+              <block type="lcd_init" id="setup_lcd_init">
+                <next>
+                  <block type="lcd_write" id="setup_lcd_l1">
+                    <field name="ROW">0</field>
+                    <value name="TEXT">
+                      <block type="text" id="setup_lcd_l1_v">
+                        <field name="TEXT">MAX7219 + LCD</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="lcd_write" id="setup_lcd_l2">
+                        <field name="ROW">1</field>
+                        <value name="TEXT">
+                          <block type="text" id="setup_lcd_l2_v">
+                            <field name="TEXT">Ready</field>
+                          </block>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop: SMILEY → HEART → CROSS → ARROW_UP, each 1 500 ms ──────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="340">
+    <statement name="DO">
+
+      <!-- SMILEY -->
+      <block type="max7219_show" id="loop_show_smiley">
+        <field name="PATTERN">SMILEY</field>
+        <next>
+          <block type="lcd_write" id="loop_lcd1_smiley">
+            <field name="ROW">0</field>
+            <value name="TEXT">
+              <block type="text" id="loop_lcd1_smiley_v">
+                <field name="TEXT">Pattern:</field>
+              </block>
+            </value>
+            <next>
+              <block type="lcd_write" id="loop_lcd2_smiley">
+                <field name="ROW">1</field>
+                <value name="TEXT">
+                  <block type="text" id="loop_lcd2_smiley_v">
+                    <field name="TEXT">Smiley</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="upy_sleep_ms" id="loop_sleep_smiley">
+                    <value name="MS">
+                      <shadow type="math_number" id="loop_sleep_smiley_v">
+                        <field name="NUM">1500</field>
+                      </shadow>
+                    </value>
+
+                    <!-- HEART -->
+                    <next>
+                      <block type="max7219_show" id="loop_show_heart">
+                        <field name="PATTERN">HEART</field>
+                        <next>
+                          <block type="lcd_write" id="loop_lcd1_heart">
+                            <field name="ROW">0</field>
+                            <value name="TEXT">
+                              <block type="text" id="loop_lcd1_heart_v">
+                                <field name="TEXT">Pattern:</field>
+                              </block>
+                            </value>
+                            <next>
+                              <block type="lcd_write" id="loop_lcd2_heart">
+                                <field name="ROW">1</field>
+                                <value name="TEXT">
+                                  <block type="text" id="loop_lcd2_heart_v">
+                                    <field name="TEXT">Heart</field>
+                                  </block>
+                                </value>
+                                <next>
+                                  <block type="upy_sleep_ms" id="loop_sleep_heart">
+                                    <value name="MS">
+                                      <shadow type="math_number" id="loop_sleep_heart_v">
+                                        <field name="NUM">1500</field>
+                                      </shadow>
+                                    </value>
+
+                                    <!-- CROSS -->
+                                    <next>
+                                      <block type="max7219_show" id="loop_show_cross">
+                                        <field name="PATTERN">CROSS</field>
+                                        <next>
+                                          <block type="lcd_write" id="loop_lcd1_cross">
+                                            <field name="ROW">0</field>
+                                            <value name="TEXT">
+                                              <block type="text" id="loop_lcd1_cross_v">
+                                                <field name="TEXT">Pattern:</field>
+                                              </block>
+                                            </value>
+                                            <next>
+                                              <block type="lcd_write" id="loop_lcd2_cross">
+                                                <field name="ROW">1</field>
+                                                <value name="TEXT">
+                                                  <block type="text" id="loop_lcd2_cross_v">
+                                                    <field name="TEXT">Cross</field>
+                                                  </block>
+                                                </value>
+                                                <next>
+                                                  <block type="upy_sleep_ms" id="loop_sleep_cross">
+                                                    <value name="MS">
+                                                      <shadow type="math_number" id="loop_sleep_cross_v">
+                                                        <field name="NUM">1500</field>
+                                                      </shadow>
+                                                    </value>
+
+                                                    <!-- ARROW_UP -->
+                                                    <next>
+                                                      <block type="max7219_show" id="loop_show_arrow">
+                                                        <field name="PATTERN">ARROW_UP</field>
+                                                        <next>
+                                                          <block type="lcd_write" id="loop_lcd1_arrow">
+                                                            <field name="ROW">0</field>
+                                                            <value name="TEXT">
+                                                              <block type="text" id="loop_lcd1_arrow_v">
+                                                                <field name="TEXT">Pattern:</field>
+                                                              </block>
+                                                            </value>
+                                                            <next>
+                                                              <block type="lcd_write" id="loop_lcd2_arrow">
+                                                                <field name="ROW">1</field>
+                                                                <value name="TEXT">
+                                                                  <block type="text" id="loop_lcd2_arrow_v">
+                                                                    <field name="TEXT">Arrow up</field>
+                                                                  </block>
+                                                                </value>
+                                                                <next>
+                                                                  <block type="upy_sleep_ms" id="loop_sleep_arrow">
+                                                                    <value name="MS">
+                                                                      <shadow type="math_number" id="loop_sleep_arrow_v">
+                                                                        <field name="NUM">1500</field>
+                                                                      </shadow>
+                                                                    </value>
+                                                                  </block>
+                                                                </next>
+                                                              </block>
+                                                            </next>
+                                                          </block>
+                                                        </next>
+                                                      </block>
+                                                    </next>
+
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+                                      </block>
+                                    </next>
+
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

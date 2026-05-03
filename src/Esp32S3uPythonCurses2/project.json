@@ -1,0 +1,21 @@
+{
+  "id": "Esp32S3uPythonCurses2",
+  "name": "ESP32-S3 uPython Curses 2",
+  "description": "ESP32-S3 MicroPython course part 2 — MAX7219, KY-018, DHT11, HC-SR04, HC-SR501 and RC-522 RFID.",
+  "version": "1.0.0",
+  "softwarePlatform": "uPython",
+  "tags": ["esp32s3", "uPython", "max7219", "spi", "led-matrix", "ky018", "adc", "dht11", "hcsr04", "hcsr501", "pir", "rc522", "rfid", "joystick", "ps2"],
+  "moduleId": "esp32-s3-pico",
+  "libraries": [
+    { "url": "https://raw.githubusercontent.com/wendlers/micropython-mfrc522/master/mfrc522.py", "remoteName": "mfrc522.py" }
+  ],
+  "sketches": [
+    { "name": "Lesson13" },
+    { "name": "Lesson14" },
+    { "name": "Lesson15" },
+    { "name": "Lesson16" },
+    { "name": "Lesson17" },
+    { "name": "Lesson18" },
+    { "name": "Lesson19" }
+  ]
+}

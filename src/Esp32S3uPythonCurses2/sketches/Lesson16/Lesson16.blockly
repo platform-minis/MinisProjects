@@ -1,0 +1,128 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_dist">dist</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="upy_pin_init" id="setup_trig">
+        <field name="PIN">5</field>
+        <field name="MODE">OUT</field>
+        <field name="PULL">NONE</field>
+        <next>
+          <block type="upy_pin_init" id="setup_echo">
+            <field name="PIN">4</field>
+            <field name="MODE">IN</field>
+            <field name="PULL">NONE</field>
+            <next>
+              <block type="upy_print" id="setup_print">
+                <value name="TEXT">
+                  <block type="text" id="setup_print_v">
+                    <field name="TEXT">HC-SR04 ready  TRIG=GP5  ECHO=GP4</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="260">
+    <statement name="DO">
+
+      <!-- dist = hcsr04_measure() -->
+      <block type="variables_set" id="loop_set_dist">
+        <field name="VAR" id="var_dist">dist</field>
+        <value name="VALUE">
+          <block type="hcsr04_measure" id="loop_measure"></block>
+        </value>
+        <next>
+
+          <!-- if dist < 2 or dist > 400: "Out of range" else: "Distance: X cm" -->
+          <block type="controls_if" id="loop_if">
+            <mutation else="1"></mutation>
+            <value name="IF0">
+              <block type="logic_operation" id="loop_or">
+                <field name="OP">OR</field>
+                <value name="A">
+                  <block type="logic_compare" id="loop_lt2">
+                    <field name="OP">LT</field>
+                    <value name="A">
+                      <block type="variables_get" id="loop_dist_a">
+                        <field name="VAR" id="var_dist">dist</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="loop_n2"><field name="NUM">2</field></block>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="logic_compare" id="loop_gt400">
+                    <field name="OP">GT</field>
+                    <value name="A">
+                      <block type="variables_get" id="loop_dist_b">
+                        <field name="VAR" id="var_dist">dist</field>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="loop_n400"><field name="NUM">400</field></block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </value>
+            <statement name="DO0">
+              <block type="upy_print" id="loop_print_oor">
+                <value name="TEXT">
+                  <block type="text" id="loop_oor_v">
+                    <field name="TEXT">Out of range</field>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <statement name="ELSE">
+              <block type="upy_print" id="loop_print_dist">
+                <value name="TEXT">
+                  <block type="text_join" id="loop_join">
+                    <mutation items="3"></mutation>
+                    <value name="ADD0">
+                      <block type="text" id="loop_t0"><field name="TEXT">Distance: </field></block>
+                    </value>
+                    <value name="ADD1">
+                      <block type="variables_get" id="loop_dist_show">
+                        <field name="VAR" id="var_dist">dist</field>
+                      </block>
+                    </value>
+                    <value name="ADD2">
+                      <block type="text" id="loop_t2"><field name="TEXT"> cm</field></block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <next>
+
+              <!-- sleep 500 ms -->
+              <block type="upy_sleep_ms" id="loop_sleep">
+                <value name="MS">
+                  <shadow type="math_number" id="loop_sleep_v">
+                    <field name="NUM">500</field>
+                  </shadow>
+                </value>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

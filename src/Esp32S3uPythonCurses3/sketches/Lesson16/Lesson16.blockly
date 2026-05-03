@@ -1,0 +1,144 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="lcd_init" id="setup_lcd_init">
+        <next>
+          <block type="lcd_write" id="setup_lcd_l1">
+            <field name="ROW">0</field>
+            <value name="TEXT">
+              <block type="text" id="setup_lcd_l1_v">
+                <field name="TEXT">HC-SR04 ready</field>
+              </block>
+            </value>
+            <next>
+              <block type="lcd_write" id="setup_lcd_l2">
+                <field name="ROW">1</field>
+                <value name="TEXT">
+                  <block type="text" id="setup_lcd_l2_v">
+                    <field name="TEXT">TRIG=GP5 ECHO=GP4</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="260">
+    <statement name="DO">
+
+      <!-- dist = HC-SR04 measure -->
+      <block type="variables_set" id="loop_set_dist">
+        <field name="VAR">dist</field>
+        <value name="VALUE">
+          <block type="hcsr04_measure" id="loop_hcsr04"></block>
+        </value>
+        <next>
+
+          <!-- LCD line 1: "Distance:" -->
+          <block type="lcd_write" id="loop_lcd_l1">
+            <field name="ROW">0</field>
+            <value name="TEXT">
+              <block type="text" id="loop_lcd_l1_v">
+                <field name="TEXT">Distance:</field>
+              </block>
+            </value>
+            <next>
+
+              <!-- if dist < 0 or dist < 2 or dist > 400 → out of range -->
+              <block type="controls_if" id="loop_if_range">
+                <mutation else="1"></mutation>
+                <value name="IF0">
+                  <block type="logic_operation" id="loop_or_range">
+                    <field name="OP">OR</field>
+                    <value name="A">
+                      <block type="logic_compare" id="loop_cmp_neg">
+                        <field name="OP">LT</field>
+                        <value name="A">
+                          <block type="variables_get" id="loop_dist_neg">
+                            <field name="VAR">dist</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="loop_val_neg">
+                            <field name="NUM">2</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="logic_compare" id="loop_cmp_far">
+                        <field name="OP">GT</field>
+                        <value name="A">
+                          <block type="variables_get" id="loop_dist_far">
+                            <field name="VAR">dist</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="loop_val_far">
+                            <field name="NUM">400</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <statement name="DO0">
+                  <block type="lcd_write" id="loop_lcd_oor">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="text" id="loop_lcd_oor_v">
+                        <field name="TEXT">Out of range</field>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <statement name="ELSE">
+                  <block type="lcd_write" id="loop_lcd_dist">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="text_join" id="loop_lcd_dist_join">
+                        <mutation items="2"></mutation>
+                        <value name="ADD0">
+                          <block type="variables_get" id="loop_dist_val">
+                            <field name="VAR">dist</field>
+                          </block>
+                        </value>
+                        <value name="ADD1">
+                          <block type="text" id="loop_lcd_dist_suffix">
+                            <field name="TEXT"> cm</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <next>
+
+                  <!-- sleep 500 ms -->
+                  <block type="upy_sleep_ms" id="loop_sleep">
+                    <value name="MS">
+                      <shadow type="math_number" id="loop_sleep_v">
+                        <field name="NUM">500</field>
+                      </shadow>
+                    </value>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

@@ -1,0 +1,131 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="max7219_init" id="setup_init">
+        <next>
+          <block type="max7219_clear" id="setup_clear">
+            <next>
+              <block type="upy_print" id="setup_print">
+                <value name="TEXT">
+                  <block type="text" id="setup_print_v">
+                    <field name="TEXT">MAX7219 ready  CLK=GP18  DIN=GP19  CS=GP5</field>
+                  </block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop: SMILEY → HEART → CROSS → CLEAR, each 1 500 ms ─────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="280">
+    <statement name="DO">
+
+      <!-- SMILEY -->
+      <block type="max7219_show" id="loop_show_smiley">
+        <field name="PATTERN">SMILEY</field>
+        <next>
+          <block type="upy_print" id="loop_print_smiley">
+            <value name="TEXT">
+              <block type="text" id="loop_print_smiley_v">
+                <field name="TEXT">Smiley</field>
+              </block>
+            </value>
+            <next>
+              <block type="upy_sleep_ms" id="loop_sleep_1">
+                <value name="MS">
+                  <shadow type="math_number" id="loop_sleep_1_v">
+                    <field name="NUM">1500</field>
+                  </shadow>
+                </value>
+
+                <!-- HEART -->
+                <next>
+                  <block type="max7219_show" id="loop_show_heart">
+                    <field name="PATTERN">HEART</field>
+                    <next>
+                      <block type="upy_print" id="loop_print_heart">
+                        <value name="TEXT">
+                          <block type="text" id="loop_print_heart_v">
+                            <field name="TEXT">Heart</field>
+                          </block>
+                        </value>
+                        <next>
+                          <block type="upy_sleep_ms" id="loop_sleep_2">
+                            <value name="MS">
+                              <shadow type="math_number" id="loop_sleep_2_v">
+                                <field name="NUM">1500</field>
+                              </shadow>
+                            </value>
+
+                            <!-- CROSS -->
+                            <next>
+                              <block type="max7219_show" id="loop_show_cross">
+                                <field name="PATTERN">CROSS</field>
+                                <next>
+                                  <block type="upy_print" id="loop_print_cross">
+                                    <value name="TEXT">
+                                      <block type="text" id="loop_print_cross_v">
+                                        <field name="TEXT">Cross</field>
+                                      </block>
+                                    </value>
+                                    <next>
+                                      <block type="upy_sleep_ms" id="loop_sleep_3">
+                                        <value name="MS">
+                                          <shadow type="math_number" id="loop_sleep_3_v">
+                                            <field name="NUM">1500</field>
+                                          </shadow>
+                                        </value>
+
+                                        <!-- CLEAR -->
+                                        <next>
+                                          <block type="max7219_clear" id="loop_clear">
+                                            <next>
+                                              <block type="upy_print" id="loop_print_clear">
+                                                <value name="TEXT">
+                                                  <block type="text" id="loop_print_clear_v">
+                                                    <field name="TEXT">Clear</field>
+                                                  </block>
+                                                </value>
+                                                <next>
+                                                  <block type="upy_sleep_ms" id="loop_sleep_4">
+                                                    <value name="MS">
+                                                      <shadow type="math_number" id="loop_sleep_4_v">
+                                                        <field name="NUM">1500</field>
+                                                      </shadow>
+                                                    </value>
+                                                  </block>
+                                                </next>
+                                              </block>
+                                            </next>
+                                          </block>
+                                        </next>
+
+                                      </block>
+                                    </next>
+                                  </block>
+                                </next>
+                              </block>
+                            </next>
+
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>
