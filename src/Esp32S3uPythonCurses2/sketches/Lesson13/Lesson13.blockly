@@ -27,7 +27,7 @@
 
       <!-- SMILEY -->
       <block type="max7219_show" id="loop_show_smiley">
-        <field name="PATTERN">SMILEY</field>
+        <field name="PATTERN">60,66,165,129,165,153,66,60</field>
         <next>
           <block type="upy_print" id="loop_print_smiley">
             <value name="TEXT">
@@ -46,7 +46,7 @@
                 <!-- HEART -->
                 <next>
                   <block type="max7219_show" id="loop_show_heart">
-                    <field name="PATTERN">HEART</field>
+                    <field name="PATTERN">0,102,255,255,126,60,24,0</field>
                     <next>
                       <block type="upy_print" id="loop_print_heart">
                         <value name="TEXT">
@@ -65,7 +65,7 @@
                             <!-- CROSS -->
                             <next>
                               <block type="max7219_show" id="loop_show_cross">
-                                <field name="PATTERN">CROSS</field>
+                                <field name="PATTERN">129,66,36,24,24,36,66,129</field>
                                 <next>
                                   <block type="upy_print" id="loop_print_cross">
                                     <value name="TEXT">

@@ -2,6 +2,160 @@
 // MAX7219 8×8 LED matrix via SPI + KY-018 photoresistor via ADC
 // Available variables: Blockly, generator, addCategory({ name, colour, blocks }), Order, addLibrary({ url, remoteName })
 
+// ─── FieldLedMatrix: clickable 8×8 LED grid field ────────────────────────────
+// Inline view shows the pattern at scale; clicking opens a popup editor
+// with a larger grid and preset buttons.
+
+class FieldLedMatrix extends Blockly.Field {
+  static CELL   = 7;   // inline cell size (px)
+  static BORDER = 1;   // gap between cells (px)
+  static PRESETS = {
+    'Smiley':   [60, 66, 165, 129, 165, 153, 66, 60],
+    'Heart':    [0, 102, 255, 255, 126, 60, 24, 0],
+    'Cross':    [129, 66, 36, 24, 24, 36, 66, 129],
+    'Arrow ↑':  [24, 60, 126, 255, 24, 24, 24, 24],
+  };
+
+  constructor(value) {
+    super(Blockly.Field.SKIP_SETUP);
+    this.SERIALIZABLE = true;
+    this.CURSOR = 'pointer';
+    this._cells = null;
+    this.setValue(value || '60,66,165,129,165,153,66,60');
+  }
+
+  static fromJson(opt) {
+    return new FieldLedMatrix(opt['value'] || '60,66,165,129,165,153,66,60');
+  }
+
+  _getBytes() {
+    const v = this.getValue() || '0,0,0,0,0,0,0,0';
+    const parts = v.split(',').map(Number);
+    while (parts.length < 8) parts.push(0);
+    return parts.slice(0, 8);
+  }
+
+  initView() {
+    const C = FieldLedMatrix.CELL, B = FieldLedMatrix.BORDER;
+    this._cells = [];
+    for (let r = 0; r < 8; r++) {
+      const row = [];
+      for (let c = 0; c < 8; c++) {
+        const rect = Blockly.utils.dom.createSvgElement('rect', {
+          x: B + c * (C + B), y: B + r * (C + B),
+          width: C, height: C, rx: 1,
+          fill: '#2a2a2a', stroke: '#444', 'stroke-width': '0.5',
+        }, this.fieldGroup_);
+        row.push(rect);
+      }
+      this._cells.push(row);
+    }
+    this._updateCells();
+  }
+
+  _updateCells() {
+    if (!this._cells) return;
+    const bytes = this._getBytes();
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const on = (bytes[r] >> (7 - c)) & 1;
+        this._cells[r][c].setAttribute('fill', on ? '#FFD700' : '#2a2a2a');
+      }
+    }
+  }
+
+  doValueUpdate_(v) { super.doValueUpdate_(v); this._updateCells(); }
+
+  updateSize_() {
+    const C = FieldLedMatrix.CELL, B = FieldLedMatrix.BORDER;
+    const total = 8 * (C + B) + B;
+    this.size_ = { width: total + 4, height: total + 4 };
+  }
+
+  render_() { this._updateCells(); this.updateSize_(); }
+
+  showEditor_() {
+    const C = 18, B = 2, total = 8 * (C + B) + B;
+    const bytes = this._getBytes();
+    let painting = false, paintVal = 1;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'padding:8px;background:#1e1e1e;border-radius:6px;user-select:none;';
+
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('width', total); svg.setAttribute('height', total);
+    svg.style.cssText = 'display:block;cursor:crosshair;';
+
+    const cells = [];
+    const redraw = () => cells.forEach(({ r, c, el }) => {
+      el.setAttribute('fill', (bytes[r] >> (7 - c)) & 1 ? '#FFD700' : '#2a2a2a');
+    });
+    const paint = (r, c, v) => {
+      if (v) bytes[r] |= (1 << (7 - c)); else bytes[r] &= ~(1 << (7 - c));
+      redraw(); this.setValue(bytes.join(','));
+    };
+
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const el = document.createElementNS(NS, 'rect');
+        el.setAttribute('x', B + c * (C + B)); el.setAttribute('y', B + r * (C + B));
+        el.setAttribute('width', C); el.setAttribute('height', C); el.setAttribute('rx', 3);
+        el.setAttribute('fill', '#2a2a2a'); el.setAttribute('stroke', '#555');
+        el.setAttribute('stroke-width', '1');
+        svg.appendChild(el); cells.push({ r, c, el });
+      }
+    }
+    redraw();
+
+    svg.addEventListener('mousedown', (e) => {
+      const ci = cells.findIndex(x => x.el === e.target);
+      if (ci < 0) return; e.preventDefault(); painting = true;
+      const { r, c } = cells[ci];
+      paintVal = (bytes[r] >> (7 - c)) & 1 ? 0 : 1;
+      paint(r, c, paintVal);
+    });
+    svg.addEventListener('mouseover', (e) => {
+      if (!painting) return;
+      const ci = cells.findIndex(x => x.el === e.target);
+      if (ci >= 0) { const { r, c } = cells[ci]; paint(r, c, paintVal); }
+    });
+    document.addEventListener('mouseup', () => { painting = false; }, { once: true });
+    wrap.appendChild(svg);
+
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;';
+    for (const [label, preset] of Object.entries(FieldLedMatrix.PRESETS)) {
+      const btn = document.createElement('button');
+      btn.textContent = label;
+      btn.style.cssText = 'background:#333;color:#ddd;border:1px solid #555;border-radius:3px;padding:2px 8px;cursor:pointer;font-size:12px;';
+      btn.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        for (let i = 0; i < 8; i++) bytes[i] = preset[i];
+        redraw(); this.setValue(bytes.join(','));
+      });
+      btns.appendChild(btn);
+    }
+    const clr = document.createElement('button');
+    clr.textContent = 'Clear';
+    clr.style.cssText = 'background:#333;color:#888;border:1px solid #555;border-radius:3px;padding:2px 8px;cursor:pointer;font-size:12px;';
+    clr.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      for (let i = 0; i < 8; i++) bytes[i] = 0;
+      redraw(); this.setValue(bytes.join(','));
+    });
+    btns.appendChild(clr);
+    wrap.appendChild(btns);
+
+    Blockly.DropDownDiv.getContentDiv().appendChild(wrap);
+    Blockly.DropDownDiv.showPositionedByField(this, () => {});
+  }
+}
+
+try { Blockly.fieldRegistry.register('field_led_matrix', FieldLedMatrix); } catch (_) {}
+
+// ─── MAX7219 driver helpers (patterns inlined by generator, not named here) ──
+
 var _MAX7219_DEFS = `
 _REG_DECODE    = 0x09
 _REG_INTENSITY = 0x0A
@@ -26,10 +180,6 @@ def clear_display():
 def show_pattern(pattern):
     for row_idx, bits in enumerate(pattern):
         _write(row_idx + 1, bits)
-HEART    = [0x00, 0x66, 0xFF, 0xFF, 0x7E, 0x3C, 0x18, 0x00]
-SMILEY   = [0x3C, 0x42, 0xA5, 0x81, 0xA5, 0x99, 0x42, 0x3C]
-CROSS    = [0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81]
-ARROW_UP = [0x18, 0x3C, 0x7E, 0xFF, 0x18, 0x18, 0x18, 0x18]
 `;
 
 Blockly.defineBlocksWithJsonArray([
@@ -54,20 +204,15 @@ Blockly.defineBlocksWithJsonArray([
     message0: 'MAX7219 show %1',
     args0: [
       {
-        type: 'field_dropdown',
+        type: 'field_led_matrix',
         name: 'PATTERN',
-        options: [
-          ['smiley',   'SMILEY'],
-          ['heart',    'HEART'],
-          ['cross',    'CROSS'],
-          ['arrow up', 'ARROW_UP'],
-        ],
+        value: '60,66,165,129,165,153,66,60',
       },
     ],
     previousStatement: null,
     nextStatement: null,
     colour: 230,
-    tooltip: 'Display a built-in pixel pattern on the 8×8 LED matrix.',
+    tooltip: 'Display a pixel pattern on the 8×8 LED matrix. Click the grid to toggle LEDs or choose a preset.',
   },
   {
     type: 'max7219_brightness',
@@ -92,6 +237,18 @@ Blockly.defineBlocksWithJsonArray([
     nextStatement: null,
     colour: 230,
     tooltip: 'Show a vertical VU-meter bar: 0 = all off, 8 = all rows lit (bottom to top).',
+  },
+  {
+    type: 'max7219_show_var',
+    message0: 'MAX7219 show list %1',
+    args0: [
+      { type: 'input_value', name: 'PATTERN' },
+    ],
+    inputsInline: true,
+    previousStatement: null,
+    nextStatement: null,
+    colour: 230,
+    tooltip: 'Display a pattern on the 8×8 LED matrix from a list of 8 bytes (each 0–255). Connect a variable or list block.',
   },
   {
     type: 'ky018_read',
@@ -128,8 +285,13 @@ generator.forBlock['max7219_clear'] = function (_block, g) {
 generator.forBlock['max7219_show'] = function (block, g) {
   g.addImport('machine_spi', 'from machine import SPI, Pin');
   g.addImport('max7219_defs', _MAX7219_DEFS);
-  var pattern = block.getFieldValue('PATTERN');
-  return 'show_pattern(' + pattern + ')\n';
+  var val = block.getFieldValue('PATTERN') || '0,0,0,0,0,0,0,0';
+  var byteArr = val.split(',').map(Number);
+  while (byteArr.length < 8) byteArr.push(0);
+  var hexList = '[' + byteArr.slice(0, 8).map(function(b) {
+    return '0x' + (b & 0xFF).toString(16).toUpperCase().padStart(2, '0');
+  }).join(', ') + ']';
+  return 'show_pattern(' + hexList + ')\n';
 };
 
 generator.forBlock['max7219_brightness'] = function (block, g) {
@@ -149,6 +311,13 @@ generator.forBlock['max7219_show_bar'] = function (block, g) {
 `);
   var level = g.valueToCode(block, 'LEVEL', Order.NONE) || '0';
   return 'show_bar(' + level + ')\n';
+};
+
+generator.forBlock['max7219_show_var'] = function (block, g) {
+  g.addImport('machine_spi', 'from machine import SPI, Pin');
+  g.addImport('max7219_defs', _MAX7219_DEFS);
+  var pattern = g.valueToCode(block, 'PATTERN', Order.NONE) || '[0,0,0,0,0,0,0,0]';
+  return 'show_pattern(' + pattern + ')\n';
 };
 
 var _KY018_DEFS = `
@@ -179,6 +348,7 @@ addCategory({
     'max7219_init',
     'max7219_clear',
     'max7219_show',
+    'max7219_show_var',
     'max7219_brightness',
     'max7219_show_bar',
   ],
