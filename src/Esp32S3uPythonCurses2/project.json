@@ -9,6 +9,7 @@
   "libraries": [
     { "url": "https://raw.githubusercontent.com/wendlers/micropython-mfrc522/master/mfrc522.py", "remoteName": "mfrc522.py" }
   ],
+  "projectScriptPath": "src/Esp32S3uPythonCurses2/project.js",
   "sketches": [
     { "name": "Lesson13" },
     { "name": "Lesson14" },
