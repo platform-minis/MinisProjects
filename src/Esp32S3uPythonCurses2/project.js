@@ -368,11 +368,11 @@ addCategory({
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'dht11_measure',
-    message0: 'DHT11 measure (GP3)',
+    message0: 'DHT11 measure (GP9)',
     previousStatement: null,
     nextStatement: null,
     colour: 120,
-    tooltip: 'Trigger one measurement on the DHT11 sensor (DATA=GP3). Call before reading temperature or humidity.',
+    tooltip: 'Trigger one measurement on the DHT11 sensor (DATA=GP9). Call before reading temperature or humidity.',
   },
   {
     type: 'dht11_temp',
@@ -391,7 +391,7 @@ Blockly.defineBlocksWithJsonArray([
 ]);
 
 var _DHT11_DEFS = `
-_dht11 = dht.DHT11(Pin(3))
+_dht11 = dht.DHT11(Pin(9))
 def _dht11_measure():
     _dht11.measure()
 def _dht11_temp():

@@ -131,6 +131,8 @@ ESP32-S3 Pico         KY-018 module
 ```
 
 > **KY-018 pin order** (looking at the module from the front, pins pointing down): the leftmost pin is **S** (signal/analog out), the middle is **+** (VCC), the rightmost is **-** (GND). Always check the silkscreen on your specific module.
+>
+> **⚠ Common clone variant — S and GND are swapped:** Many KY-018 modules sold on AliExpress and similar marketplaces have the pin order **− | + | S** (GND on the left, signal on the right) instead of the standard **S | + | −**. If you connect such a module following the diagram above without checking the PCB labels, GND ends up on GP7 and the ADC reads **0** constantly. Always verify the **S**, **+** and **−** markings printed on your specific module's PCB before wiring.
 
 **How it works — voltage divider:**
 
@@ -158,7 +160,7 @@ Bar rows lit:  0–2       3–4        5–8
 ```text
 ESP32-S3 Pico         DHT11 module
 ┌──────────────┐     ┌──────────────┐
-│         GP3  ├─────┤ DATA (S)     │
+│         GP9  ├─────┤ DATA (S)     │
 │         3V3  ├─────┤ VCC (+)      │
 │         GND  ├─────┤ GND (−)      │
 └──────────────┘     └──────────────┘
@@ -167,14 +169,54 @@ ESP32-S3 Pico         DHT11 module
 > **Pull-up resistor:** The DHT11 DATA line requires a 4.7–10 kΩ pull-up to 3.3 V. Most breakout modules include it on the board. If using a bare 4-pin sensor, add a 10 kΩ resistor between DATA and 3.3 V manually.
 > **Minimum interval:** Do not call `measure()` more often than once every 1 second (2 s recommended). Faster polling returns stale or erroneous values.
 
-**Bare sensor pin order** (flat side facing you, pins pointing down):
+### Bare DHT11 sensor (no breakout module)
+
+If you have the standalone 4-pin component instead of a 3-pin breakout module, you **must** add an external 10 kΩ pull-up resistor — the bare sensor does not include one.
+
+**Pin identification** (hold the sensor with the ventilation grill facing you, pins pointing down):
 
 ```text
-Pin 1 → VCC (3.3 V)
-Pin 2 → DATA  ──[ 10 kΩ ]── VCC
-Pin 3 → NC (not connected)
-Pin 4 → GND
+  ┌─────────┐
+  │ ▓▓▓▓▓▓▓ │  ← ventilation grill (front)
+  │         │
+  └─┬─┬─┬─┬─┘
+    1 2 3 4
+
+  Pin 1 — VCC   (3.3 V)
+  Pin 2 — DATA  (signal)
+  Pin 3 — NC    (leave unconnected)
+  Pin 4 — GND
 ```
+
+**Wiring with pull-up resistor:**
+
+```text
+ESP32-S3 Pico              DHT11 (bare sensor)
+┌──────────────┐
+│         3V3  ├───────────────── Pin 1 (VCC)
+│              │         │
+│              │      [ 10 kΩ ]   ← pull-up resistor on breadboard
+│              │         │
+│         GP9  ├───────────────── Pin 2 (DATA)
+│              │
+│              │                  Pin 3 (NC — leave unconnected)
+│              │
+│         GND  ├───────────────── Pin 4 (GND)
+└──────────────┘
+```
+
+**Breadboard wiring order:**
+
+```text
+Step 1: DHT11 Pin 1 (VCC)  → breadboard rail 3V3
+Step 2: DHT11 Pin 4 (GND)  → breadboard rail GND
+Step 3: 10 kΩ resistor     → between Pin 1 (VCC) and Pin 2 (DATA) rows
+Step 4: DHT11 Pin 2 (DATA) → GP9 on ESP32-S3
+        DHT11 Pin 3 (NC)   → nothing
+```
+
+> **Why the pull-up is needed:** The DHT11 uses an open-drain single-wire protocol — both the sensor and the microcontroller pull the DATA line LOW to send bits, but neither actively drives it HIGH. The pull-up resistor provides the resting HIGH state. Without it the line floats, the timing is unreliable, and `measure()` raises `OSError` or returns garbage values.
+> **⚠ Symptom without pull-up:** if you see `OSError: [Errno 110] ETIMEDOUT` or the values freeze at 0 °C / 0 % — the pull-up resistor is missing or not connected.
 
 ---
 
@@ -675,11 +717,11 @@ Light: 3991  BRIGHT
 
 ```text
 ╔══ ▶ START ════════════════════════════════╗
-║  [Print]  "DHT11 ready  DATA=GP3"         ║
+║  [Print]  "DHT11 ready  DATA=GP9"         ║
 ╚═══════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ══════════════════════════════════════════╗
-║  [DHT11 measure (GP3)]                                 ║
+║  [DHT11 measure (GP9)]                                 ║
 ║  set temp = [DHT11 temperature]                        ║
 ║  set hum  = [DHT11 humidity]                           ║
 ║  [Print]  "Temp: " + temp + " C   Hum: " + hum + " %" ║
@@ -696,14 +738,14 @@ Light: 3991  BRIGHT
 from machine import Pin
 import dht, time
 
-_sensor = dht.DHT11(Pin(3))
+_sensor = dht.DHT11(Pin(9))
 
 def read_dht():
     _sensor.measure()
     return _sensor.temperature(), _sensor.humidity()
 
 def setup():
-    print('DHT11 ready  DATA=GP3')
+    print('DHT11 ready  DATA=GP9')
 
 def loop():
     temp, hum = read_dht()
@@ -716,7 +758,7 @@ def loop():
 **Example REPL output:**
 
 ```text
-DHT11 ready  DATA=GP3
+DHT11 ready  DATA=GP9
 Temp: 22 C   Hum: 55 %
 Temp: 22 C   Hum: 55 %
 Temp: 31 C   Hum: 83 %
@@ -1199,6 +1241,7 @@ This is useful for:
 | No LEDs light up | MAX7219 in shutdown mode or wrong CS polarity | Check that init_max7219() runs; verify GP5 → CS wiring |
 | All LEDs permanently on | Display Test register left at 0x01 | Send `_write(0x0F, 0x00)` to exit test mode |
 | Random garbage on display | Wrong SPI polarity/phase | MAX7219 uses `polarity=0, phase=0` (SPI mode 0) |
+| KY-018 ADC always reads 0 | S and GND pins swapped on clone module (pin order − \| + \| S instead of S \| + \| −) | Check the silkscreen on the module PCB; rewire so that the pin labelled **S** goes to GP7 |
 | Port not found | USB cable not connected or charge-only cable | Use a data USB cable |
 | `OSError: [Errno 16]` | Port busy | Close Thonny, mpremote, or other serial monitors |
 | Upload hangs | Board stuck in running program | Press `Ctrl + C` in terminal first, then upload |
