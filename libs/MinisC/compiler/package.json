@@ -1,0 +1,17 @@
+{
+  "name": "minisc-compiler",
+  "version": "1.0.0",
+  "description": "MinisC compiler — C-like language to .mbc bytecode for the MinisC VM",
+  "main": "dist/index.js",
+  "bin": { "minisc": "dist/index.js" },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "compile": "ts-node src/index.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}

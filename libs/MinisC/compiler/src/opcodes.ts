@@ -1,0 +1,56 @@
+// Must stay in sync with MinisOpcodes.h
+
+export const enum Op {
+    NOP          = 0x00,
+    POP          = 0x01,
+    DUP          = 0x02,
+    DUP2         = 0x03,
+    SWAP         = 0x04,
+
+    PUSH_NULL    = 0x05,
+    PUSH_TRUE    = 0x06,
+    PUSH_FALSE   = 0x07,
+    PUSH_IMM     = 0x08,
+    PUSH_INT     = 0x09,
+    PUSH_FLT     = 0x0A,
+    PUSH_STR     = 0x0B,
+
+    LOAD_GLOBAL  = 0x0C,
+    STORE_GLOBAL = 0x0D,
+    LOAD_LOCAL   = 0x0E,
+    STORE_LOCAL  = 0x0F,
+
+    IADD = 0x10, ISUB = 0x11, IMUL = 0x12, IDIV = 0x13, IMOD = 0x14, INEG = 0x15,
+    FADD = 0x16, FSUB = 0x17, FMUL = 0x18, FDIV = 0x19, FNEG = 0x1A,
+    BAND = 0x1B, BOR  = 0x1C, BXOR = 0x1D, BNOT = 0x1E, BSHL = 0x1F, BSHR = 0x20,
+
+    IEQ = 0x21, INE = 0x22, ILT = 0x23, ILE = 0x24, IGT = 0x25, IGE = 0x26,
+    FEQ = 0x27, FNE = 0x28, FLT = 0x29, FLE = 0x2A, FGT = 0x2B, FGE = 0x2C,
+    SEQ = 0x2D, SNE = 0x2E,
+
+    LAND = 0x2F, LOR = 0x30, LNOT = 0x31,
+
+    I2F = 0x32, F2I = 0x33, I2B = 0x34, F2B = 0x35,
+    I2S = 0x36, F2S = 0x37, B2S = 0x38, S2I = 0x39, S2F = 0x3A,
+
+    JUMP         = 0x3B,
+    JUMP_TRUE    = 0x3C,
+    JUMP_FALSE   = 0x3D,
+    JUMP_TRUE_K  = 0x3E,
+    JUMP_FALSE_K = 0x3F,
+
+    CALL         = 0x40,
+    CALL_NATIVE  = 0x41,
+    RETURN       = 0x42,
+    RETURN_VAL   = 0x43,
+
+    NEW_ARRAY = 0x44, ARR_GET = 0x45, ARR_SET = 0x46, ARR_LEN = 0x47,
+    STR_CAT   = 0x48, STR_LEN = 0x49, STR_CHAR = 0x4A,
+
+    IINC_LOCAL  = 0x4B, IDEC_LOCAL  = 0x4C,
+    IINC_GLOBAL = 0x4D, IDEC_GLOBAL = 0x4E,
+}
+
+export function isJumpOp(op: number): boolean {
+    return op >= 0x3B && op <= 0x3F;
+}
