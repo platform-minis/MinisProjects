@@ -1,0 +1,103 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_i">i</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="ws2812_clear" id="setup_clear">
+        <next>
+          <block type="upy_print" id="setup_print">
+            <value name="TEXT">
+              <block type="text" id="setup_text"><field name="TEXT">Wipe started</field></block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="270">
+    <statement name="DO">
+
+      <!-- fill clockwise: for i = 0 to 16 -->
+      <block type="controls_for" id="fill_for">
+        <field name="VAR" id="var_i">i</field>
+        <value name="FROM"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        <value name="TO"><shadow type="math_number"><field name="NUM">16</field></shadow></value>
+        <value name="BY"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+        <statement name="DO">
+
+          <!-- WS2812 set pixel i R=180 G=0 B=0 -->
+          <block type="ws2812_set" id="fill_set">
+            <value name="IDX"><block type="variables_get" id="fill_i"><field name="VAR" id="var_i">i</field></block></value>
+            <value name="R"><block type="math_number"><field name="NUM">180</field></block></value>
+            <value name="G"><block type="math_number"><field name="NUM">0</field></block></value>
+            <value name="B"><block type="math_number"><field name="NUM">0</field></block></value>
+            <next>
+              <block type="ws2812_write" id="fill_write">
+                <next>
+                  <block type="upy_sleep_ms" id="fill_sleep">
+                    <value name="MS"><shadow type="math_number"><field name="NUM">60</field></shadow></value>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+
+        </statement>
+        <next>
+
+          <!-- pause 300 ms -->
+          <block type="upy_sleep_ms" id="pause1">
+            <value name="MS"><shadow type="math_number"><field name="NUM">300</field></shadow></value>
+            <next>
+
+              <!-- clear clockwise: for i = 0 to 16 -->
+              <block type="controls_for" id="clear_for">
+                <field name="VAR" id="var_i">i</field>
+                <value name="FROM"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="TO"><shadow type="math_number"><field name="NUM">16</field></shadow></value>
+                <value name="BY"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                <statement name="DO">
+
+                  <!-- WS2812 set pixel i R=0 G=0 B=0 -->
+                  <block type="ws2812_set" id="clear_set">
+                    <value name="IDX"><block type="variables_get" id="clear_i"><field name="VAR" id="var_i">i</field></block></value>
+                    <value name="R"><block type="math_number"><field name="NUM">0</field></block></value>
+                    <value name="G"><block type="math_number"><field name="NUM">0</field></block></value>
+                    <value name="B"><block type="math_number"><field name="NUM">0</field></block></value>
+                    <next>
+                      <block type="ws2812_write" id="clear_write">
+                        <next>
+                          <block type="upy_sleep_ms" id="clear_sleep">
+                            <value name="MS"><shadow type="math_number"><field name="NUM">60</field></shadow></value>
+                          </block>
+                        </next>
+                      </block>
+                    </next>
+                  </block>
+
+                </statement>
+                <next>
+
+                  <!-- pause 300 ms -->
+                  <block type="upy_sleep_ms" id="pause2">
+                    <value name="MS"><shadow type="math_number"><field name="NUM">300</field></shadow></value>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

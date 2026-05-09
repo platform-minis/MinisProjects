@@ -1,0 +1,9 @@
+{
+  "id": "Esp32C3Lamp",
+  "name": "ESP32-C3 Lamp",
+  "description": "WS2812 LED ring lamp with 17 red LEDs on ESP32-C3 Super Mini.",
+  "version": "1.0.0",
+  "softwarePlatform": "uPython",
+  "tags": ["lamp", "ws2812", "neopixel", "esp32c3", "led"],
+  "moduleId": "esp32-c3-supermini"
+}

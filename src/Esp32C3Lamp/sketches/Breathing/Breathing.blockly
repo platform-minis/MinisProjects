@@ -1,0 +1,157 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_step">step</variable>
+    <variable id="var_t">t</variable>
+    <variable id="var_brightness">brightness</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="ws2812_fill_red" id="setup_fill">
+        <value name="VAL">
+          <shadow type="math_number" id="setup_min">
+            <field name="NUM">4</field>
+          </shadow>
+        </value>
+        <next>
+          <block type="upy_print" id="setup_print">
+            <value name="TEXT">
+              <block type="text" id="setup_text">
+                <field name="TEXT">Breathing started</field>
+              </block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop: one sine cycle (100 steps × 20 ms = 2 s per breath) ──────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="270">
+    <statement name="DO">
+
+      <block type="controls_for" id="loop_for">
+        <field name="VAR" id="var_step">step</field>
+        <value name="FROM">
+          <shadow type="math_number" id="for_from"><field name="NUM">0</field></shadow>
+        </value>
+        <value name="TO">
+          <shadow type="math_number" id="for_to"><field name="NUM">99</field></shadow>
+        </value>
+        <value name="BY">
+          <shadow type="math_number" id="for_by"><field name="NUM">1</field></shadow>
+        </value>
+        <statement name="DO">
+
+          <!-- t = (sin(2π × step / 100) + 1) / 2 -->
+          <block type="variables_set" id="set_t">
+            <field name="VAR" id="var_t">t</field>
+            <value name="VALUE">
+              <block type="math_arithmetic" id="t_div">
+                <field name="OP">DIVIDE</field>
+                <value name="A">
+                  <block type="math_arithmetic" id="t_add">
+                    <field name="OP">ADD</field>
+                    <value name="A">
+                      <block type="math_single" id="t_sin">
+                        <field name="OP">SIN</field>
+                        <value name="NUM">
+                          <block type="math_arithmetic" id="t_angle">
+                            <field name="OP">MULTIPLY</field>
+                            <value name="A">
+                              <block type="math_arithmetic" id="t_2pi">
+                                <field name="OP">MULTIPLY</field>
+                                <value name="A">
+                                  <block type="math_number" id="t_2"><field name="NUM">2</field></block>
+                                </value>
+                                <value name="B">
+                                  <block type="math_constant" id="t_pi"><field name="CONSTANT">PI</field></block>
+                                </value>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <block type="math_arithmetic" id="t_frac">
+                                <field name="OP">DIVIDE</field>
+                                <value name="A">
+                                  <block type="variables_get" id="t_step"><field name="VAR" id="var_step">step</field></block>
+                                </value>
+                                <value name="B">
+                                  <block type="math_number" id="t_100"><field name="NUM">100</field></block>
+                                </value>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="t_one"><field name="NUM">1</field></block>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="math_number" id="t_two"><field name="NUM">2</field></block>
+                </value>
+              </block>
+            </value>
+            <next>
+
+              <!-- brightness = 4 + t × (180 − 4) -->
+              <block type="variables_set" id="set_bright">
+                <field name="VAR" id="var_brightness">brightness</field>
+                <value name="VALUE">
+                  <block type="math_arithmetic" id="b_add">
+                    <field name="OP">ADD</field>
+                    <value name="A">
+                      <block type="math_number" id="b_min"><field name="NUM">4</field></block>
+                    </value>
+                    <value name="B">
+                      <block type="math_arithmetic" id="b_scale">
+                        <field name="OP">MULTIPLY</field>
+                        <value name="A">
+                          <block type="variables_get" id="b_t"><field name="VAR" id="var_t">t</field></block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="b_range"><field name="NUM">176</field></block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+
+                  <!-- WS2812 fill red brightness -->
+                  <block type="ws2812_fill_red" id="fill_red">
+                    <value name="VAL">
+                      <block type="variables_get" id="fill_bright">
+                        <field name="VAR" id="var_brightness">brightness</field>
+                      </block>
+                    </value>
+                    <next>
+
+                      <!-- sleep 20 ms -->
+                      <block type="upy_sleep_ms" id="step_sleep">
+                        <value name="MS">
+                          <shadow type="math_number" id="step_sleep_v">
+                            <field name="NUM">20</field>
+                          </shadow>
+                        </value>
+                      </block>
+
+                    </next>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </statement>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

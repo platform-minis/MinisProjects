@@ -1,0 +1,184 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_head">head</variable>
+    <variable id="var_i">i</variable>
+    <variable id="var_dist">dist</variable>
+    <variable id="var_b">b</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="ws2812_clear" id="setup_clear">
+        <next>
+          <block type="variables_set" id="setup_head">
+            <field name="VAR" id="var_head">head</field>
+            <value name="VALUE">
+              <block type="math_number" id="head_zero"><field name="NUM">0</field></block>
+            </value>
+            <next>
+              <block type="upy_print" id="setup_print">
+                <value name="TEXT">
+                  <block type="text" id="setup_text"><field name="TEXT">Comet started</field></block>
+                </value>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="300">
+    <statement name="DO">
+
+      <!-- for i = 0 to 16 -->
+      <block type="controls_for" id="loop_for_i">
+        <field name="VAR" id="var_i">i</field>
+        <value name="FROM"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        <value name="TO"><shadow type="math_number"><field name="NUM">16</field></shadow></value>
+        <value name="BY"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+        <statement name="DO">
+
+          <!-- dist = (head - i) % 17 -->
+          <block type="variables_set" id="set_dist">
+            <field name="VAR" id="var_dist">dist</field>
+            <value name="VALUE">
+              <block type="math_arithmetic" id="dist_mod">
+                <field name="OP">MODULO</field>
+                <value name="A">
+                  <block type="math_arithmetic" id="dist_sub">
+                    <field name="OP">MINUS</field>
+                    <value name="A">
+                      <block type="variables_get" id="dist_head"><field name="VAR" id="var_head">head</field></block>
+                    </value>
+                    <value name="B">
+                      <block type="variables_get" id="dist_i"><field name="VAR" id="var_i">i</field></block>
+                    </value>
+                  </block>
+                </value>
+                <value name="B">
+                  <block type="math_number" id="dist_17"><field name="NUM">17</field></block>
+                </value>
+              </block>
+            </value>
+            <next>
+
+              <!-- b = 255 if dist=0 else int(220*(1-dist/8)^2) if dist<8 else 0 -->
+              <block type="variables_set" id="set_b">
+                <field name="VAR" id="var_b">b</field>
+                <value name="VALUE">
+                  <block type="logic_ternary" id="b_t0">
+                    <value name="IF">
+                      <block type="logic_compare" id="b_eq0">
+                        <field name="OP">EQ</field>
+                        <value name="A"><block type="variables_get" id="b_d0"><field name="VAR" id="var_dist">dist</field></block></value>
+                        <value name="B"><block type="math_number"><field name="NUM">0</field></block></value>
+                      </block>
+                    </value>
+                    <value name="THEN"><block type="math_number"><field name="NUM">255</field></block></value>
+                    <value name="ELSE">
+                      <block type="logic_ternary" id="b_t1">
+                        <value name="IF">
+                          <block type="logic_compare" id="b_lt8">
+                            <field name="OP">LT</field>
+                            <value name="A"><block type="variables_get" id="b_d1"><field name="VAR" id="var_dist">dist</field></block></value>
+                            <value name="B"><block type="math_number"><field name="NUM">8</field></block></value>
+                          </block>
+                        </value>
+                        <value name="THEN">
+                          <!-- int(220 * (1 - dist/8)^2) -->
+                          <block type="math_single" id="b_int">
+                            <field name="OP">INT</field>
+                            <value name="NUM">
+                              <block type="math_arithmetic" id="b_scale">
+                                <field name="OP">MULTIPLY</field>
+                                <value name="A">
+                                  <block type="math_number"><field name="NUM">220</field></block>
+                                </value>
+                                <value name="B">
+                                  <!-- (1 - dist/8)^2 -->
+                                  <block type="math_arithmetic" id="b_pow">
+                                    <field name="OP">POWER</field>
+                                    <value name="A">
+                                      <block type="math_arithmetic" id="b_sub1">
+                                        <field name="OP">MINUS</field>
+                                        <value name="A"><block type="math_number"><field name="NUM">1</field></block></value>
+                                        <value name="B">
+                                          <block type="math_arithmetic" id="b_div8">
+                                            <field name="OP">DIVIDE</field>
+                                            <value name="A"><block type="variables_get" id="b_d2"><field name="VAR" id="var_dist">dist</field></block></value>
+                                            <value name="B"><block type="math_number"><field name="NUM">8</field></block></value>
+                                          </block>
+                                        </value>
+                                      </block>
+                                    </value>
+                                    <value name="B"><block type="math_number"><field name="NUM">2</field></block></value>
+                                  </block>
+                                </value>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                        <value name="ELSE"><block type="math_number"><field name="NUM">0</field></block></value>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+                <next>
+
+                  <!-- WS2812 set pixel i R=b G=0 B=0 -->
+                  <block type="ws2812_set" id="set_pixel">
+                    <value name="IDX"><block type="variables_get" id="px_i"><field name="VAR" id="var_i">i</field></block></value>
+                    <value name="R"><block type="variables_get" id="px_b"><field name="VAR" id="var_b">b</field></block></value>
+                    <value name="G"><block type="math_number" id="px_g"><field name="NUM">0</field></block></value>
+                    <value name="B"><block type="math_number" id="px_bl"><field name="NUM">0</field></block></value>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </statement>
+        <next>
+
+          <!-- WS2812 write -->
+          <block type="ws2812_write" id="loop_write">
+            <next>
+
+              <!-- head = (head + 1) % 17 -->
+              <block type="variables_set" id="advance_head">
+                <field name="VAR" id="var_head">head</field>
+                <value name="VALUE">
+                  <block type="math_arithmetic" id="head_mod">
+                    <field name="OP">MODULO</field>
+                    <value name="A">
+                      <block type="math_arithmetic" id="head_inc">
+                        <field name="OP">ADD</field>
+                        <value name="A"><block type="variables_get" id="h_get"><field name="VAR" id="var_head">head</field></block></value>
+                        <value name="B"><block type="math_number"><field name="NUM">1</field></block></value>
+                      </block>
+                    </value>
+                    <value name="B"><block type="math_number"><field name="NUM">17</field></block></value>
+                  </block>
+                </value>
+                <next>
+                  <block type="upy_sleep_ms" id="loop_sleep">
+                    <value name="MS"><shadow type="math_number"><field name="NUM">50</field></shadow></value>
+                  </block>
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

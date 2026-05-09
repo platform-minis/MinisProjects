@@ -1,0 +1,92 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_i">i</variable>
+    <variable id="var_r">r</variable>
+    <variable id="var_g">g</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="ws2812_clear" id="setup_clear">
+        <next>
+          <block type="upy_print" id="setup_print">
+            <value name="TEXT">
+              <block type="text" id="setup_text"><field name="TEXT">Fire started</field></block>
+            </value>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- ─── Loop ────────────────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="loop_block" x="50" y="270">
+    <statement name="DO">
+
+      <!-- for i = 0 to 16 -->
+      <block type="controls_for" id="loop_for_i">
+        <field name="VAR" id="var_i">i</field>
+        <value name="FROM"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        <value name="TO"><shadow type="math_number"><field name="NUM">16</field></shadow></value>
+        <value name="BY"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+        <statement name="DO">
+
+          <!-- r = random(120, 255) -->
+          <block type="variables_set" id="set_r">
+            <field name="VAR" id="var_r">r</field>
+            <value name="VALUE">
+              <block type="math_random_int" id="rand_r">
+                <value name="FROM"><shadow type="math_number"><field name="NUM">120</field></shadow></value>
+                <value name="TO"><shadow type="math_number"><field name="NUM">255</field></shadow></value>
+              </block>
+            </value>
+            <next>
+
+              <!-- g = random(0, 30) -->
+              <block type="variables_set" id="set_g">
+                <field name="VAR" id="var_g">g</field>
+                <value name="VALUE">
+                  <block type="math_random_int" id="rand_g">
+                    <value name="FROM"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                    <value name="TO"><shadow type="math_number"><field name="NUM">30</field></shadow></value>
+                  </block>
+                </value>
+                <next>
+
+                  <!-- WS2812 set pixel i R=r G=g B=0 -->
+                  <block type="ws2812_set" id="set_pixel">
+                    <value name="IDX"><block type="variables_get" id="px_i"><field name="VAR" id="var_i">i</field></block></value>
+                    <value name="R"><block type="variables_get" id="px_r"><field name="VAR" id="var_r">r</field></block></value>
+                    <value name="G"><block type="variables_get" id="px_g"><field name="VAR" id="var_g">g</field></block></value>
+                    <value name="B"><block type="math_number" id="px_bl"><field name="NUM">0</field></block></value>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </statement>
+        <next>
+
+          <!-- WS2812 write -->
+          <block type="ws2812_write" id="loop_write">
+            <next>
+
+              <!-- sleep 60 ms -->
+              <block type="upy_sleep_ms" id="loop_sleep">
+                <value name="MS"><shadow type="math_number"><field name="NUM">60</field></shadow></value>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

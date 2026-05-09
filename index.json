@@ -526,6 +526,77 @@
       "readmePath": "src/Esp32S3uPythonIot/docs/welcome.md"
     },
     {
+      "id": "Esp32C3Lamp",
+      "name": "ESP32-C3 Lamp",
+      "description": "WS2812 LED ring lamp with 17 red LEDs on ESP32-C3 Super Mini.",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-c3-supermini",
+      "version": "1.0.0",
+      "tags": [
+        "lamp",
+        "ws2812",
+        "neopixel",
+        "esp32c3",
+        "led"
+      ],
+      "path": "src/Esp32C3Lamp",
+      "hasSrc": true,
+      "hasDocs": false,
+      "sketches": [
+        {
+          "name": "SolidRed",
+          "files": [
+            "src/Esp32C3Lamp/sketches/SolidRed/SolidRed.blockly",
+            "src/Esp32C3Lamp/sketches/SolidRed/SolidRed.py"
+          ]
+        },
+        {
+          "name": "Breathing",
+          "files": [
+            "src/Esp32C3Lamp/sketches/Breathing/Breathing.blockly",
+            "src/Esp32C3Lamp/sketches/Breathing/Breathing.py"
+          ]
+        },
+        {
+          "name": "Chase",
+          "files": [
+            "src/Esp32C3Lamp/sketches/Chase/Chase.blockly",
+            "src/Esp32C3Lamp/sketches/Chase/Chase.py"
+          ]
+        },
+        {
+          "name": "Comet",
+          "files": [
+            "src/Esp32C3Lamp/sketches/Comet/Comet.blockly",
+            "src/Esp32C3Lamp/sketches/Comet/Comet.py"
+          ]
+        },
+        {
+          "name": "Fire",
+          "files": [
+            "src/Esp32C3Lamp/sketches/Fire/Fire.blockly",
+            "src/Esp32C3Lamp/sketches/Fire/Fire.py"
+          ]
+        },
+        {
+          "name": "Twinkle",
+          "files": [
+            "src/Esp32C3Lamp/sketches/Twinkle/Twinkle.blockly",
+            "src/Esp32C3Lamp/sketches/Twinkle/Twinkle.py"
+          ]
+        },
+        {
+          "name": "Wipe",
+          "files": [
+            "src/Esp32C3Lamp/sketches/Wipe/Wipe.blockly",
+            "src/Esp32C3Lamp/sketches/Wipe/Wipe.py"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32C3Lamp/README.md",
+      "projectScriptPath": "src/Esp32C3Lamp/project.js"
+    },
+    {
       "id": "Esp32S3Test",
       "name": "ESP32-S3-uPythonTest",
       "description": "ESP32-S3 test project for demonstrating functionality.",
