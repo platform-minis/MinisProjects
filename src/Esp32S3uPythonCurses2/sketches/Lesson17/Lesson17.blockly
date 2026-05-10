@@ -1,4 +1,8 @@
 <xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_det">det</variable>
+    <variable id="var_adc">adc</variable>
+  </variables>
 
   <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
   <block type="upy_start" id="setup_block" x="50" y="50">
@@ -6,7 +10,7 @@
       <block type="upy_print" id="setup_print">
         <value name="TEXT">
           <block type="text" id="setup_print_v">
-            <field name="TEXT">HC-SR501 PIR ready   OUT=GP2</field>
+            <field name="TEXT">TCRT5000 ready   D0=GP2  A0=GP10</field>
           </block>
         </value>
       </block>
@@ -17,39 +21,79 @@
   <block type="upy_forever" id="loop_block" x="50" y="200">
     <statement name="DO">
 
-      <!-- if HC-SR501 motion? → print "Motion detected!" else print "--" -->
-      <block type="controls_if" id="loop_if">
-        <mutation else="1"></mutation>
-        <value name="IF0">
-          <block type="hcsr501_read" id="loop_pir"></block>
+      <!-- det = tcrt5000_read() -->
+      <block type="variables_set" id="loop_set_det">
+        <field name="VAR" id="var_det">det</field>
+        <value name="VALUE">
+          <block type="tcrt5000_read" id="loop_read_d"></block>
         </value>
-        <statement name="DO0">
-          <block type="upy_print" id="loop_print_motion">
-            <value name="TEXT">
-              <block type="text" id="loop_motion_v">
-                <field name="TEXT">Motion detected!</field>
-              </block>
-            </value>
-          </block>
-        </statement>
-        <statement name="ELSE">
-          <block type="upy_print" id="loop_print_idle">
-            <value name="TEXT">
-              <block type="text" id="loop_idle_v">
-                <field name="TEXT">--</field>
-              </block>
-            </value>
-          </block>
-        </statement>
         <next>
 
-          <!-- sleep 500 ms -->
-          <block type="upy_sleep_ms" id="loop_sleep">
-            <value name="MS">
-              <shadow type="math_number" id="loop_sleep_v">
-                <field name="NUM">500</field>
-              </shadow>
+          <!-- adc = tcrt5000_adc() -->
+          <block type="variables_set" id="loop_set_adc">
+            <field name="VAR" id="var_adc">adc</field>
+            <value name="VALUE">
+              <block type="tcrt5000_adc" id="loop_read_a"></block>
             </value>
+            <next>
+
+              <!-- if det: "Object detected  ADC=<adc>" else: "--  ADC=<adc>" -->
+              <block type="controls_if" id="loop_if">
+                <mutation else="1"></mutation>
+                <value name="IF0">
+                  <block type="variables_get" id="loop_det_check">
+                    <field name="VAR" id="var_det">det</field>
+                  </block>
+                </value>
+                <statement name="DO0">
+                  <block type="upy_print" id="loop_print_det">
+                    <value name="TEXT">
+                      <block type="text_join" id="loop_join_det">
+                        <mutation items="2"></mutation>
+                        <value name="ADD0">
+                          <block type="text" id="loop_t_det"><field name="TEXT">Object detected   ADC=</field></block>
+                        </value>
+                        <value name="ADD1">
+                          <block type="variables_get" id="loop_adc_det">
+                            <field name="VAR" id="var_adc">adc</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <statement name="ELSE">
+                  <block type="upy_print" id="loop_print_idle">
+                    <value name="TEXT">
+                      <block type="text_join" id="loop_join_idle">
+                        <mutation items="2"></mutation>
+                        <value name="ADD0">
+                          <block type="text" id="loop_t_idle"><field name="TEXT">--   ADC=</field></block>
+                        </value>
+                        <value name="ADD1">
+                          <block type="variables_get" id="loop_adc_idle">
+                            <field name="VAR" id="var_adc">adc</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <next>
+
+                  <!-- sleep 300 ms -->
+                  <block type="upy_sleep_ms" id="loop_sleep">
+                    <value name="MS">
+                      <shadow type="math_number" id="loop_sleep_v">
+                        <field name="NUM">300</field>
+                      </shadow>
+                    </value>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
           </block>
 
         </next>

@@ -1,29 +1,34 @@
 import os, sys, io
-from machine import Pin
+from machine import Pin, ADC
 import time
 
-# HC-SR501 PIR motion sensor
+# TCRT5000 IR reflective sensor
 #
 # Wiring:
-#   OUT → GP2
-#   VCC → 5V  (VBUS pin)
+#   VCC → 3.3 V
 #   GND → GND
+#   D0  → GP2   (digital out — LOW (0) when object detected)
+#   A0  → GP10  (analog out — lower value = closer / more reflection)
 #
-# After power-on the sensor needs ~30 s to stabilise — avoid false triggers.
+# Adjust the onboard potentiometer to set the digital detection threshold.
 
-_pir = Pin(2, Pin.IN)
+_tcrt_d = Pin(2, Pin.IN)
+_tcrt_a = ADC(Pin(10))
+_tcrt_a.atten(ADC.ATTN_11DB)   # 0–3.3 V range → 0–4095
 
 
 def setup():
-    print('HC-SR501 PIR ready   OUT=GP2')
+    print('TCRT5000 ready   D0=GP2  A0=GP10')
 
 
 def loop():
-    if _pir.value():
-        print('Motion detected!')
+    detected = not _tcrt_d.value()   # D0 LOW → object detected
+    adc_val = _tcrt_a.read()
+    if detected:
+        print('Object detected   ADC=' + str(adc_val))
     else:
-        print('--')
-    time.sleep_ms(500)
+        print('--   ADC=' + str(adc_val))
+    time.sleep_ms(300)
 
 
 if __name__ == '__main__':

@@ -472,34 +472,51 @@ addCategory({
   blocks: ['hcsr04_measure'],
 });
 
-// ─── HC-SR501 blocks ──────────────────────────────────────────────────────
+// ─── TCRT5000 blocks ──────────────────────────────────────────────────────
 
 Blockly.defineBlocksWithJsonArray([
   {
-    type: 'hcsr501_read',
-    message0: 'HC-SR501 motion? (GP2)',
+    type: 'tcrt5000_read',
+    message0: 'TCRT5000 object? (D0=GP2)',
     output: 'Boolean',
     colour: 30,
-    tooltip: 'Return True if the HC-SR501 PIR sensor detects motion (OUT=GP2).',
+    tooltip: 'Return True when the TCRT5000 detects an object or reflective surface (D0=GP2, active LOW).',
+  },
+  {
+    type: 'tcrt5000_adc',
+    message0: 'TCRT5000 ADC (A0=GP10)',
+    output: 'Number',
+    colour: 30,
+    tooltip: 'Return the raw ADC value 0–4095 from the TCRT5000 analog output (A0=GP10). Lower value = more reflection = object closer.',
   },
 ]);
 
-var _HCSR501_DEFS = `
-_pir = Pin(2, Pin.IN)
-def _hcsr501_read():
-    return bool(_pir.value())
+var _TCRT5000_DEFS = `
+_tcrt_d = Pin(2, Pin.IN)
+_tcrt_a = ADC(Pin(10))
+_tcrt_a.atten(ADC.ATTN_11DB)
+def _tcrt5000_read():
+    return not _tcrt_d.value()
+def _tcrt5000_adc():
+    return _tcrt_a.read()
 `;
 
-generator.forBlock['hcsr501_read'] = function (_block, g) {
-  g.addImport('machine_pin_pir', 'from machine import Pin');
-  g.addImport('hcsr501_defs', _HCSR501_DEFS);
-  return ['_hcsr501_read()', Order.ATOMIC];
+generator.forBlock['tcrt5000_read'] = function (_block, g) {
+  g.addImport('machine_pin_tcrt', 'from machine import Pin, ADC');
+  g.addImport('tcrt5000_defs', _TCRT5000_DEFS);
+  return ['_tcrt5000_read()', Order.ATOMIC];
+};
+
+generator.forBlock['tcrt5000_adc'] = function (_block, g) {
+  g.addImport('machine_pin_tcrt', 'from machine import Pin, ADC');
+  g.addImport('tcrt5000_defs', _TCRT5000_DEFS);
+  return ['_tcrt5000_adc()', Order.ATOMIC];
 };
 
 addCategory({
-  name: 'HC-SR501',
+  name: 'TCRT5000',
   colour: '#e65100',
-  blocks: ['hcsr501_read'],
+  blocks: ['tcrt5000_read', 'tcrt5000_adc'],
 });
 
 // ─── RC-522 blocks ────────────────────────────────────────────────────────

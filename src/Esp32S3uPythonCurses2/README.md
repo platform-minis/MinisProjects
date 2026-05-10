@@ -1,6 +1,6 @@
 # MicroPython Course — ESP32-S3 Pico · Part 2
 
-A continuation of the hands-on MicroPython course for the **ESP32-S3** microcontroller. Part 2 covers seven independent lessons — one component per lesson: MAX7219 LED matrix, KY-018 light sensor, DHT11, HC-SR04, HC-SR501 PIR, RC-522 RFID reader, and PS2 joystick.
+A continuation of the hands-on MicroPython course for the **ESP32-S3** microcontroller. Part 2 covers seven independent lessons — one component per lesson: MAX7219 LED matrix, KY-018 light sensor, DHT11, HC-SR04, TCRT5000 IR reflective sensor, RC-522 RFID reader, and PS2 joystick.
 
 ---
 
@@ -44,8 +44,9 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 | **TRIG** | HC-SR04 trigger pin — a 10 µs HIGH pulse starts one measurement cycle |
 | **ECHO** | HC-SR04 echo pin — stays HIGH for a duration proportional to the measured distance; `duration [µs] / 58 ≈ distance [cm]` |
 | **time_pulse_us()** | MicroPython function that waits for a pin to reach a given level and measures how long it stays there; built-in timeout prevents infinite loops |
-| **HC-SR501** | PIR motion sensor — detects infrared radiation from warm moving bodies; digital OUT goes HIGH when motion is sensed (range up to 7 m, 120° detection cone) |
-| **PIR** | Passive Infrared — sensor that detects changes in infrared radiation caused by moving warm objects; requires no emitter, "passive" because it only receives |
+| **TCRT5000** | IR reflective sensor module — an IR LED emits infrared light; a phototransistor detects the reflected light; D0 (digital out) goes LOW when an object is close (active LOW); A0 (analog out) provides a proportional voltage: lower value = more reflection = closer object |
+| **IR LED** | Infrared Light-Emitting Diode — emits light at ~950 nm, invisible to the human eye; in the TCRT5000 it illuminates the surface in front of the sensor |
+| **Phototransistor** | Light-sensitive transistor — conducts when illuminated by reflected IR light; its conduction level is proportional to the amount of reflected light |
 | **RC-522** | RFID reader/writer IC — reads and writes 13.56 MHz MIFARE-compatible cards and tags over SPI; detects cards within ~3 cm |
 | **RFID** | Radio Frequency Identification — wireless technology where a reader energises a passive tag via an electromagnetic field; the tag responds with its stored data |
 | **MIFARE** | Contactless smartcard standard (13.56 MHz ISO 14443A) from NXP; the most common format for key fobs, transit cards and access control badges |
@@ -72,8 +73,9 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 | Pin | Mode | Component | Lessons |
 | --- | ---- | --------- | ------- |
 | 1 | ADC input | Joystick VRx | 19 |
-| 2 | Digital input | HC-SR501 OUT | 17 |
-| 3 | Digital in/out | DHT11 DATA | 15 |
+| 2 | Digital input | TCRT5000 D0 | 17 |
+| 9 | Digital in/out | DHT11 DATA | 15 |
+| 10 | ADC input | TCRT5000 A0 | 17 |
 | 4 | SPI MISO (dummy) / Digital input | Not connected (13) · HC-SR04 ECHO (16) | 13, 16 |
 | 5 | Digital output | MAX7219 CS (13) · HC-SR04 TRIG (16) | 13, 16 |
 | 6 | ADC input | Joystick VRy | 19 |
@@ -251,34 +253,35 @@ distance [cm] = duration [µs] / 58
 
 ---
 
-## Wiring — HC-SR501 PIR motion sensor (Lesson 17)
+## Wiring — TCRT5000 IR reflective sensor (Lesson 17)
 
 ```text
-ESP32-S3 Pico         HC-SR501
+ESP32-S3 Pico         TCRT5000 module
 ┌──────────────┐     ┌─────────┐
-│         GP2  ├─────┤ OUT     │
-│          5V  ├─────┤ VCC     │
+│         GP2  ├─────┤ D0      │
+│        GP10  ├─────┤ A0      │
+│         3.3V ├─────┤ VCC     │
 │         GND  ├─────┤ GND     │
 └──────────────┘     └─────────┘
 ```
 
-> **VCC at 5 V:** The HC-SR501 requires 4.5–20 V to operate correctly. Use the **VBUS** (5 V USB) pin on the ESP32-S3 Pico. The OUT pin outputs 3.3 V logic, which is safe to connect directly to GP2.
-> **Warm-up:** After power-on the sensor takes ~30 s to stabilise. Ignore the first readings — the output may toggle randomly until the pyroelectric element reaches thermal equilibrium.
+> **D0 is active LOW:** the digital output goes LOW (0) when an object or reflective surface is detected, and HIGH (1) when the path is clear.
+> **A0 analog output:** lower ADC value means more IR reflection (object closer). The ESP32-S3 reads this on GP10 via ADC1 (0–4095, 12-bit).
 
-**Onboard potentiometers:**
+**Onboard potentiometer:**
 
 ```text
-HC-SR501 (top view)
- ┌────────────────────────┐
- │  [Sx]         [Tx]     │   Sx = sensitivity  (CW → longer range, up to ~7 m)
- │                        │   Tx = time delay   (CW → longer HIGH duration, up to ~5 min)
- │     PIR lens            │
- │                        │
- │  VCC   OUT   GND       │
- └────────────────────────┘
+TCRT5000 module (top view)
+ ┌─────────────────────┐
+ │  IR LED   sensor    │
+ │                     │
+ │  [POT]  [LED]       │   POT = detection threshold
+ │                     │       CW → higher threshold (detects from further away)
+ │  VCC D0 A0 GND      │       CCW → lower threshold (only very close objects)
+ └─────────────────────┘
 ```
 
-Turn **Tx** fully counter-clockwise for the shortest HIGH duration (~0.3 s) — useful during development so you don't have to wait.
+Turn the potentiometer until the onboard indicator LED switches state at the desired detection distance.
 
 ---
 
@@ -862,75 +865,82 @@ Distance: 12.0 cm
 
 ---
 
-### Lesson 17 — HC-SR501 PIR motion sensor
+### Lesson 17 — TCRT5000 IR reflective sensor
 
-**Goal:** Detect movement using a passive infrared sensor and print a motion alert to the REPL.
+**Goal:** Detect objects using an infrared reflective sensor and read both its digital and analog outputs.
 
 **What happens:**
-`setup()` configures GP2 as a digital input and prints a ready message. Every 500 ms the `loop()` reads `_pir.value()`: `1` (HIGH) means the sensor has detected infrared radiation from a moving warm object, `0` (LOW) means no activity. The result is printed as `Motion detected!` or `--`.
+`setup()` initialises GP2 as digital input and GP10 as ADC, then prints a ready message. Every 300 ms `loop()` reads the digital output (`D0 LOW = detected`) and the raw ADC value from `A0`. Both are printed together — `Object detected  ADC=<value>` or `--  ADC=<value>` — so you can observe how the analog reading correlates with the distance to the reflecting surface.
 
 **Components used:**
 
-- **HC-SR501 PIR motion sensor** (3 pins: VCC, OUT, GND)
-- 3× jumper wires
+- **TCRT5000 IR reflective sensor module** (4 pins: VCC, GND, D0, A0)
+- 4× jumper wires
 
-**Wiring:** see *Wiring — HC-SR501* section above.
+**Wiring:** see *Wiring — TCRT5000* section above.
 
 **Blockly blocks:**
 
 ```text
-╔══ ▶ START ══════════════════════════════════╗
-║  [Print]  "HC-SR501 PIR ready  OUT=GP2"     ║
-╚═════════════════════════════════════════════╝
+╔══ ▶ START ══════════════════════════════════════════╗
+║  [Print]  "TCRT5000 ready   D0=GP2  A0=GP10"         ║
+╚═════════════════════════════════════════════════════╝
 
-╔══ 🔁 FOREVER ═══════════════════════════════════════════╗
-║  ╔══ If  [HC-SR501 motion? (GP2)] ════════════════╗    ║
-║  ║  [Print]  "Motion detected!"                   ║    ║
-║  ╠══ Else ════════════════════════════════════════╣    ║
-║  ║  [Print]  "--"                                 ║    ║
-║  ╚════════════════════════════════════════════════╝    ║
-║  [Sleep]  500 ms                                       ║
-╚═════════════════════════════════════════════════════════╝
+╔══ 🔁 FOREVER ══════════════════════════════════════════════════════╗
+║  det ← [TCRT5000 object? (D0=GP2)]                                ║
+║  adc ← [TCRT5000 ADC (A0=GP10)]                                    ║
+║  ╔══ If  det ══════════════════════════════════════════════╗       ║
+║  ║  [Print]  "Object detected   ADC=" + adc               ║       ║
+║  ╠══ Else ══════════════════════════════════════════════════╣      ║
+║  ║  [Print]  "--   ADC=" + adc                             ║       ║
+║  ╚════════════════════════════════════════════════════════╝        ║
+║  [Sleep]  300 ms                                                   ║
+╚════════════════════════════════════════════════════════════════════╝
 ```
 
 **MicroPython code:**
 
 ```python
-from machine import Pin
+from machine import Pin, ADC
 import time
 
-_pir = Pin(2, Pin.IN)
+_tcrt_d = Pin(2, Pin.IN)
+_tcrt_a = ADC(Pin(10))
+_tcrt_a.atten(ADC.ATTN_11DB)   # 0–3.3 V → 0–4095
 
 def setup():
-    print('HC-SR501 PIR ready   OUT=GP2')
+    print('TCRT5000 ready   D0=GP2  A0=GP10')
 
 def loop():
-    if _pir.value():
-        print('Motion detected!')
+    detected = not _tcrt_d.value()   # D0 LOW → object detected
+    adc_val = _tcrt_a.read()
+    if detected:
+        print('Object detected   ADC=' + str(adc_val))
     else:
-        print('--')
-    time.sleep_ms(500)
+        print('--   ADC=' + str(adc_val))
+    time.sleep_ms(300)
 ```
 
-**Example REPL output** (sit still, then wave your hand in front of the sensor):
+**Example REPL output** (move your hand slowly toward and away from the sensor):
 
 ```text
-HC-SR501 PIR ready   OUT=GP2
---
---
-Motion detected!
-Motion detected!
-Motion detected!
---
---
+TCRT5000 ready   D0=GP2  A0=GP10
+--   ADC=3980
+--   ADC=3850
+Object detected   ADC=620
+Object detected   ADC=310
+Object detected   ADC=180
+--   ADC=3910
+--   ADC=4020
 ```
 
 **What you learn:**
 
-- Reading a digital sensor with `Pin.IN` — no ADC or timing logic required
-- How a PIR sensor works: the pyroelectric element responds to changes in infrared flux from moving warm bodies
-- Why the sensor needs ~30 s warm-up time: the element must reach thermal equilibrium before it can detect relative changes
-- How to tune sensitivity and output duration via onboard potentiometers
+- Reading a digital output and an analog output from the same sensor module
+- Active-LOW logic: `not pin.value()` converts the inverted signal to an intuitive boolean
+- Using `ADC.ATTN_11DB` to extend the ADC range to the full 3.3 V supply
+- How a reflected IR signal correlates with distance: closer object → more reflection → lower ADC value
+- Adjusting a hardware potentiometer to calibrate a digital threshold
 
 ---
 
