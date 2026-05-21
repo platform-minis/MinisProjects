@@ -7,16 +7,12 @@
   "tags": ["test", "esp32s3", "uPython"],
   "moduleId": "esp32-s3-pico",
   "sketches": [
+    { "name": "LessonRgb" },
     { "name": "Lesson1" },
     { "name": "Lesson2" },
     { "name": "Lesson3" },
     { "name": "Lesson4" },
-    { "name": "Lesson5" },
-    { "name": "Lesson6" },
-    { "name": "Lesson7" },
-    { "name": "Lesson8" },
     { "name": "Lesson9" },
-    { "name": "Lesson10" },
     { "name": "Lesson11" },
     { "name": "Lesson12" }
   ]

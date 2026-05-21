@@ -1,0 +1,266 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <!--
+    LessonRgb — On-board RGB LED + BOOT button (simplified Blockly view).
+    This Blockly shows the essential structure: RGB init, GPIO button
+    detection (click = next color, hold = prev color), and color fill.
+
+    The full 5-animation version with rainbow / breathing / heartbeat /
+    color-shift / strobe effects is in Code mode (LessonRgb.py).
+    Open the sketch in Code mode to see and run the complete implementation.
+  -->
+
+  <variables>
+    <variable id="var_rgb">rgb</variable>
+    <variable id="var_btn">Btn1</variable>
+    <variable id="var_anim">anim</variable>
+  </variables>
+
+  <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
+  <block type="upy_start" id="LRgb_start" x="50" y="50">
+    <statement name="DO">
+
+      <!-- init RGB LED object (WS2812B on GP47) -->
+      <block type="upy_rgb_init" id="LRgb_rgb_init">
+        <field name="VAR" id="var_rgb">rgb</field>
+        <next>
+
+          <!-- init BOOT button: GP0, active LOW, internal pull-up -->
+          <block type="upy_pin_btn_init" id="LRgb_btn_init">
+            <field name="VAR" id="var_btn">Btn1</field>
+            <value name="PIN">
+              <shadow type="math_number" id="LRgb_pin_val">
+                <field name="NUM">0</field>
+              </shadow>
+            </value>
+            <field name="ACTIVE_LOW">True</field>
+            <field name="PULLUP">True</field>
+            <next>
+
+              <!-- anim = 0 (first color) -->
+              <block type="variables_set" id="LRgb_anim_init">
+                <field name="VAR" id="var_anim">anim</field>
+                <value name="VALUE">
+                  <block type="math_number" id="LRgb_zero">
+                    <field name="NUM">0</field>
+                  </block>
+                </value>
+                <next>
+
+                  <!-- turn LED off at startup -->
+                  <block type="upy_rgb_fill_color" id="LRgb_fill_off">
+                    <field name="VAR" id="var_rgb">rgb</field>
+                    <value name="COLOR">
+                      <block type="upy_ui_color" id="LRgb_color_off">
+                        <field name="MODE">PALETTE</field>
+                        <field name="COLOR">0x000000</field>
+                      </block>
+                    </value>
+                    <next>
+
+                      <block type="upy_print" id="LRgb_print_ready">
+                        <value name="TEXT">
+                          <block type="text" id="LRgb_text_ready">
+                            <field name="TEXT">RGB ready — short press = next, hold = prev</field>
+                          </block>
+                        </value>
+                      </block>
+
+                    </next>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+  <!-- ─── Forever (loop) ──────────────────────────────────────────────────── -->
+  <block type="upy_forever" id="LRgb_forever" x="50" y="480">
+    <statement name="DO">
+
+      <!-- update button state (must be called every loop iteration) -->
+      <block type="upy_pin_btn_tick" id="LRgb_tick">
+        <field name="VAR" id="var_btn">Btn1</field>
+        <next>
+
+          <!-- short press → next color: anim = (anim + 1) % 3 -->
+          <block type="controls_if" id="LRgb_if_click">
+            <value name="IF0">
+              <block type="upy_pin_btn_state" id="LRgb_clicked">
+                <field name="VAR" id="var_btn">Btn1</field>
+                <field name="STATE">WAS_CLICKED</field>
+              </block>
+            </value>
+            <statement name="DO0">
+              <block type="variables_set" id="LRgb_next">
+                <field name="VAR" id="var_anim">anim</field>
+                <value name="VALUE">
+                  <block type="math_arithmetic" id="LRgb_next_mod">
+                    <field name="OP">MODULO</field>
+                    <value name="A">
+                      <block type="math_arithmetic" id="LRgb_next_add">
+                        <field name="OP">ADD</field>
+                        <value name="A">
+                          <block type="variables_get" id="LRgb_anim_g1">
+                            <field name="VAR" id="var_anim">anim</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="LRgb_n1">
+                            <field name="NUM">1</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <value name="B">
+                      <block type="math_number" id="LRgb_mod3a">
+                        <field name="NUM">3</field>
+                      </block>
+                    </value>
+                  </block>
+                </value>
+              </block>
+            </statement>
+            <next>
+
+              <!-- long press → prev color: anim = (anim + 2) % 3  [= (anim-1) mod 3] -->
+              <block type="controls_if" id="LRgb_if_hold">
+                <value name="IF0">
+                  <block type="upy_pin_btn_state" id="LRgb_held">
+                    <field name="VAR" id="var_btn">Btn1</field>
+                    <field name="STATE">WAS_HOLD</field>
+                  </block>
+                </value>
+                <statement name="DO0">
+                  <block type="variables_set" id="LRgb_prev">
+                    <field name="VAR" id="var_anim">anim</field>
+                    <value name="VALUE">
+                      <block type="math_arithmetic" id="LRgb_prev_mod">
+                        <field name="OP">MODULO</field>
+                        <value name="A">
+                          <block type="math_arithmetic" id="LRgb_prev_add">
+                            <field name="OP">ADD</field>
+                            <value name="A">
+                              <block type="variables_get" id="LRgb_anim_g2">
+                                <field name="VAR" id="var_anim">anim</field>
+                              </block>
+                            </value>
+                            <value name="B">
+                              <block type="math_number" id="LRgb_n2">
+                                <field name="NUM">2</field>
+                              </block>
+                            </value>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="LRgb_mod3b">
+                            <field name="NUM">3</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                  </block>
+                </statement>
+                <next>
+
+                  <!-- display color based on anim index (0=red, 1=green, 2=blue) -->
+                  <block type="controls_if" id="LRgb_if_anim" inline="false">
+                    <mutation elseif="1" else="1"/>
+                    <!-- anim == 0 → red -->
+                    <value name="IF0">
+                      <block type="logic_compare" id="LRgb_cmp0">
+                        <field name="OP">EQ</field>
+                        <value name="A">
+                          <block type="variables_get" id="LRgb_anim_g3">
+                            <field name="VAR" id="var_anim">anim</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="LRgb_v0">
+                            <field name="NUM">0</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <statement name="DO0">
+                      <block type="upy_rgb_fill_color" id="LRgb_fill_red">
+                        <field name="VAR" id="var_rgb">rgb</field>
+                        <value name="COLOR">
+                          <block type="upy_ui_color" id="LRgb_color_red">
+                            <field name="MODE">PALETTE</field>
+                            <field name="COLOR">0xff0000</field>
+                          </block>
+                        </value>
+                      </block>
+                    </statement>
+                    <!-- anim == 1 → green -->
+                    <value name="IF1">
+                      <block type="logic_compare" id="LRgb_cmp1">
+                        <field name="OP">EQ</field>
+                        <value name="A">
+                          <block type="variables_get" id="LRgb_anim_g4">
+                            <field name="VAR" id="var_anim">anim</field>
+                          </block>
+                        </value>
+                        <value name="B">
+                          <block type="math_number" id="LRgb_v1">
+                            <field name="NUM">1</field>
+                          </block>
+                        </value>
+                      </block>
+                    </value>
+                    <statement name="DO1">
+                      <block type="upy_rgb_fill_color" id="LRgb_fill_green">
+                        <field name="VAR" id="var_rgb">rgb</field>
+                        <value name="COLOR">
+                          <block type="upy_ui_color" id="LRgb_color_green">
+                            <field name="MODE">PALETTE</field>
+                            <field name="COLOR">0x00ff00</field>
+                          </block>
+                        </value>
+                      </block>
+                    </statement>
+                    <!-- else → blue -->
+                    <statement name="ELSE">
+                      <block type="upy_rgb_fill_color" id="LRgb_fill_blue">
+                        <field name="VAR" id="var_rgb">rgb</field>
+                        <value name="COLOR">
+                          <block type="upy_ui_color" id="LRgb_color_blue">
+                            <field name="MODE">PALETTE</field>
+                            <field name="COLOR">0x0000ff</field>
+                          </block>
+                        </value>
+                      </block>
+                    </statement>
+                    <next>
+
+                      <block type="upy_sleep_ms" id="LRgb_sleep">
+                        <value name="MS">
+                          <shadow type="math_number" id="LRgb_sleep_val">
+                            <field name="NUM">20</field>
+                          </shadow>
+                        </value>
+                      </block>
+
+                    </next>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>

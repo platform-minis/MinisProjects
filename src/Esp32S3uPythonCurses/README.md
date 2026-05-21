@@ -17,6 +17,12 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | Term | Description |
 | ---- | ----------- |
 | **GPIO** | General Purpose Input/Output — a microcontroller pin that can act as a digital input or output |
+| **WS2812B** | Addressable RGB LED (NeoPixel) — receives colour data over a single wire using a precise timing protocol; on the ESP32-S3 Pico it is the on-board LED on GP47 |
+| **NeoPixel** | Common name for WS2812B-compatible addressable LEDs; MicroPython provides the built-in `neopixel` module to drive them |
+| **HSV** | Hue-Saturation-Value colour model — hue (0–360°) selects the colour, saturation controls vividness, value controls brightness |
+| **Active LOW** | A signal that is "active" (button pressed, LED on) when the voltage is 0 V; the BOOT button on the ESP32-S3 Pico reads 0 when pressed, 1 when released |
+| **Pull-up resistor** | A resistor (usually internal to the MCU) connecting a pin to 3.3 V, ensuring a HIGH state when the button is released |
+| **Short press / Long press** | Two distinct button gestures distinguished by duration; the sketch uses 600 ms as the threshold |
 | **Pin.OUT** | Output mode — the microcontroller drives the voltage (0 V or 3.3 V) |
 | **Pin.IN** | Input mode — the microcontroller reads the state of an external signal |
 | **ADC** | Analog-to-Digital Converter — converts a voltage (0–3.3 V) into an integer value |
@@ -50,26 +56,46 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 
 | Pin | Mode | Component | Lessons |
 | --- | ---- | --------- | ------- |
+| 0 | Digital input | BOOT button (active LOW, built-in) | LessonRgb |
 | 3 | Digital in/out | DHT11 DATA | Lesson 12 |
 | 4 | Digital input | PIR motion sensor (OUT) | Lesson 11 |
-| 4 | Digital output | ULN2003 IN1 (stepper motor) | Lesson 8 |
-| 5 | Digital output | ULN2003 IN2 (stepper motor) | Lesson 8 |
-| 5 | Digital output | HC-SR04 TRIG | Lesson 10 |
-| 6 | Digital output | ULN2003 IN3 (stepper motor) | Lesson 8 |
-| 4 | Digital input | HC-SR04 ECHO | Lesson 10 |
-| 7 | ADC input | Photoresistor (LDR) | Lesson 6 |
-| 19 | Digital input | VS1838B IR receiver (data) | Lesson 5 |
 | 11 | Digital output | LED | Lesson 1, 2, 4 |
 | 12 | Digital output | LED (red) | Lesson 3 |
 | 13 | Digital output | LED (yellow) | Lesson 3 |
 | 14 | Digital output | LED (green) | Lesson 3 |
 | 16 | Digital input | Tactile button | Lesson 4 |
-| 17 | Digital output | ULN2003 IN4 (stepper motor) | Lesson 8 |
 | 18 | PWM output | Passive buzzer | Lesson 9 |
+| 47 | Digital output | WS2812B on-board RGB LED (built-in) | LessonRgb |
 
 ---
 
 ## Wiring Diagrams
+
+### On-board RGB LED and BOOT button (LessonRgb)
+
+No external wiring needed — both components are soldered onto the board.
+
+```text
+ESP32-S3 Pico — built-in components
+┌──────────────────────────────────────────┐
+│  GP47 ──── WS2812B (RGB LED)  ←on-board │
+│  GP0  ──── BOOT button        ←on-board │
+│            (active LOW — reads 0 when    │
+│             pressed, 1 when released)    │
+└──────────────────────────────────────────┘
+```
+
+> **No external components needed for LessonRgb.** The WS2812B and BOOT button are mounted directly on the PCB.
+> If the LED does not light up, check that your MicroPython firmware was compiled with NeoPixel support (all standard ESP32-S3 builds include it). If the colour is wrong or the LED is very dim, try changing `_RGB_PIN` to 48 — some board revisions use GP48 instead of GP47.
+
+**BOOT button behaviour:**
+
+```text
+Button released:  GP0 ──[internal pull-up]── 3.3 V   → reads 1
+Button pressed:   GP0 ──[switch]── GND                → reads 0
+```
+
+---
 
 ### LED connection (Lessons 1, 2, 4)
 
@@ -142,54 +168,6 @@ GND ──────────┘         │
 
 ---
 
-### IR receiver — VS1838B (Lesson 5)
-
-```text
-VS1838B (front view — flat side facing you)
-┌─────────────┐
-│  ○   ○   ○  │
-│  │   │   │  │
-│ OUT  GND  VCC│
-│  │   │   │  │
-│  │   │   │  │
-  GP19  GND  3V3
-```
-
-> **VS1838B pinout** (flat side facing you, pins down): left = OUT (signal), middle = GND, right = VCC (3.3 V).
-
-```text
-ESP32-S3 Pico
-┌──────────────┐
-│        GP19  ├──── OUT  (VS1838B left pin)
-│         3V3  ├──── VCC  (VS1838B right pin)
-│         GND  ├──── GND  (VS1838B middle pin)
-└──────────────┘
-```
-
-> **No extra resistor or capacitor needed** — the VS1838B module has internal filtering and a 3.3 V-compatible output that connects directly to any GPIO input pin.
-
----
-
-### Photoresistor — voltage divider (Lesson 6)
-
-```text
-3.3 V ──── LDR (photoresistor) ──┬──── GP7 (ADC)
-                                 │
-                             R 10kΩ (fixed)
-                                 │
-                                GND
-```
-
-How it works: the LDR and fixed resistor form a voltage divider. In the **dark**, LDR resistance rises → voltage at GP7 drops → low ADC reading. In **bright light**, LDR resistance falls → voltage at GP7 rises → high ADC reading.
-
-```text
-Light level:  │░░░░░░░░░│▒▒▒▒▒▒▒▒▒│█████████│
-ADC reading:  0       1000       2500      4095
-Category:    DARK     NORMAL      BRIGHT
-```
-
----
-
 ### Passive buzzer connection (Lesson 9)
 
 ```text
@@ -207,86 +185,6 @@ GP18 ──── (+) terminal of passive buzzer
 GND  ──── (−) terminal of passive buzzer
 ```
 
----
-
-### DHT11 temperature and humidity sensor (Lesson 12)
-
-```text
-ESP32-S3 Pico        DHT11 module
-┌──────────────┐    ┌──────────────┐
-│         3V3  ├────┤ VCC (+)      │
-│         GND  ├────┤ GND (−)      │
-│         GP3  ├────┤ DATA (S)     │
-└──────────────┘    └──────────────┘
-```
-
-> **Pull-up resistor:** The DHT11 DATA line requires a 4.7–10 kΩ pull-up to 3.3 V. Most breakout modules already include it on the board. If you use a bare sensor (4-pin package), add a 10 kΩ resistor between DATA and 3.3 V.
-> **Minimum interval:** Do not call `measure()` more often than once every 1 second (recommended 2 s). Faster polling returns stale or erroneous values.
-
-**Bare sensor vs module:**
-
-```text
-Bare DHT11 (4 pins, left to right — flat side facing you):
-  Pin 1 → VCC (3.3 V)
-  Pin 2 → DATA  ──[ 10kΩ ]── VCC
-  Pin 3 → NC (not connected)
-  Pin 4 → GND
-```
-
----
-
-### HC-SR04 ultrasonic distance sensor (Lesson 10)
-
-```text
-ESP32-S3 Pico        HC-SR04
-┌──────────────┐    ┌─────────┐
-│         3V3  ├────┤ VCC     │
-│         GND  ├────┤ GND     │
-│         GP5  ├────┤ TRIG    │
-│         GP4  ├────┤ ECHO    │
-└──────────────┘    └─────────┘
-```
-
-> **Voltage note:** The HC-SR04 operates at 5 V but its ECHO pin outputs 5 V logic. On a 3.3 V board like the ESP32-S3, power the module from 3.3 V — this also lowers the ECHO output to ~3.3 V, which is safe to connect directly to a GPIO input pin.
-
-**How it works:**
-
-```text
-   TRIG: ──┐ 10 µs ┌──────────────────────────────── LOW
-           └───────┘
-
-   ECHO: ────────────────┐          ┌─────────────────── LOW
-                         │←────────→│
-                         │ duration │ = distance × 2 / 343 m/s
-                         └──────────┘
-         HIGH when echo received
-
-   distance [cm] = duration [µs] / 58
-```
-
----
-
-### PIR motion sensor (Lesson 11)
-
-```text
-ESP32-S3 Pico        PIR module
-┌──────────────┐    ┌──────────────┐
-│         3V3  ├────┤ VCC          │
-│         GND  ├────┤ GND          │
-│         GP4  ├────┤ OUT (signal) │
-└──────────────┘    └──────────────┘
-
-GP11 ──── 330Ω ──── LED (+) ──── LED (−) ──── GND
-```
-
-> **Most PIR modules** (e.g. HC-SR501) accept 5 V or 3.3 V and output a 3.3 V-compatible HIGH signal — they can be connected directly to any GPIO input pin. Check your module's datasheet.
-
-**Behavior:**
-
-```text
-No motion:   OUT ── LOW  (0 V)
-Motion:      OUT ── HIGH (3.3 V)  for 2–10 s (adjustable via onboard potentiometer)
-```
 
 ---
 
@@ -659,6 +557,195 @@ Each lesson is shown in two forms: **Blockly blocks** (visual editor) and **Micr
 
 ---
 
+### LessonRgb — On-board RGB LED animations
+
+**Goal:** Drive the WS2812B RGB LED built into the ESP32-S3 Pico board through five different light animations, switching between them with the BOOT button — no external components required.
+
+**What happens:**
+The sketch runs one of five animations on the on-board RGB LED (GP47). Pressing the BOOT button (GP0) cycles forward through animations; holding it for more than 600 ms cycles backward. The active animation name is printed to the REPL each time it changes.
+
+| # | Animation | Description |
+| - | --------- | ----------- |
+| 0 | **Rainbow** | Continuously rotates through the full colour wheel (HSV hue 0–360°) |
+| 1 | **Breathing** | Fades white in and out using a sine-wave brightness curve |
+| 2 | **Heartbeat** | Red double-pulse with a long pause — mimics a heartbeat rhythm |
+| 3 | **Color shift** | Smoothly transitions between colours sampled at golden-angle (137°) steps |
+| 4 | **Strobe** | Rapid white flashes with a dark gap — classic strobe effect |
+
+**Button gestures:**
+
+```text
+Short press  (< 600 ms):  next animation  →
+Long press   (≥ 600 ms):  prev animation  ←
+```
+
+> **Note:** This lesson requires **Code mode** for the full implementation.
+> The Blockly view shows a simplified 3-colour version using the RGB and Button blocks.
+> Open the sketch in Code mode to see and run all five animations.
+
+**No wiring needed** — see the *On-board RGB LED and BOOT button* section.
+
+**Key concepts:**
+
+```text
+neopixel.NeoPixel(Pin(47), 1)   # 1 addressable LED on GP47
+_np[0] = (R, G, B)              # set colour as (0-255, 0-255, 0-255)
+_np.write()                     # push data to the LED
+Pin(0, Pin.IN, Pin.PULL_UP)     # BOOT button with internal pull-up
+_btn.value() == 0               # True when button is pressed (active LOW)
+time.ticks_ms()                 # millisecond timestamp for long-press detection
+time.ticks_diff(now, start)     # elapsed time, safe across 32-bit rollover
+```
+
+**HSV → RGB conversion (used by Rainbow and Color shift):**
+
+```text
+Hue (H):        0°=red  60°=yellow  120°=green  180°=cyan  240°=blue  300°=magenta
+Saturation (S): 0.0=white  →  1.0=pure colour
+Value (V):      0.0=off   →  1.0=full brightness
+
+Example:
+  _hsv(0,   1.0, 1.0) → (255,  0,   0)   red
+  _hsv(120, 1.0, 1.0) → (0,  255,   0)   green
+  _hsv(240, 1.0, 1.0) → (0,    0, 255)   blue
+  _hsv(60,  1.0, 0.5) → (127, 127,  0)   dark yellow
+```
+
+**Blockly blocks (simplified — 3 colours):**
+
+```text
+╔══ ▶ START ══════════════════════════════════════════════════╗
+║  [Init RGB]    rgb                                          ║
+║  [Init Button] Btn1  pin=0  active_low=True  pullup=True   ║
+║  [Set]         anim = 0                                     ║
+║  [RGB fill]    rgb  color=OFF                               ║
+║  [Print]       "RGB ready — short press = next, hold = prev"║
+╚═════════════════════════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═══════════════════════════════════════════════╗
+║  [Button tick]  Btn1                                        ║
+║  ╔══ If  Btn1  was clicked ═══════════════════════════════╗  ║
+║  ║  [Set]  anim = (anim + 1) % 3                         ║  ║
+║  ╚════════════════════════════════════════════════════════╝  ║
+║  ╔══ If  Btn1  was hold ══════════════════════════════════╗  ║
+║  ║  [Set]  anim = (anim + 2) % 3   [= prev mod 3]        ║  ║
+║  ╚════════════════════════════════════════════════════════╝  ║
+║  ╔══ If anim == 0 ════════════════════════════════════════╗  ║
+║  ║  [RGB fill]  rgb  red                                  ║  ║
+║  ╠══ Else if anim == 1 ══════════════════════════════════╣  ║
+║  ║  [RGB fill]  rgb  green                                ║  ║
+║  ╠══ Else ════════════════════════════════════════════════╣  ║
+║  ║  [RGB fill]  rgb  blue                                 ║  ║
+║  ╚════════════════════════════════════════════════════════╝  ║
+║  [Sleep]  20 ms                                             ║
+╚═════════════════════════════════════════════════════════════╝
+```
+
+**MicroPython code (full 5-animation version — Code mode):**
+
+```python
+import neopixel
+from machine import Pin
+import time
+import math
+
+_RGB_PIN = 47   # WS2812B on-board LED
+_BTN_PIN = 0    # BOOT button, active LOW
+
+_np  = neopixel.NeoPixel(Pin(_RGB_PIN), 1)
+_btn = Pin(_BTN_PIN, Pin.IN, Pin.PULL_UP)
+
+_ANIM_COUNT = 5
+_anim_idx   = 0
+_NAMES      = ('Rainbow', 'Breathing', 'Heartbeat', 'Color shift', 'Strobe')
+
+_btn_down, _btn_pressed_at = False, 0
+_LONG_MS = 600
+
+def _hsv(h, s, v):
+    i      = int(h / 60) % 6
+    f      = (h / 60) - int(h / 60)
+    p, q, t = v*(1-s), v*(1-s*f), v*(1-s*(1-f))
+    r, g, b = ((v,t,p),(q,v,p),(p,v,t),(p,q,v),(t,p,v),(v,p,q))[i]
+    return (int(r*255), int(g*255), int(b*255))
+
+# Animation 0 — Rainbow
+_rb_hue = 0
+def _rainbow():
+    global _rb_hue
+    _rb_hue = (_rb_hue + 3) % 360
+    _np[0] = _hsv(_rb_hue, 1.0, 1.0); _np.write(); time.sleep_ms(20)
+
+# Animation 1 — Breathing
+_br_deg = 0
+def _breathing():
+    global _br_deg
+    c = int((math.sin(math.radians(_br_deg)) + 1.0) * 0.5 * 230) + 5
+    _np[0] = (c, c, c); _np.write()
+    _br_deg = (_br_deg + 3) % 360; time.sleep_ms(15)
+
+# Animation 2 — Heartbeat
+_PULSE = (0, 30, 120, 220, 255, 220, 80, 0, 0, 60, 160, 80, 0, 0, 0, 0)
+_hb_i  = 0
+def _heartbeat():
+    global _hb_i
+    _np[0] = (_PULSE[_hb_i % len(_PULSE)], 0, 0); _np.write()
+    _hb_i += 1; time.sleep_ms(75)
+
+# Animation 3 — Color shift (golden-angle steps)
+_cs_hue, _cs_target = 0, 137
+def _colorshift():
+    global _cs_hue, _cs_target
+    diff = (_cs_target - _cs_hue) % 360
+    if diff > 180: diff -= 360
+    if abs(diff) <= 2:
+        _cs_hue = _cs_target; _cs_target = (_cs_target + 137) % 360
+    else:
+        _cs_hue = (_cs_hue + (2 if diff > 0 else -2)) % 360
+    _np[0] = _hsv(_cs_hue, 1.0, 0.9); _np.write(); time.sleep_ms(18)
+
+# Animation 4 — Strobe
+_ST = (1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0); _st_i = 0
+def _strobe():
+    global _st_i
+    _np[0] = (255,255,255) if _ST[_st_i % len(_ST)] else (0,0,0)
+    _np.write(); _st_i += 1; time.sleep_ms(55)
+
+_ANIMS = (_rainbow, _breathing, _heartbeat, _colorshift, _strobe)
+
+def _poll_btn():
+    global _anim_idx, _btn_down, _btn_pressed_at
+    pressed = _btn.value() == 0
+    now = time.ticks_ms()
+    if pressed and not _btn_down:
+        _btn_down = True; _btn_pressed_at = now
+    elif not pressed and _btn_down:
+        _btn_down = False
+        held = time.ticks_diff(now, _btn_pressed_at) >= _LONG_MS
+        _anim_idx = (_anim_idx + (-1 if held else 1)) % _ANIM_COUNT
+        print(('Prev' if held else 'Next') + ':', _NAMES[_anim_idx])
+
+def setup():
+    _np[0] = (0,0,0); _np.write()
+    print('RGB LED Animations — 5 modes')
+    print('Short press BOOT = next   |   Long press BOOT = prev')
+    print('Active:', _NAMES[_anim_idx])
+
+def loop():
+    _poll_btn(); _ANIMS[_anim_idx]()
+```
+
+**What you learn:**
+
+- Driving a WS2812B (NeoPixel) with the built-in `neopixel` module
+- HSV → RGB colour conversion — separating hue from brightness
+- Reading an active-LOW button using `Pin.PULL_UP`
+- Short-press vs long-press detection using `ticks_ms()` and `ticks_diff()`
+- Python function tables (`_ANIMS` tuple) as a simple state machine
+- Multiple independent animation state variables (hue counter, sine angle, sequence index…)
+
+---
+
 ### Lesson 1 — Turn on an LED
 
 **Goal:** Understand basic pin output configuration and setting a HIGH state once at startup.
@@ -899,363 +986,6 @@ def loop():
 
 ---
 
-### Lesson 5 — IR keyboard (NEC remote)
-
-**Goal:** Receive and decode NEC infrared signals from a TV remote — print the button name to the REPL each time a key is pressed.
-
-> **Note:** This lesson has no meaningful Blockly representation — NEC decoding requires precise timing measurements that are handled in Python only. Open the sketch in **Code mode** to see and run the full implementation.
-
-**What happens:**
-The VS1838B IR receiver module converts modulated 38 kHz infrared signals into digital pulses on GP19. Each button press on the remote produces a NEC frame: a 9 ms start burst, a 4.5 ms gap, and 32 bits of data (address + command). The program measures pulse widths with `machine.time_pulse_us`, decodes the bits, looks up the command byte in a dictionary, and prints the result. The LED on GP11 flashes briefly on each received key.
-
-**Components used:**
-
-- **VS1838B** IR receiver module (or similar 38 kHz demodulator)
-- **IR remote control** using NEC protocol (common 21-key mini remote)
-- **LED + 330 Ω resistor** on GP11 (from Lesson 1, optional feedback)
-
-**Wiring:**
-
-```text
-ESP32-S3 Pico          VS1838B
-┌────────────┐        ┌──────────────────────┐
-│      GP19  ├───────►│ OUT  (left pin)       │
-│       3V3  ├───────►│ VCC  (right pin)      │
-│       GND  ├───────►│ GND  (middle pin)     │
-└────────────┘        └──────────────────────┘
-```
-
-**NEC protocol overview:**
-
-```text
-Start burst   Start space   32 data bits          Stop
-│←─ 9 ms ─→│←─ 4.5 ms ─→│ addr │~addr │ cmd │~cmd │← 562 µs →
-
-Bit 0:  │← 562 µs →│←  562 µs  →│
-Bit 1:  │← 562 µs →│← 1687 µs →│
-```
-
-Each NEC frame carries:
-
-- **addr** (8 bits) — device address (0x00 for most mini remotes)
-- **~addr** (8 bits) — inverted address (checksum)
-- **cmd** (8 bits) — button code
-- **~cmd** (8 bits) — inverted command (checksum)
-
-**Button map for common 21-key mini remote (address = 0x00):**
-
-```text
-┌───────┬───────┬───────┐
-│ CH-   │  CH   │  CH+  │   0x45  0x46  0x47
-├───────┼───────┼───────┤
-│ PREV  │ NEXT  │ PLAY  │   0x44  0x40  0x43
-├───────┼───────┼───────┤
-│ VOL-  │ VOL+  │  EQ   │   0x07  0x15  0x09
-├───────┼───────┼───────┤
-│   0   │ 100+  │ 200+  │   0x16  0x19  0x0D
-├───────┼───────┼───────┤
-│   1   │   2   │   3   │   0x0C  0x18  0x5E
-├───────┼───────┼───────┤
-│   4   │   5   │   6   │   0x08  0x1C  0x5A
-├───────┼───────┼───────┤
-│   7   │   8   │   9   │   0x42  0x52  0x4A
-└───────┴───────┴───────┘
-```
-
-**MicroPython code:**
-
-```python
-from machine import Pin, time_pulse_us
-import time
-
-_ir  = Pin(19, Pin.IN)   # VS1838B data output
-_led = Pin(11, Pin.OUT)  # LED feedback
-
-_IR_KEYS = {
-    0x45: 'CH-',  0x46: 'CH',   0x47: 'CH+',
-    0x44: 'PREV', 0x40: 'NEXT', 0x43: 'PLAY',
-    0x07: 'VOL-', 0x15: 'VOL+', 0x09: 'EQ',
-    0x16: '0',    0x19: '100+', 0x0D: '200+',
-    0x0C: '1',    0x18: '2',    0x5E: '3',
-    0x08: '4',    0x1C: '5',    0x5A: '6',
-    0x42: '7',    0x52: '8',    0x4A: '9',
-}
-
-def _recv_nec():
-    t = time_pulse_us(_ir, 0, 14000)        # 9 ms start burst
-    if not 7500 < t < 10500: return None
-    t = time_pulse_us(_ir, 1, 6000)         # 4.5 ms start space
-    if not 3500 < t < 5500: return None
-    bits = 0
-    for i in range(32):
-        if not 200 < time_pulse_us(_ir, 0, 2000) < 900:
-            return None
-        t = time_pulse_us(_ir, 1, 2500)     # 562 µs = 0, 1687 µs = 1
-        if t < 200: return None
-        bits |= (1 if t > 1000 else 0) << i
-    return bits & 0xFF, (bits >> 16) & 0xFF  # addr, cmd
-
-def setup():
-    _led.value(0)
-    print('IR ready — press a button')
-
-def loop():
-    result = _recv_nec()
-    if result:
-        addr, cmd = result
-        key = _IR_KEYS.get(cmd, f'0x{cmd:02X}')
-        _led.value(1)
-        print(key)
-        time.sleep_ms(80)
-        _led.value(0)
-```
-
-> **Different remote?** If you have a different NEC remote, run the sketch first, press each button, and note the `cmd=0xXX` values printed. Update the `_IR_KEYS` dictionary with your own codes. The `addr` byte identifies the device — it will be the same for all buttons on one remote.
-
-**What you learn:**
-
-- Receiving and decoding IR signals with `machine.time_pulse_us`
-- NEC IR protocol — frame structure, bit timing
-- Dictionary lookups to map numeric codes to human-readable labels
-- Interrupt-free polling decoder pattern
-
----
-
-### Lesson 6 — Light level measurement (ADC)
-
-**Goal:** Read an analog signal, classify the value, and print results to the console.
-
-**What happens:**
-Every 500 ms the program reads a value from the ADC on pin 7 (photoresistor). The result is an integer in the range 0–4095. Based on the value, one of three categories is printed:
-
-| ADC reading | Category |
-| ----------- | -------- |
-| < 1000 | DARK |
-| 1000 – 2499 | NORMAL |
-| ≥ 2500 | BRIGHT |
-
-**Example REPL output:**
-
-```text
-Light level2341
-NORMAL
-Light level891
-DARK
-Light level3102
-BRIGHT
-```
-
-**Wiring:** see *Photoresistor* section.
-
-**Blockly blocks:**
-
-```text
-╔══ ▶ START ══════════════════════════════╗
-║  [ADC Init]  pin=7  attenuation=11dB   ║
-╚═════════════════════════════════════════╝
-
-╔══ 🔁 FOREVER ═══════════════════════════════════════╗
-║  [Set]    Light = [ADC Read pin=7]                  ║
-║  [Print]  "Light level" + Light                     ║
-║  ╔══ If  Light < 1000 ════════════════════════════╗  ║
-║  ║  [Print]  "DARK"                               ║  ║
-║  ╠══ Else if  Light < 2500 ═══════════════════════╣  ║
-║  ║  [Print]  "NORMAL"                             ║  ║
-║  ╠══ Else ══════════════════════════════════════════╣  ║
-║  ║  [Print]  "BRIGHT"                             ║  ║
-║  ╚═════════════════════════════════════════════════╝  ║
-║  [Sleep]  500 ms                                      ║
-╚══════════════════════════════════════════════════════╝
-```
-
-**MicroPython code:**
-
-```python
-from machine import Pin, ADC
-import time
-
-_adc_7 = ADC(Pin(7), atten=ADC.ATTN_11DB)
-Light = None
-
-def setup():
-    pass
-
-def loop():
-    global Light
-    Light = _adc_7.read()
-    print('Light level' + str(Light))
-    if Light < 1000:
-        print('DARK')
-    elif Light < 2500:
-        print('NORMAL')
-    else:
-        print('BRIGHT')
-    time.sleep_ms(500)
-```
-
-**What you learn:**
-
-- The `ADC` class and the `atten` parameter
-- The difference between digital and analog signals
-- Using global variables (`global`)
-- Classifying continuous values with thresholds (`elif`)
-
----
-
-### Lesson 7 — Project template
-
-**Goal:** A starting point for your own experiments.
-
-**What happens:**
-The lesson contains only a clean template with empty `setup()` and `loop()` functions and a `KeyboardInterrupt` handler. No functionality is implemented — this is the place for your own program.
-
-**Blockly blocks:**
-
-```text
-╔══ ▶ START ══════════════════════════════╗
-║  (empty — add initialization here)      ║
-╚═════════════════════════════════════════╝
-
-╔══ 🔁 FOREVER ═══════════════════════════╗
-║  (empty — add program logic here)       ║
-╚═════════════════════════════════════════╝
-```
-
-**MicroPython code:**
-
-```python
-def setup():
-    pass
-
-def loop():
-    pass
-```
-
-**What you learn:**
-
-- The standard structure of every MicroPython program in this course
-- Handling `KeyboardInterrupt` (Ctrl+C) — safe program termination
-
----
-
-### Lesson 8 — Stepper motor (fan)
-
-**Goal:** Drive a 28BYJ-48 stepper motor through a ULN2003 driver — continuous rotation simulating a fan blade.
-
-**What happens:**
-The program sends successive voltage combinations to 4 pins following the full-step sequence. Each of the 4 excitation patterns rotates the motor by one step — repeated without interruption this produces continuous shaft rotation. A 3 ms delay between steps sets the speed (~83 RPM with the 28BYJ-48 64:1 gear ratio).
-
-**Components used:**
-
-- **28BYJ-48** stepper motor (5 V, unipolar)
-- **ULN2003** driver board (4 transistors + motor connector)
-
-**Wiring:**
-
-```text
-ESP32-S3 Pico          ULN2003            28BYJ-48
-┌────────────┐       ┌──────────┐        ┌────────┐
-│       GP4  ├──────►│ IN1      │        │        │
-│       GP5  ├──────►│ IN2      ├───────►│ coils  │
-│       GP6  ├──────►│ IN3      │        │        │
-│      GP17  ├──────►│ IN4      │        └────────┘
-│            │       │          │
-│       GND  ├──────►│ GND      │
-└────────────┘       │ 5V  ◄────┼── 5V (USB or external)
-                     └──────────┘
-```
-
-> **Important:** The 28BYJ-48 requires **5 V** power — connect the `5V` pin of the ESP32-S3 board (directly from USB) to the `5V` input of the ULN2003, not `3V3`. The 3.3 V logic signals on GP4–GP17 are fully compatible with ULN2003 inputs.
-
-**Full-step sequence (4 steps):**
-
-```text
-Step │ IN1(GP4) │ IN2(GP5) │ IN3(GP6) │ IN4(GP17)
-─────┼──────────┼──────────┼──────────┼──────────
-  1  │    1     │    0     │    1     │    0
-  2  │    0     │    1     │    1     │    0
-  3  │    0     │    1     │    0     │    1
-  4  │    1     │    0     │    0     │    1
-```
-
-**Blockly blocks:**
-
-```text
-╔══ ▶ START ══════════════════════════════╗
-║  [Pin Init]  pin=4   mode=OUT           ║
-║  [Pin Init]  pin=5   mode=OUT           ║
-║  [Pin Init]  pin=6   mode=OUT           ║
-║  [Pin Init]  pin=17  mode=OUT           ║
-╚═════════════════════════════════════════╝
-
-╔══ 🔁 FOREVER ═══════════════════════════╗
-║  -- step 1 --                           ║
-║  [Pin Set]   pin=4   → 1               ║
-║  [Pin Set]   pin=5   → 0               ║
-║  [Pin Set]   pin=6   → 1               ║
-║  [Pin Set]   pin=17  → 0               ║
-║  [Sleep]     3 ms                       ║
-║  -- step 2 --                           ║
-║  [Pin Set]   pin=4   → 0               ║
-║  [Pin Set]   pin=5   → 1               ║
-║  [Pin Set]   pin=6   → 1               ║
-║  [Pin Set]   pin=17  → 0               ║
-║  [Sleep]     3 ms                       ║
-║  -- step 3 --                           ║
-║  [Pin Set]   pin=4   → 0               ║
-║  [Pin Set]   pin=5   → 1               ║
-║  [Pin Set]   pin=6   → 0               ║
-║  [Pin Set]   pin=17  → 1               ║
-║  [Sleep]     3 ms                       ║
-║  -- step 4 --                           ║
-║  [Pin Set]   pin=4   → 1               ║
-║  [Pin Set]   pin=5   → 0               ║
-║  [Pin Set]   pin=6   → 0               ║
-║  [Pin Set]   pin=17  → 1               ║
-║  [Sleep]     3 ms                       ║
-╚═════════════════════════════════════════╝
-```
-
-**MicroPython code:**
-
-```python
-from machine import Pin
-import time
-
-_pin_4  = Pin(4,  mode=Pin.OUT)   # IN1
-_pin_5  = Pin(5,  mode=Pin.OUT)   # IN2
-_pin_6  = Pin(6,  mode=Pin.OUT)   # IN3
-_pin_17 = Pin(17, mode=Pin.OUT)   # IN4
-
-def setup():
-    pass
-
-def loop():
-    # Step 1
-    _pin_4.value(1); _pin_5.value(0); _pin_6.value(1); _pin_17.value(0)
-    time.sleep_ms(3)
-    # Step 2
-    _pin_4.value(0); _pin_5.value(1); _pin_6.value(1); _pin_17.value(0)
-    time.sleep_ms(3)
-    # Step 3
-    _pin_4.value(0); _pin_5.value(1); _pin_6.value(0); _pin_17.value(1)
-    time.sleep_ms(3)
-    # Step 4
-    _pin_4.value(1); _pin_5.value(0); _pin_6.value(0); _pin_17.value(1)
-    time.sleep_ms(3)
-```
-
-> **Speed adjustment:** Change the `sleep_ms(3)` value — lower = faster, higher = slower. Below 2 ms the motor may miss steps. Above 10 ms rotation will be noticeably slow.
-
-**What you learn:**
-
-- Driving a stepper motor through a transistor driver (ULN2003)
-- Full-step sequence — the concept of a step and a coil
-- How delay between steps affects rotational speed
-- Powering 5 V components from the microcontroller board
-
----
-
 ### Lesson 9 — Passive buzzer (melody)
 
 **Goal:** Generate musical tones using PWM — play a repeating three-note arpeggio (C–E–G) on a passive buzzer.
@@ -1351,199 +1081,6 @@ C4=262  D4=294  E4=330  F4=349  G4=392  A4=440  B4=494  C5=523
 - Controlling pitch with `freq()` and volume/silence with `duty()`
 - Building a simple melody loop in MicroPython
 
----
-
-### Lesson 10 — HC-SR04 ultrasonic distance sensor
-
-**Goal:** Measure distance using an ultrasonic sensor by writing a reusable `measure_distance()` function and calling it from the main loop.
-
-**What happens:**
-`setup()` initialises GP5 as output (TRIG) and GP4 as input (ECHO). Every 500 ms the loop calls `measure_distance()`, which sends a 10 µs trigger pulse, waits for the ECHO pin to go HIGH (start of echo), records the time with `ticks_us()`, waits for ECHO to go LOW, calculates the elapsed time, and returns the distance in centimetres (`duration / 58`). The result is printed; values outside 2–400 cm are reported as "Out of range".
-
-**Components used:**
-
-- **HC-SR04** (or compatible HY-SRF05, US-016, etc.)
-- Optional: **LED** on GP11 with 330 Ω resistor as a proximity indicator
-
-**Wiring:**
-
-```text
-ESP32-S3 Pico        HC-SR04
-┌──────────────┐    ┌─────────┐
-│         3V3  ├────┤ VCC     │
-│         GND  ├────┤ GND     │
-│         GP5  ├────┤ TRIG    │
-│         GP4  ├────┤ ECHO    │
-└──────────────┘    └─────────┘
-```
-
-**Blockly blocks:**
-
-```text
-╔══ 🔧 FUNCTION  measure_distance  [return value] ════════════╗
-║  [Pin Set]  pin=5  value=0                                  ║
-║  [Sleep µs]  2                                              ║
-║  [Pin Set]  pin=5  value=1                                  ║
-║  [Sleep µs]  10                                             ║
-║  [Pin Set]  pin=5  value=0                                  ║
-║  [Repeat until]  pin 4 == 1                                 ║
-║  set start = [ticks µs]                                     ║
-║  [Repeat until]  pin 4 == 0                                 ║
-║  set duration = [ticks µs] − start                          ║
-║  return  duration ÷ 58                                      ║
-╚═════════════════════════════════════════════════════════════╝
-
-╔══ ▶ START ══════════════════════════════════════════════════╗
-║  [Pin Init]  pin=5  OUT                                     ║
-║  [Pin Init]  pin=4  IN                                      ║
-║  [Print]  "HC-SR04 ready  TRIG=GP5  ECHO=GP4"               ║
-╚═════════════════════════════════════════════════════════════╝
-
-╔══ 🔁 FOREVER ═══════════════════════════════════════════════╗
-║  set dist = [Call  measure_distance]                        ║
-║  [If]  dist > 400  OR  dist < 2                             ║
-║  ║  [Print]  "Out of range"                                 ║
-║  [Else]                                                     ║
-║  ║  [Print]  "Distance: " + dist + " cm"                    ║
-║  [Sleep]  500 ms                                            ║
-╚═════════════════════════════════════════════════════════════╝
-```
-
-**MicroPython code:**
-
-```python
-from machine import Pin
-import time
-
-_pin_5 = Pin(5, mode=Pin.OUT)   # TRIG
-_pin_4 = Pin(4, mode=Pin.IN)    # ECHO
-
-def measure_distance():
-    _pin_5.value(0)
-    time.sleep_us(2)
-    _pin_5.value(1)
-    time.sleep_us(10)
-    _pin_5.value(0)
-    while not (_pin_4.value() == 1):
-        pass
-    start = time.ticks_us()
-    while not (_pin_4.value() == 0):
-        pass
-    duration = time.ticks_us() - start
-    return duration / 58
-
-def setup():
-    print('HC-SR04 ready  TRIG=GP5  ECHO=GP4')
-
-def loop():
-    dist = measure_distance()
-    if dist > 400 or dist < 2:
-        print('Out of range')
-    else:
-        print('Distance: ' + str(dist) + ' cm')
-    time.sleep_ms(500)
-```
-
-> **Distance formula:** Sound travels at ~343 m/s. The echo time is a round trip (there and back), so `distance = (duration_µs × 0.0343) / 2 ≈ duration_µs / 58` gives centimetres. Division by 58 is the standard shortcut for air at ~20 °C.
->
-> **Timeout:** If nothing reflects the pulse, ECHO stays LOW and the `while` loop spins forever. For production code replace the busy-wait loops with `machine.time_pulse_us(pin, level, timeout_us)` which has a built-in timeout.
-
-**What you learn:**
-
-- Defining and calling a function with a return value (`procedures_defreturn`)
-- Measuring elapsed time with `ticks_us()`
-- Using `controls_whileUntil` to wait for a pin state change
-- The HC-SR04 trigger/echo protocol
-
----
-
-### Lesson 11 — PIR motion sensor
-
-**Goal:** Detect motion with a passive infrared sensor using a `is_motion_detected()` boolean function and react by lighting an LED.
-
-**What happens:**
-`setup()` initialises GP4 as input (PIR signal) and GP11 as output (LED), then turns the LED off. Every 100 ms the loop calls `is_motion_detected()`, which returns `True` when the PIR output pin is HIGH. If motion is detected the LED lights up and "Motion detected!" is printed; otherwise the LED turns off.
-
-**Components used:**
-
-- **PIR motion sensor module** (e.g. HC-SR501, AM312, or similar 3.3 V-compatible module)
-- **LED** on GP11 with 330 Ω resistor
-
-**Wiring:**
-
-```text
-ESP32-S3 Pico        PIR module
-┌──────────────┐    ┌──────────────┐
-│         3V3  ├────┤ VCC          │
-│         GND  ├────┤ GND          │
-│         GP4  ├────┤ OUT (signal) │
-└──────────────┘    └──────────────┘
-
-GP11 ──── 330Ω ──── LED (+)
-                        │
-                    LED (−) ──── GND
-```
-
-**Blockly blocks:**
-
-```text
-╔══ 🔧 FUNCTION  is_motion_detected  [return value] ══════════╗
-║  return  [Pin Read  pin=4]  ==  1                           ║
-╚═════════════════════════════════════════════════════════════╝
-
-╔══ ▶ START ══════════════════════════════════════════════════╗
-║  [Pin Init]  pin=4   IN                                     ║
-║  [Pin Init]  pin=11  OUT                                    ║
-║  [Pin Set]   pin=11  0                                      ║
-║  [Print]  "PIR ready  PIR=GP4  LED=GP11"                    ║
-╚═════════════════════════════════════════════════════════════╝
-
-╔══ 🔁 FOREVER ═══════════════════════════════════════════════╗
-║  set motion = [Call  is_motion_detected]                    ║
-║  [If]  motion                                               ║
-║  ║  [Pin Set]  pin=11  1                                    ║
-║  ║  [Print]  "Motion detected!"                             ║
-║  [Else]                                                     ║
-║  ║  [Pin Set]  pin=11  0                                    ║
-║  [Sleep]  100 ms                                            ║
-╚═════════════════════════════════════════════════════════════╝
-```
-
-**MicroPython code:**
-
-```python
-from machine import Pin
-import time
-
-_pin_4  = Pin(4,  mode=Pin.IN)   # PIR signal
-_pin_11 = Pin(11, mode=Pin.OUT)  # LED
-
-def is_motion_detected():
-    return _pin_4.value() == 1
-
-def setup():
-    _pin_11.value(0)
-    print('PIR ready  PIR=GP4  LED=GP11')
-
-def loop():
-    motion = is_motion_detected()
-    if motion:
-        _pin_11.value(1)
-        print('Motion detected!')
-    else:
-        _pin_11.value(0)
-    time.sleep_ms(100)
-```
-
-> **Sensitivity adjustment:** Most HC-SR501 modules have two potentiometers on the back — one controls detection range (3–7 m) and the other controls the hold time (how long the output stays HIGH after motion stops, 3–300 s). Adjust them with a small screwdriver before testing.
->
-> **Warm-up time:** PIR sensors need 30–60 seconds after power-on to stabilise. During this period the output may briefly pulse HIGH — this is normal.
-
-**What you learn:**
-
-- Wrapping a pin read in a boolean function (`procedures_defreturn` returning a comparison)
-- Calling a function whose result drives an `if/else` block
-- How a PIR passive infrared sensor works
 
 ---
 
@@ -1583,13 +1120,14 @@ if __name__ == '__main__':
 ## Course progress
 
 ```text
+LessonRgb ──  On-board RGB LED (WS2812B) + BOOT button animations
 Lesson 1  ──  Digital output (LED ON)
 Lesson 2  ──  Timing and cycle (LED blink)
 Lesson 3  ──  Multiple outputs + sequence (3× LED)
 Lesson 4  ──  Digital input + control (button → LED)
-Lesson 6  ──  Analog ADC input (photoresistor)
-Lesson 7  ──  Project template
-Lesson 8  ──  Stepper motor 28BYJ-48 (fan)
+Lesson 9  ──  Passive buzzer (melody)
+Lesson 11 ──  PIR motion sensor
+Lesson 12 ──  DHT11 temperature and humidity
 ```
 
 ---
