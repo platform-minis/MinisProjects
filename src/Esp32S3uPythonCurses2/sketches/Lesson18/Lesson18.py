@@ -1,5 +1,6 @@
 from machine import SPI, Pin
 import time
+import sys
 
 # RC-522 RFID reader - read card/tag UID over SPI (inline driver)
 #
@@ -68,12 +69,12 @@ def _tocard(cmd, data):
 
     _rclr(0x0D, 0x80)
 
-    stat = 2  # ERR
+    stat = 2
     if i:
         if (_rrd(0x06) & 0x1B) == 0x00:
-            stat = 0  # OK
+            stat = 0
             if n & irq_en & 0x01:
-                stat = 1  # NOTAGERR
+                stat = 1
             elif cmd == 0x0C:
                 n = _rrd(0x0A)
                 lbits = _rrd(0x0C) & 0x07
@@ -88,7 +89,7 @@ def _tocard(cmd, data):
                 for _ in range(n):
                     recv.append(_rrd(0x09))
         else:
-            stat = 2  # ERR
+            stat = 2
 
     return stat, recv, bits
 
@@ -98,7 +99,7 @@ def _init_reader():
     time.sleep_ms(50)
     _rst_r.value(1)
     time.sleep_ms(50)
-    _rwr(0x01, 0x0F)  # SoftReset
+    _rwr(0x01, 0x0F)
     time.sleep_ms(50)
     _rwr(0x2A, 0x8D)
     _rwr(0x2B, 0x3E)
@@ -106,7 +107,9 @@ def _init_reader():
     _rwr(0x2C, 0)
     _rwr(0x15, 0x40)
     _rwr(0x11, 0x3D)
-    _rset(0x14, 0x03)  # antenna on
+    _rset(0x14, 0x03)
+    ver = _rrd(0x37)
+    print('RC-522 version: 0x{:02X}  (expect 0x91 or 0x92)'.format(ver))
     print('RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15')
 
 
@@ -140,10 +143,11 @@ def loop():
         time.sleep_ms(100)
 
 
-if __name__ == '__main__':
-    try:
-        setup()
-        while True:
-            loop()
-    except (Exception, KeyboardInterrupt) as e:
-        print(e)
+try:
+    setup()
+    while True:
+        loop()
+except KeyboardInterrupt:
+    print('Stopped.')
+except Exception as e:
+    sys.print_exception(e)
