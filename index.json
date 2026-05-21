@@ -155,12 +155,8 @@
         "esp32s3",
         "uPython"
       ],
-      "libraries": [
-        {
-          "url": "https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/hardware.py",
-          "remoteName": "hardware.py"
-        }
-      ],
+      "libraries": [],
+      "projectScriptPath": "src/Esp32S3uPythonCurses/project.js",
       "path": "src/Esp32S3uPythonCurses",
       "hasSrc": true,
       "hasDocs": true,
