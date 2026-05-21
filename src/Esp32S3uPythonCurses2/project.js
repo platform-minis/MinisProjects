@@ -524,11 +524,11 @@ addCategory({
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'rc522_init',
-    message0: 'RC-522 init  SCK=GP18  MOSI=GP19  MISO=GP16  SDA=GP17  RST=GP15',
+    message0: 'RC-522 init  SCK=GP18  MOSI=GP11  MISO=GP16  SDA=GP17  RST=GP15',
     previousStatement: null,
     nextStatement: null,
     colour: 160,
-    tooltip: 'Initialise the RC-522 RFID reader over SPI (SCK=GP18, MOSI=GP19, MISO=GP16, SDA=GP17, RST=GP15).',
+    tooltip: 'Initialise the RC-522 RFID reader over SPI (SCK=GP18, MOSI=GP11, MISO=GP16, SDA=GP17, RST=GP15).',
   },
   {
     type: 'rc522_read_uid',
@@ -540,28 +540,61 @@ Blockly.defineBlocksWithJsonArray([
 ]);
 
 var _RC522_DEFS = `
-import mfrc522 as _mfrc522_mod
-_rc522_obj = _mfrc522_mod.MFRC522(sck=18, mosi=19, miso=16, rst=15, cs=17)
+_spi_r = SPI(1, baudrate=1_000_000, polarity=0, phase=0, sck=Pin(18), mosi=Pin(11), miso=Pin(16))
+_cs_r  = Pin(17, Pin.OUT, value=1)
+_rst_r = Pin(15, Pin.OUT, value=1)
+def _rrd(a):
+    _cs_r.value(0)
+    _spi_r.write(bytes([((a<<1)&0x7E)|0x80]))
+    v=_spi_r.read(1)[0]
+    _cs_r.value(1)
+    return v
+def _rwr(a,v):
+    _cs_r.value(0)
+    _spi_r.write(bytes([(a<<1)&0x7E,v]))
+    _cs_r.value(1)
+def _rset(a,m): _rwr(a,_rrd(a)|m)
+def _rclr(a,m): _rwr(a,_rrd(a)&~m)
+def _rc522_transceive(data):
+    _rwr(0x02,0x77); _rclr(0x04,0x80)
+    _rset(0x0A,0x80); _rwr(0x01,0x00)
+    for b in data: _rwr(0x09,b)
+    _rwr(0x01,0x0C); _rset(0x0D,0x80)
+    for _ in range(2000):
+        if _rrd(0x04)&0x31: break
+    _rclr(0x0D,0x80)
+    if _rrd(0x06)&0x1B: return None
+    n=_rrd(0x0A)&0x7F
+    return [_rrd(0x09) for _ in range(min(n,16))]
 def _rc522_init():
-    print('RC-522 ready   SCK=GP18 MOSI=GP19 MISO=GP16 SDA=GP17 RST=GP15')
+    _rst_r.value(0); time.sleep_ms(1); _rst_r.value(1); time.sleep_ms(50)
+    _rwr(0x01,0x0F); time.sleep_ms(50)
+    _rwr(0x2A,0x8D); _rwr(0x2B,0x3E)
+    _rwr(0x2C,30); _rwr(0x2D,0)
+    _rwr(0x15,0x40); _rwr(0x11,0x3D)
+    _rset(0x14,0x03)
+    print('RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15')
 def _rc522_read_uid():
-    stat, _ = _rc522_obj.request(_rc522_obj.REQIDL)
-    if stat != _rc522_obj.OK:
-        return ''
-    stat, uid = _rc522_obj.SelectTagSN()
-    if stat != _rc522_obj.OK:
-        return ''
-    return ':'.join('{:02X}'.format(b) for b in uid)
+    _rwr(0x0D,0x07)
+    r=_rc522_transceive([0x26])
+    if not r or len(r)<2: return ''
+    _rwr(0x0D,0x00)
+    r=_rc522_transceive([0x93,0x20])
+    if r and len(r)==5 and (r[0]^r[1]^r[2]^r[3])==r[4]:
+        return ':'.join('{:02X}'.format(b) for b in r[:4])
+    return ''
 `;
 
 generator.forBlock['rc522_init'] = function (_block, g) {
-  g.addImport('machine_spi_rc522', 'from machine import SPI, Pin');
+  g.addImport('machine_spi_pin', 'from machine import SPI, Pin');
+  g.addImport('import_time', 'import time');
   g.addImport('rc522_defs', _RC522_DEFS);
   return '_rc522_init()\n';
 };
 
 generator.forBlock['rc522_read_uid'] = function (_block, g) {
-  g.addImport('machine_spi_rc522', 'from machine import SPI, Pin');
+  g.addImport('machine_spi_pin', 'from machine import SPI, Pin');
+  g.addImport('import_time', 'import time');
   g.addImport('rc522_defs', _RC522_DEFS);
   return ['_rc522_read_uid()', Order.ATOMIC];
 };
