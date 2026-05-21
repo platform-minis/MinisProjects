@@ -141,7 +141,7 @@
           ]
         }
       ],
-      "readmePath": "src/Esp32S3ZeroTest/docs/welcome.md"
+      "readmePath": "src/Esp32S3ZeroTest/README.md"
     },
     {
       "id": "Esp32S3uPythonCurses",
@@ -252,7 +252,7 @@
           ]
         }
       ],
-      "readmePath": "src/Esp32S3uPythonCurses/docs/welcome.md"
+      "readmePath": "src/Esp32S3uPythonCurses/README.md"
     },
     {
       "id": "Esp32S3uPythonCurses2",
