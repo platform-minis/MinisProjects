@@ -615,7 +615,8 @@ def _rc522_init():
     _rwr(0x15, 0x40)
     _rwr(0x11, 0x3D)
     _rset(0x14, 0x03)
-    print('RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15')
+    ver = _rrd(0x37)
+    print('RC-522 ver=0x{:02X}  SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15  (0x91/0x92=OK 0xFF=no SPI)'.format(ver))
 def _rc522_read_uid():
     _rwr(0x0D, 0x07)
     stat, recv, bits = _rc522_tocard(0x0C, [0x26])
