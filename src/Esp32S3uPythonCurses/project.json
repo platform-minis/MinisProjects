@@ -30,10 +30,5 @@
       "name": "Lesson9"
     }
   ],
-  "libraries": [
-    {
-      "url": "https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/hardware.py",
-      "remoteName": "hardware.py"
-    }
-  ]
+  "libraries": []
 }

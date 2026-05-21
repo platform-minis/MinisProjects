@@ -1,10 +1,6 @@
 // project.js — custom Blockly blocks for Esp32S3uPythonCurses
 // Available variables: Blockly, generator, addCategory({ name, colour, blocks }), Order, addLibrary({ url, remoteName })
 
-var RAW = 'https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/';
-addLibrary({ url: RAW + 'minis_iot.py',     remoteName: 'minis_iot.py' });
-addLibrary({ url: RAW + 'minis_display.py', remoteName: 'minis_display.py' });
-
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'curses_init',
@@ -120,4 +116,144 @@ addCategory({
     'curses_getkey',
     'curses_move',
   ],
+});
+
+// ─── WS2812B (on-board RGB LED, GP47) ────────────────────────────────────────
+
+var _WS2812B_DEFS = `
+_rgb = neopixel.NeoPixel(Pin(47), 1)
+`;
+
+Blockly.defineBlocksWithJsonArray([
+  {
+    type: 'ws2812b_init',
+    message0: 'WS2812B init (GP47)',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 300,
+    tooltip: 'Initialize the on-board WS2812B RGB LED on GP47.',
+  },
+  {
+    type: 'ws2812b_fill',
+    message0: 'WS2812B color %1',
+    args0: [
+      { type: 'input_value', name: 'COLOR', check: 'Number' },
+    ],
+    inputsInline: true,
+    previousStatement: null,
+    nextStatement: null,
+    colour: 300,
+    tooltip: 'Set the WS2812B RGB LED color (0xRRGGBB hex value).',
+  },
+]);
+
+generator.forBlock['ws2812b_init'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('neopixel_import', 'import neopixel');
+  g.addImport('ws2812b_defs', _WS2812B_DEFS);
+  return 'print("WS2812B ready")\n';
+};
+
+generator.forBlock['ws2812b_fill'] = function (block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('neopixel_import', 'import neopixel');
+  g.addImport('ws2812b_defs', _WS2812B_DEFS);
+  var color = g.valueToCode(block, 'COLOR', Order.NONE) || '0';
+  return '_c = ' + color + '\n_rgb[0] = ((_c>>16)&0xff, (_c>>8)&0xff, _c&0xff)\n_rgb.write()\n';
+};
+
+// ─── BOOT button (GP0, active LOW, internal pull-up) ─────────────────────────
+// State machine: short press → clicked, long press (≥500 ms) → held
+
+var _BOOT_BTN_DEFS = `
+_btn_pin = Pin(0, Pin.IN, Pin.PULL_UP)
+_btn_state = {'pressed': False, 'last_ms': 0, 'clicked': False, 'held': False}
+_HOLD_MS = 500
+def _btn_tick():
+    now = time.ticks_ms()
+    p = not _btn_pin.value()
+    _btn_state['clicked'] = False
+    _btn_state['held'] = False
+    if p and not _btn_state['pressed']:
+        _btn_state['pressed'] = True
+        _btn_state['last_ms'] = now
+    elif not p and _btn_state['pressed']:
+        _btn_state['pressed'] = False
+        if time.ticks_diff(now, _btn_state['last_ms']) < _HOLD_MS:
+            _btn_state['clicked'] = True
+        else:
+            _btn_state['held'] = True
+`;
+
+Blockly.defineBlocksWithJsonArray([
+  {
+    type: 'boot_btn_init',
+    message0: 'BOOT button init (GP0)',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 210,
+    tooltip: 'Initialize the BOOT button on GP0 (active LOW, internal pull-up).',
+  },
+  {
+    type: 'boot_btn_tick',
+    message0: 'BOOT button tick',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 210,
+    tooltip: 'Update BOOT button state — call once per loop iteration.',
+  },
+  {
+    type: 'boot_btn_clicked',
+    message0: 'BOOT button clicked?',
+    output: 'Boolean',
+    colour: 210,
+    tooltip: 'True if BOOT button was short-pressed since last tick.',
+  },
+  {
+    type: 'boot_btn_held',
+    message0: 'BOOT button held?',
+    output: 'Boolean',
+    colour: 210,
+    tooltip: 'True if BOOT button was held (long press) since last tick.',
+  },
+]);
+
+generator.forBlock['boot_btn_init'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('boot_btn_defs', _BOOT_BTN_DEFS);
+  return 'print("BOOT button ready")\n';
+};
+
+generator.forBlock['boot_btn_tick'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('boot_btn_defs', _BOOT_BTN_DEFS);
+  return '_btn_tick()\n';
+};
+
+generator.forBlock['boot_btn_clicked'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('boot_btn_defs', _BOOT_BTN_DEFS);
+  return ["_btn_state['clicked']", Order.ATOMIC];
+};
+
+generator.forBlock['boot_btn_held'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('boot_btn_defs', _BOOT_BTN_DEFS);
+  return ["_btn_state['held']", Order.ATOMIC];
+};
+
+addCategory({
+  name: 'RGB LED',
+  colour: '#8b008b',
+  blocks: ['ws2812b_init', 'ws2812b_fill'],
+});
+
+addCategory({
+  name: 'BOOT Button',
+  colour: '#1565c0',
+  blocks: ['boot_btn_init', 'boot_btn_tick', 'boot_btn_clicked', 'boot_btn_held'],
 });
