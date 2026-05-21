@@ -161,10 +161,10 @@
       "hasDocs": true,
       "sketches": [
         {
-          "name": "LessonRgb",
+          "name": "Lesson0",
           "files": [
-            "src/Esp32S3uPythonCurses/sketches/LessonRgb/LessonRgb.blockly",
-            "src/Esp32S3uPythonCurses/sketches/LessonRgb/LessonRgb.py"
+            "src/Esp32S3uPythonCurses/sketches/Lesson0/Lesson0.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson0/Lesson0.py"
           ]
         },
         {
@@ -214,13 +214,6 @@
           "files": [
             "src/Esp32S3uPythonCurses/sketches/Lesson12/Lesson12.blockly",
             "src/Esp32S3uPythonCurses/sketches/Lesson12/Lesson12.py"
-          ]
-        },
-        {
-          "name": "Lesson15",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson15/Lesson15.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson15/Lesson15.py"
           ]
         }
       ],

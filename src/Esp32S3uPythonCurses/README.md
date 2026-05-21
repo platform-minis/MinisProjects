@@ -56,7 +56,7 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 
 | Pin | Mode | Component | Lessons |
 | --- | ---- | --------- | ------- |
-| 0 | Digital input | BOOT button (active LOW, built-in) | LessonRgb |
+| 0 | Digital input | BOOT button (active LOW, built-in) | Lesson0 |
 | 3 | Digital in/out | DHT11 DATA | Lesson 12 |
 | 4 | Digital input | PIR motion sensor (OUT) | Lesson 11 |
 | 11 | Digital output | LED | Lesson 1, 2, 4 |
@@ -65,13 +65,13 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | 14 | Digital output | LED (green) | Lesson 3 |
 | 16 | Digital input | Tactile button | Lesson 4 |
 | 18 | PWM output | Passive buzzer | Lesson 9 |
-| 47 | Digital output | WS2812B on-board RGB LED (built-in) | LessonRgb |
+| 47 | Digital output | WS2812B on-board RGB LED (built-in) | Lesson0 |
 
 ---
 
 ## Wiring Diagrams
 
-### On-board RGB LED and BOOT button (LessonRgb)
+### On-board RGB LED and BOOT button (Lesson0)
 
 No external wiring needed — both components are soldered onto the board.
 
@@ -85,7 +85,7 @@ ESP32-S3 Pico — built-in components
 └──────────────────────────────────────────┘
 ```
 
-> **No external components needed for LessonRgb.** The WS2812B and BOOT button are mounted directly on the PCB.
+> **No external components needed for Lesson0.** The WS2812B and BOOT button are mounted directly on the PCB.
 > If the LED does not light up, check that your MicroPython firmware was compiled with NeoPixel support (all standard ESP32-S3 builds include it). If the colour is wrong or the LED is very dim, try changing `_RGB_PIN` to 48 — some board revisions use GP48 instead of GP47.
 
 **BOOT button behaviour:**
@@ -557,7 +557,7 @@ Each lesson is shown in two forms: **Blockly blocks** (visual editor) and **Micr
 
 ---
 
-### LessonRgb — On-board RGB LED animations
+### Lesson0 — On-board RGB LED animations
 
 **Goal:** Drive the WS2812B RGB LED built into the ESP32-S3 Pico board through five different light animations, switching between them with the BOOT button — no external components required.
 
@@ -1120,7 +1120,7 @@ if __name__ == '__main__':
 ## Course progress
 
 ```text
-LessonRgb ──  On-board RGB LED (WS2812B) + BOOT button animations
+Lesson0 ──  On-board RGB LED (WS2812B) + BOOT button animations
 Lesson 1  ──  Digital output (LED ON)
 Lesson 2  ──  Timing and cycle (LED blink)
 Lesson 3  ──  Multiple outputs + sequence (3× LED)
