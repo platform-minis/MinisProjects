@@ -161,38 +161,17 @@
       "hasDocs": true,
       "sketches": [
         {
+          "name": "LessonRgb",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/LessonRgb/LessonRgb.blockly",
+            "src/Esp32S3uPythonCurses/sketches/LessonRgb/LessonRgb.py"
+          ]
+        },
+        {
           "name": "Lesson1",
           "files": [
             "src/Esp32S3uPythonCurses/sketches/Lesson1/Lesson1.blockly",
             "src/Esp32S3uPythonCurses/sketches/Lesson1/Lesson1.py"
-          ]
-        },
-        {
-          "name": "Lesson10",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson10/Lesson10.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson10/Lesson10.py"
-          ]
-        },
-        {
-          "name": "Lesson11",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson11/Lesson11.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson11/Lesson11.py"
-          ]
-        },
-        {
-          "name": "Lesson12",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson12/Lesson12.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson12/Lesson12.py"
-          ]
-        },
-        {
-          "name": "Lesson15",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson15/Lesson15.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson15/Lesson15.py"
           ]
         },
         {
@@ -217,38 +196,31 @@
           ]
         },
         {
-          "name": "Lesson5",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson5/Lesson5.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson5/Lesson5.py"
-          ]
-        },
-        {
-          "name": "Lesson6",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson6/Lesson6.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson6/Lesson6.py"
-          ]
-        },
-        {
-          "name": "Lesson7",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson7/Lesson7.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson7/Lesson7.py"
-          ]
-        },
-        {
-          "name": "Lesson8",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson8/Lesson8.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson8/Lesson8.py"
-          ]
-        },
-        {
           "name": "Lesson9",
           "files": [
             "src/Esp32S3uPythonCurses/sketches/Lesson9/Lesson9.blockly",
             "src/Esp32S3uPythonCurses/sketches/Lesson9/Lesson9.py"
+          ]
+        },
+        {
+          "name": "Lesson11",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson11/Lesson11.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson11/Lesson11.py"
+          ]
+        },
+        {
+          "name": "Lesson12",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson12/Lesson12.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson12/Lesson12.py"
+          ]
+        },
+        {
+          "name": "Lesson15",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson15/Lesson15.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson15/Lesson15.py"
           ]
         }
       ],
