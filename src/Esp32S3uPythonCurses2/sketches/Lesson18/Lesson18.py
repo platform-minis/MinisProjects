@@ -1,22 +1,17 @@
+print('Lesson18: loading...')
 from machine import SPI, Pin
 import time
-import sys
 
-# RC-522 RFID reader - read card/tag UID over SPI (inline driver)
-#
-# Wiring:
-#   SCK  -> GP18
-#   MOSI -> GP11
-#   MISO -> GP16
-#   SDA  -> GP17  (CS / chip select)
-#   RST  -> GP15
-#   3V3  -> 3.3 V
-#   GND  -> GND
-
-_spi_r = SPI(1, baudrate=1000000, polarity=0, phase=0,
-             sck=Pin(18), mosi=Pin(11), miso=Pin(16))
-_cs_r = Pin(17, Pin.OUT, value=1)
-_rst_r = Pin(15, Pin.OUT, value=1)
+print('Lesson18: init SPI...')
+try:
+    _spi_r = SPI(1, baudrate=1000000, polarity=0, phase=0,
+                 sck=Pin(18), mosi=Pin(11), miso=Pin(16))
+    _cs_r = Pin(17, Pin.OUT, value=1)
+    _rst_r = Pin(15, Pin.OUT, value=1)
+    print('Lesson18: SPI OK')
+except Exception as e:
+    print('SPI init error:', e)
+    raise
 
 
 def _rrd(a):
@@ -109,8 +104,7 @@ def _init_reader():
     _rwr(0x11, 0x3D)
     _rset(0x14, 0x03)
     ver = _rrd(0x37)
-    print('RC-522 version: 0x{:02X}  (expect 0x91 or 0x92)'.format(ver))
-    print('RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15')
+    print('RC-522 version: 0x{:02X}  (expect 0x91 or 0x92, 0x00/0xFF = no SPI)'.format(ver))
 
 
 def read_uid():
@@ -129,25 +123,18 @@ def read_uid():
     return None
 
 
-def setup():
-    _init_reader()
-    print('Hold a card or tag near the reader...')
-
-
-def loop():
-    uid = read_uid()
-    if uid:
-        print('Card UID: ' + uid)
-        time.sleep_ms(1000)
-    else:
-        time.sleep_ms(100)
-
-
+print('Lesson18: starting reader...')
 try:
-    setup()
+    _init_reader()
+    print('Hold a card near the reader...')
     while True:
-        loop()
+        uid = read_uid()
+        if uid:
+            print('Card UID: ' + uid)
+            time.sleep_ms(1000)
+        else:
+            time.sleep_ms(100)
 except KeyboardInterrupt:
     print('Stopped.')
 except Exception as e:
-    sys.print_exception(e)
+    print('Error:', type(e).__name__, str(e))
