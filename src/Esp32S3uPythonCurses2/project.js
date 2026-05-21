@@ -620,6 +620,7 @@ def _rc522_init():
 def _rc522_read_uid():
     _rwr(0x0D, 0x07)
     stat, recv, bits = _rc522_tocard(0x0C, [0x26])
+    print('REQA s={} b={}'.format(stat, bits))
     if stat != 0 or bits != 0x10:
         return ''
     _rwr(0x0D, 0x00)
