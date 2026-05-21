@@ -162,7 +162,7 @@ _REG_INTENSITY = 0x0A
 _REG_SCANLIMIT = 0x0B
 _REG_SHUTDOWN  = 0x0C
 _REG_DISPTEST  = 0x0F
-_spi = SPI(1, baudrate=10_000_000, polarity=0, phase=0, sck=Pin(18), mosi=Pin(19), miso=Pin(4))
+_spi = SPI(1, baudrate=1000000, polarity=0, phase=0, sck=Pin(18), mosi=Pin(11), miso=Pin(16))
 _cs  = Pin(5, Pin.OUT, value=1)
 def _write(reg, data):
     _cs.value(0)
@@ -185,11 +185,11 @@ def show_pattern(pattern):
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'max7219_init',
-    message0: 'MAX7219 init  CLK=GP18  DIN=GP19  CS=GP5',
+    message0: 'MAX7219 init  CLK=GP18  DIN=GP11  CS=GP5',
     previousStatement: null,
     nextStatement: null,
     colour: 230,
-    tooltip: 'Initialize the MAX7219 LED matrix driver over SPI (CLK=GP18, DIN=GP19, CS=GP5).',
+    tooltip: 'Initialize the MAX7219 LED matrix driver over SPI (CLK=GP18, DIN=GP11, CS=GP5).',
   },
   {
     type: 'max7219_clear',

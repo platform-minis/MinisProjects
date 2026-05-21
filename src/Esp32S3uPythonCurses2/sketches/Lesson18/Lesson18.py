@@ -4,8 +4,7 @@ import time
 
 print('Lesson18: init SPI...')
 try:
-    _spi_r = SPI(1, baudrate=1000000, polarity=0, phase=0,
-                 sck=Pin(18), mosi=Pin(11), miso=Pin(16))
+    _spi_r = SPI(1, baudrate=1000000, polarity=0, phase=0, sck=Pin(18), mosi=Pin(11), miso=Pin(16))
     _cs_r = Pin(17, Pin.OUT, value=1)
     _rst_r = Pin(15, Pin.OUT, value=1)
     print('Lesson18: SPI OK')
