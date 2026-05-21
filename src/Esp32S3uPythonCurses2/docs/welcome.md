@@ -33,7 +33,7 @@ A **continuation of the ESP32-S3 MicroPython course** introducing the MAX7219 8�
 
 ## Quick start — Lesson 13
 
-1. Wire the MAX7219: CLK → GP18, DIN → GP19, CS → GP5, VCC → 3.3 V, GND → GND.
+1. Wire the MAX7219: CLK → GP18, DIN → GP11, CS → GP5, VCC → 3.3 V, GND → GND.
 2. Open `Lesson13` and click **Upload → Run only**.
 3. The matrix cycles through Smiley, Heart, Cross and Arrow patterns every 1.5 s.
 
@@ -51,7 +51,7 @@ A **continuation of the ESP32-S3 MicroPython course** introducing the MAX7219 8�
 
 ## Quick start — Lesson 18
 
-1. Wire RC-522: SCK → GP18, MOSI → GP19, MISO → GP16, SDA → GP17, RST → GP15, 3V3 → 3.3 V, GND → GND.
+1. Wire RC-522: SCK → GP18, MOSI → GP11, MISO → GP16, SDA → GP17, RST → GP15, 3V3 → 3.3 V, GND → GND.
 2. Open `Lesson18` and click **Upload → Run only**.
 3. Hold an RFID card or key fob near the reader — `Card UID: XX:XX:XX:XX` appears in the terminal.
 

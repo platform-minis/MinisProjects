@@ -7,14 +7,14 @@ import mfrc522
 #
 # Wiring:
 #   SCK  → GP18
-#   MOSI → GP19
+#   MOSI → GP11
 #   MISO → GP16
 #   SDA  → GP17  (CS / chip select)
 #   RST  → GP15
 #   3V3  → 3.3 V
 #   GND  → GND
 
-_reader = mfrc522.MFRC522(sck=18, mosi=19, miso=16, rst=15, cs=17)
+_reader = mfrc522.MFRC522(sck=18, mosi=11, miso=16, rst=15, cs=17)
 
 
 def read_uid():
@@ -28,7 +28,7 @@ def read_uid():
 
 
 def setup():
-    print('RC-522 ready   SCK=GP18 MOSI=GP19 MISO=GP16 SDA=GP17 RST=GP15')
+    print('RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15')
     print('Hold a card or tag near the reader...')
 
 

@@ -10,7 +10,7 @@
               <block type="upy_print" id="setup_print">
                 <value name="TEXT">
                   <block type="text" id="setup_print_v">
-                    <field name="TEXT">MAX7219 ready  CLK=GP18  DIN=GP19  CS=GP5</field>
+                    <field name="TEXT">MAX7219 ready  CLK=GP18  DIN=GP11  CS=GP5</field>
                   </block>
                 </value>
               </block>

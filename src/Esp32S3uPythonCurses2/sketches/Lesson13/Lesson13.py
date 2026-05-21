@@ -5,7 +5,7 @@ import time
 # MAX7219 8×8 LED matrix
 # Wiring:
 #   CLK  (SCK)  → GP18
-#   DIN  (MOSI) → GP19
+#   DIN  (MOSI) → GP11
 #   CS          → GP5
 #   VCC         → 3.3 V  (or 5 V for brighter display)
 #   GND         → GND
@@ -18,7 +18,7 @@ _REG_SHUTDOWN  = 0x0C  # 0 = shutdown, 1 = normal operation
 _REG_DISPTEST  = 0x0F  # 1 = all LEDs on (test), 0 = normal
 
 _spi = SPI(1, baudrate=10_000_000, polarity=0, phase=0,
-           sck=Pin(18), mosi=Pin(19), miso=Pin(4))
+           sck=Pin(18), mosi=Pin(11), miso=Pin(4))
 _cs  = Pin(5, Pin.OUT, value=1)
 
 
@@ -59,7 +59,7 @@ _step  = 0
 def setup():
     init_max7219()
     clear_display()
-    print('MAX7219 ready  CLK=GP18  DIN=GP19  CS=GP5')
+    print('MAX7219 ready  CLK=GP18  DIN=GP11  CS=GP5')
 
 
 def loop():

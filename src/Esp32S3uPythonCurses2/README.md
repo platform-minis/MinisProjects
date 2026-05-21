@@ -85,7 +85,7 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 | 16 | SPI MISO | RC-522 MISO | 18 |
 | 17 | Digital output | RC-522 SDA (CS) | 18 |
 | 18 | SPI SCK | MAX7219 CLK (13) · RC-522 SCK (18) | 13, 18 |
-| 19 | SPI MOSI | MAX7219 DIN (13) · RC-522 MOSI (18) | 13, 18 |
+| 11 | SPI MOSI | MAX7219 DIN (13) · RC-522 MOSI (18) | 13, 18 |
 
 > GP4 and GP5 serve different purposes in different lessons. They are never used simultaneously — each lesson uses its own wiring.
 
@@ -97,7 +97,7 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 ESP32-S3 Pico         MAX7219 module
 ┌──────────────┐     ┌──────────────────┐
 │        GP18  ├─────┤ CLK              │
-│        GP19  ├─────┤ DIN              │
+│        GP11  ├─────┤ DIN              │
 │         GP5  ├─────┤ CS               │
 │         3V3  ├─────┤ VCC              │
 │         GND  ├─────┤ GND              │
@@ -115,7 +115,7 @@ Step 1: GND   (ESP32-S3)  →  GND   (MAX7219)
 Step 2: 3V3   (ESP32-S3)  →  VCC   (MAX7219)
 Step 3: GP5   (ESP32-S3)  →  CS    (MAX7219)
 Step 4: GP18  (ESP32-S3)  →  CLK   (MAX7219)
-Step 5: GP19  (ESP32-S3)  →  DIN   (MAX7219)
+Step 5: GP11  (ESP32-S3)  →  DIN   (MAX7219)
         GP4   (ESP32-S3)  →  (nothing)
 ```
 
@@ -291,7 +291,7 @@ Turn the potentiometer until the onboard indicator LED switches state at the des
 ESP32-S3 Pico         RC-522 module
 ┌──────────────┐     ┌──────────────┐
 │        GP18  ├─────┤ SCK          │
-│        GP19  ├─────┤ MOSI         │
+│        GP11  ├─────┤ MOSI         │
 │        GP16  ├─────┤ MISO         │
 │        GP17  ├─────┤ SDA  (CS)    │
 │        GP15  ├─────┤ RST          │
@@ -352,7 +352,7 @@ SPI is the fastest of the common serial protocols. It is full-duplex (sends and 
 ```text
 ESP32-S3       MAX7219
   GP18  ──────── CLK
-  GP19  ──────── DIN
+  GP11  ──────── DIN
   GP5   ──────── CS
   GND   ──────── GND
   (MISO not used by MAX7219 — write-only device)
@@ -529,7 +529,7 @@ Binary:        0 1 1 0 0 1 1 0  =  0b01100110  =  0x66
 ESP32-S3 Pico         MAX7219 module
 ┌──────────────┐     ┌──────────────────┐
 │        GP18  ├─────┤ CLK              │
-│        GP19  ├─────┤ DIN              │
+│        GP11  ├─────┤ DIN              │
 │         GP5  ├─────┤ CS               │
 │         3V3  ├─────┤ VCC              │
 │         GND  ├─────┤ GND              │
@@ -540,9 +540,9 @@ ESP32-S3 Pico         MAX7219 module
 
 ```text
 ╔══ ▶ START ════════════════════════════════════════════╗
-║  [MAX7219 init  CLK=GP18  DIN=GP19  CS=GP5]           ║
+║  [MAX7219 init  CLK=GP18  DIN=GP11  CS=GP5]           ║
 ║  [MAX7219 clear display]                              ║
-║  [Print]  "MAX7219 ready  CLK=GP18  DIN=GP19  CS=GP5" ║
+║  [Print]  "MAX7219 ready  CLK=GP18  DIN=GP11  CS=GP5" ║
 ╚═══════════════════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ════════════════════════════════════════╗
@@ -609,7 +609,7 @@ _step     = 0
 def setup():
     init_max7219()
     clear_display()
-    print('MAX7219 ready  CLK=GP18  DIN=GP19  CS=GP5')
+    print('MAX7219 ready  CLK=GP18  DIN=GP11  CS=GP5')
 
 def loop():
     global _step
@@ -949,7 +949,7 @@ Object detected   ADC=180
 **Goal:** Read the UID of an RFID card or key fob using the RC-522 module over SPI and print it to the REPL.
 
 **What happens:**
-`setup()` creates an MFRC522 reader object on SPI pins GP18/GP19/GP16 with CS=GP17 and RST=GP15, then prints a ready message. The `loop()` calls `read_uid()` every 100 ms: it sends an idle request (`REQIDL`) to check for cards in range, then runs the anti-collision/select sequence (`SelectTagSN`) to retrieve the 4-byte UID. If a valid UID is found it is printed as a colon-separated hex string and the loop pauses 1 s to avoid printing the same card repeatedly. With no card present the loop sleeps 100 ms and tries again.
+`setup()` creates an MFRC522 reader object on SPI pins GP18/GP11/GP16 with CS=GP17 and RST=GP15, then prints a ready message. The `loop()` calls `read_uid()` every 100 ms: it sends an idle request (`REQIDL`) to check for cards in range, then runs the anti-collision/select sequence (`SelectTagSN`) to retrieve the 4-byte UID. If a valid UID is found it is printed as a colon-separated hex string and the loop pauses 1 s to avoid printing the same card repeatedly. With no card present the loop sleeps 100 ms and tries again.
 
 **Components used:**
 
@@ -965,7 +965,7 @@ Object detected   ADC=180
 
 ```text
 ╔══ ▶ START ═══════════════════════════════════════════════════════════════╗
-║  [RC-522 init  SCK=GP18  MOSI=GP19  MISO=GP16  SDA=GP17  RST=GP15]      ║
+║  [RC-522 init  SCK=GP18  MOSI=GP11  MISO=GP16  SDA=GP17  RST=GP15]      ║
 ║  [Print]  "Hold a card near the reader..."                               ║
 ╚══════════════════════════════════════════════════════════════════════════╝
 
@@ -999,7 +999,7 @@ def read_uid():
     return ':'.join('{:02X}'.format(b) for b in uid)
 
 def setup():
-    print('RC-522 ready   SCK=GP18 MOSI=GP19 MISO=GP16 SDA=GP17 RST=GP15')
+    print('RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15')
     print('Hold a card or tag near the reader...')
 
 def loop():
@@ -1014,7 +1014,7 @@ def loop():
 **Example REPL output** (tap different cards against the reader):
 
 ```text
-RC-522 ready   SCK=GP18 MOSI=GP19 MISO=GP16 SDA=GP17 RST=GP15
+RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15
 Hold a card or tag near the reader...
 Card UID: A3:1F:C7:02
 Card UID: A3:1F:C7:02
@@ -1191,7 +1191,7 @@ Click the **Upload** button (top right of the project page). The upload dialog o
 │  ┌───────────────────────────────────────────────┐  │
 │  │ REPL terminal output                          │  │
 │  │ > OK                                          │  │
-│  │   MAX7219 ready  CLK=GP18  DIN=GP19  CS=GP5   │  │
+│  │   MAX7219 ready  CLK=GP18  DIN=GP11  CS=GP5   │  │
 │  │   Smiley                                      │  │
 │  └───────────────────────────────────────────────┘  │
 │                                          [ UPLOAD ]  │
