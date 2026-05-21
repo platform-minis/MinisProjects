@@ -545,59 +545,90 @@ _cs_r = Pin(17, Pin.OUT, value=1)
 _rst_r = Pin(15, Pin.OUT, value=1)
 def _rrd(a):
     _cs_r.value(0)
-    _spi_r.write(bytes([((a << 1) & 0x7E) | 0x80]))
-    v = _spi_r.read(1)[0]
+    _spi_r.write(bytes([0xff & (((a << 1) & 0x7e) | 0x80)]))
+    val = _spi_r.read(1)
     _cs_r.value(1)
-    return v
+    return val[0]
 def _rwr(a, v):
     _cs_r.value(0)
-    _spi_r.write(bytes([(a << 1) & 0x7E, v]))
+    _spi_r.write(bytes([0xff & ((a << 1) & 0x7e)]))
+    _spi_r.write(bytes([0xff & v]))
     _cs_r.value(1)
 def _rset(a, m):
     _rwr(a, _rrd(a) | m)
 def _rclr(a, m):
-    _rwr(a, _rrd(a) & ~m)
-def _rc522_transceive(data):
-    _rwr(0x02, 0x77)
+    _rwr(a, _rrd(a) & (~m))
+def _rc522_tocard(cmd, data):
+    recv = []
+    bits = 0
+    irq_en = 0x77
+    wait_irq = 0x30
+    _rwr(0x02, irq_en | 0x80)
     _rclr(0x04, 0x80)
     _rset(0x0A, 0x80)
     _rwr(0x01, 0x00)
-    for b in data:
-        _rwr(0x09, b)
-    _rwr(0x01, 0x0C)
-    _rset(0x0D, 0x80)
-    for _ in range(2000):
-        if _rrd(0x04) & 0x31:
+    for c in data:
+        _rwr(0x09, c)
+    _rwr(0x01, cmd)
+    if cmd == 0x0C:
+        _rset(0x0D, 0x80)
+    i = 2000
+    while True:
+        n = _rrd(0x04)
+        i -= 1
+        if ~((i != 0) and ~(n & 0x01) and ~(n & wait_irq)):
             break
     _rclr(0x0D, 0x80)
-    if _rrd(0x06) & 0x1B:
-        return None
-    n = _rrd(0x0A) & 0x7F
-    return [_rrd(0x09) for _ in range(min(n, 16))]
+    stat = 2
+    if i:
+        if (_rrd(0x06) & 0x1B) == 0x00:
+            stat = 0
+            if n & irq_en & 0x01:
+                stat = 1
+            elif cmd == 0x0C:
+                n = _rrd(0x0A)
+                lbits = _rrd(0x0C) & 0x07
+                if lbits != 0:
+                    bits = (n - 1) * 8 + lbits
+                else:
+                    bits = n * 8
+                if n == 0:
+                    n = 1
+                elif n > 16:
+                    n = 16
+                for _ in range(n):
+                    recv.append(_rrd(0x09))
+        else:
+            stat = 2
+    return stat, recv, bits
 def _rc522_init():
     _rst_r.value(0)
-    time.sleep_ms(1)
+    time.sleep_ms(50)
     _rst_r.value(1)
     time.sleep_ms(50)
     _rwr(0x01, 0x0F)
     time.sleep_ms(50)
     _rwr(0x2A, 0x8D)
     _rwr(0x2B, 0x3E)
-    _rwr(0x2C, 30)
-    _rwr(0x2D, 0)
+    _rwr(0x2D, 30)
+    _rwr(0x2C, 0)
     _rwr(0x15, 0x40)
     _rwr(0x11, 0x3D)
     _rset(0x14, 0x03)
     print('RC-522 ready   SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15')
 def _rc522_read_uid():
     _rwr(0x0D, 0x07)
-    r = _rc522_transceive([0x26])
-    if not r or len(r) < 2:
+    stat, recv, bits = _rc522_tocard(0x0C, [0x26])
+    if stat != 0 or bits != 0x10:
         return ''
     _rwr(0x0D, 0x00)
-    r = _rc522_transceive([0x93, 0x20])
-    if r and len(r) == 5 and (r[0] ^ r[1] ^ r[2] ^ r[3]) == r[4]:
-        return ':'.join('{:02X}'.format(b) for b in r[:4])
+    stat, recv, bits = _rc522_tocard(0x0C, [0x93, 0x20])
+    if stat == 0 and len(recv) == 5:
+        chk = 0
+        for b in recv[:4]:
+            chk ^= b
+        if chk == recv[4]:
+            return ':'.join('{:02X}'.format(b) for b in recv[:4])
     return ''
 `;
 
