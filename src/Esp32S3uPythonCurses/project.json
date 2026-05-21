@@ -4,14 +4,36 @@
   "description": "ESP32-S3 test project for demonstrating functionality.",
   "version": "1.0.0",
   "softwarePlatform": "uPython",
-  "tags": ["test", "esp32s3", "uPython"],
+  "tags": [
+    "test",
+    "esp32s3",
+    "uPython"
+  ],
   "moduleId": "esp32-s3-pico",
   "sketches": [
-    { "name": "Lesson0" },
-    { "name": "Lesson1" },
-    { "name": "Lesson2" },
-    { "name": "Lesson3" },
-    { "name": "Lesson4" },
-    { "name": "Lesson9" }
+    {
+      "name": "Lesson0"
+    },
+    {
+      "name": "Lesson1"
+    },
+    {
+      "name": "Lesson2"
+    },
+    {
+      "name": "Lesson3"
+    },
+    {
+      "name": "Lesson4"
+    },
+    {
+      "name": "Lesson9"
+    }
+  ],
+  "libraries": [
+    {
+      "url": "https://raw.githubusercontent.com/platform-minis/MinisProjects/main/libs/uMinisLib/hardware.py",
+      "remoteName": "hardware.py"
+    }
   ]
 }
