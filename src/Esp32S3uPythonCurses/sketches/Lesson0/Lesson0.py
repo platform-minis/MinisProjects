@@ -4,7 +4,7 @@ import time
 import math
 
 # ── Hardware ──────────────────────────────────────────────────────────────────
-_RGB_PIN = 47   # WS2812B on-board LED — Waveshare ESP32-S3-Pico = GP47
+_RGB_PIN = 21   # WS2812B on-board LED — Waveshare ESP32-S3-Pico = GP21
 _BTN_PIN = 0    # BOOT button, active LOW (GP0); internal pull-up used
 
 _np  = neopixel.NeoPixel(Pin(_RGB_PIN), 1)

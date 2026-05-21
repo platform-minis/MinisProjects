@@ -1,6 +1,6 @@
 <xml xmlns="https://developers.google.com/blockly/xml">
   <!--
-    Lesson0 — On-board RGB LED (WS2812B, GP47) + BOOT button (GP0).
+    Lesson0 — On-board RGB LED (WS2812B, GP21) + BOOT button (GP0).
     Uses custom project.js blocks — no hardware.py required.
     Short press = next color, long press = prev color.
   -->

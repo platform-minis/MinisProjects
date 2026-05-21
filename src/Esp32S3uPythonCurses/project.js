@@ -121,13 +121,13 @@ addCategory({
 // ─── WS2812B (on-board RGB LED, GP47) ────────────────────────────────────────
 
 var _WS2812B_DEFS = `
-_rgb = neopixel.NeoPixel(Pin(47), 1)
+_rgb = neopixel.NeoPixel(Pin(21), 1)
 `;
 
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'ws2812b_init',
-    message0: 'WS2812B init (GP47)',
+    message0: 'WS2812B init (GP21)',
     previousStatement: null,
     nextStatement: null,
     colour: 300,

@@ -17,7 +17,7 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | Term | Description |
 | ---- | ----------- |
 | **GPIO** | General Purpose Input/Output — a microcontroller pin that can act as a digital input or output |
-| **WS2812B** | Addressable RGB LED (NeoPixel) — receives colour data over a single wire using a precise timing protocol; on the ESP32-S3 Pico it is the on-board LED on GP47 |
+| **WS2812B** | Addressable RGB LED (NeoPixel) — receives colour data over a single wire using a precise timing protocol; on the ESP32-S3 Pico it is the on-board LED on GP21 |
 | **NeoPixel** | Common name for WS2812B-compatible addressable LEDs; MicroPython provides the built-in `neopixel` module to drive them |
 | **HSV** | Hue-Saturation-Value colour model — hue (0–360°) selects the colour, saturation controls vividness, value controls brightness |
 | **Active LOW** | A signal that is "active" (button pressed, LED on) when the voltage is 0 V; the BOOT button on the ESP32-S3 Pico reads 0 when pressed, 1 when released |
@@ -65,7 +65,7 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 | 14 | Digital output | LED (green) | Lesson 3 |
 | 16 | Digital input | Tactile button | Lesson 4 |
 | 18 | PWM output | Passive buzzer | Lesson 9 |
-| 47 | Digital output | WS2812B on-board RGB LED (built-in) | Lesson0 |
+| 21 | Digital output | WS2812B on-board RGB LED (built-in) | Lesson0 |
 
 ---
 
@@ -78,7 +78,7 @@ No external wiring needed — both components are soldered onto the board.
 ```text
 ESP32-S3 Pico — built-in components
 ┌──────────────────────────────────────────┐
-│  GP47 ──── WS2812B (RGB LED)  ←on-board │
+│  GP21 ──── WS2812B (RGB LED)  ←on-board │
 │  GP0  ──── BOOT button        ←on-board │
 │            (active LOW — reads 0 when    │
 │             pressed, 1 when released)    │
@@ -86,7 +86,7 @@ ESP32-S3 Pico — built-in components
 ```
 
 > **No external components needed for Lesson0.** The WS2812B and BOOT button are mounted directly on the PCB.
-> If the LED does not light up, check that your MicroPython firmware was compiled with NeoPixel support (all standard ESP32-S3 builds include it). If the colour is wrong or the LED is very dim, try changing `_RGB_PIN` to 48 — some board revisions use GP48 instead of GP47.
+> If the LED does not light up, check that your MicroPython firmware was compiled with NeoPixel support (all standard ESP32-S3 builds include it).
 
 **BOOT button behaviour:**
 
