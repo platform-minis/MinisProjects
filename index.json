@@ -213,6 +213,7 @@
       "softwarePlatform": "uPython",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
+      "readmePath": "src/Esp32S3uPythonCurses2/README.md",
       "tags": [
         "esp32s3",
         "uPython",
