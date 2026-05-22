@@ -617,6 +617,15 @@ def _rc522_init():
     _rset(0x14, 0x03)
     ver = _rrd(0x37)
     print('RC-522 ver=0x{:02X}  SCK=GP18 MOSI=GP11 MISO=GP16 SDA=GP17 RST=GP15  (0x91/0x92=OK 0xFF=no SPI)'.format(ver))
+    print('INIT: hold card near reader for 3s...')
+    for _i in range(30):
+        _rwr(0x0D, 0x07)
+        _s, _r, _b = _rc522_tocard(0x0C, [0x26])
+        print('REQA s={} b={}'.format(_s, _b))
+        if _s == 0 and _b == 0x10:
+            print('CARD DETECTED IN INIT!')
+            break
+        time.sleep_ms(100)
 def _rc522_read_uid():
     _rwr(0x0D, 0x07)
     stat, recv, bits = _rc522_tocard(0x0C, [0x26])
