@@ -5,7 +5,7 @@ import time
 
 # DHT11 temperature and humidity sensor
 # Wiring:
-#   DATA → GP9  (single-wire protocol)
+#   DATA → GP10 (single-wire protocol)
 #   VCC  → 3.3 V
 #   GND  → GND
 #
@@ -14,7 +14,7 @@ import time
 #   Humidity:    20–90 %   ±5 %    resolution 1 %
 #   Minimum interval between readings: 1 s (use 2 s to be safe)
 
-_sensor = dht.DHT11(Pin(9))
+_sensor = dht.DHT11(Pin(10))
 
 
 def read_dht():
@@ -24,7 +24,7 @@ def read_dht():
 
 
 def setup():
-    print('DHT11 ready  DATA=GP9')
+    print('DHT11 ready  DATA=GP10')
 
 
 def loop():
