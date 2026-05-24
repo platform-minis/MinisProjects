@@ -10,7 +10,7 @@
       <block type="upy_print" id="setup_print">
         <value name="TEXT">
           <block type="text" id="setup_print_v">
-            <field name="TEXT">DHT11 ready  DATA=GP9</field>
+            <field name="TEXT">DHT11 ready  DATA=GP10</field>
           </block>
         </value>
       </block>
