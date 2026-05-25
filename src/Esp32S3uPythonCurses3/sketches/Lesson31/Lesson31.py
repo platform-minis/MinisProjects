@@ -1,13 +1,30 @@
 from machine import Pin, I2C
 import time
-from lcd1602 import LCD1602
 
 _i2c0 = I2C(0, sda=Pin(13), scl=Pin(14), freq=400000)
 _i2c1 = I2C(1, sda=Pin(33), scl=Pin(34), freq=400000)
 _AHT20_ADDR = 0x38
 _BMP280_ADDR = 0x77
 _bmp280_cal = None
-_lcd = LCD1602(_i2c1, 0x27)
+
+class _LCD:
+    def __init__(self, i2c, addr=0x27):
+        self.i2c = i2c; self.addr = addr; self._bl = 0x08; self._setup()
+    def _wb(self, b): self.i2c.writeto(self.addr, bytes([b | self._bl]))
+    def _pulse(self, b):
+        self._wb(b | 4); time.sleep_us(1); self._wb(b & ~4); time.sleep_us(50)
+    def _s4(self, n): self._wb(n); self._pulse(n)
+    def _cmd(self, d, m=0):
+        rs = m & 1; self._s4((d & 0xF0) | rs); self._s4(((d << 4) & 0xF0) | rs)
+    def _setup(self):
+        time.sleep_ms(50); self._s4(0x30); time.sleep_ms(5); self._s4(0x30)
+        time.sleep_us(150); self._s4(0x30); self._s4(0x20)
+        self._cmd(0x28); self._cmd(0x0C); self._cmd(0x06); self._cmd(0x01); time.sleep_ms(2)
+    def write_line(self, row, text):
+        self._cmd(0x80 | (0x40 if row else 0))
+        for ch in '{:<16}'.format(str(text)[:16]): self._cmd(ord(ch), 1)
+
+_lcd = _LCD(_i2c1, 0x27)
 
 def _u16(b, i):
     return b[i] | (b[i + 1] << 8)

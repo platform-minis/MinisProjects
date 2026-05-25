@@ -6,7 +6,7 @@
     {
       "id": "Esp32AudioPlayer",
       "name": "ESP32 Audio Player",
-      "description": "Modularna platforma audio na ESP32 \u2014 odtwarzacz plik\u00f3w z karty SD, radio internetowe, g\u0142o\u015bnik Bluetooth, stacja efekt\u00f3w d\u017awi\u0119kowych i rejestrator audio.",
+      "description": "Modularna platforma audio na ESP32 — odtwarzacz plików z karty SD, radio internetowe, głośnik Bluetooth, stacja efektów dźwiękowych i rejestrator audio.",
       "softwarePlatform": "Arduino",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
@@ -28,7 +28,7 @@
     {
       "id": "Esp32S3DisplayVGA",
       "name": "ESP32-S3 Display VGA",
-      "description": "ESP32-S3 wy\u015bwietla obraz VGA 640\u00d7480 @ 60Hz, 8-bit kolor (R3G3B2). U\u017cywa sprz\u0119towego bloku LCD_CAM z DMA. Oparty na bibliotece luniVGA.",
+      "description": "ESP32-S3 wyświetla obraz VGA 640×480 @ 60Hz, 8-bit kolor (R3G3B2). Używa sprzętowego bloku LCD_CAM z DMA. Oparty na bibliotece luniVGA.",
       "softwarePlatform": "Arduino",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
@@ -58,7 +58,7 @@
     {
       "id": "Esp32S3DisplayVGA1bit",
       "name": "ESP32-S3 Display VGA 1bit",
-      "description": "ESP32-S3 wy\u015bwietla obraz monochromatyczny VGA 640\u00d7480 @ 60Hz. Minimalne okablowanie: tylko 3 piny danych (MSB ka\u017cdego kana\u0142u) + HSYNC + VSYNC.",
+      "description": "ESP32-S3 wyświetla obraz monochromatyczny VGA 640×480 @ 60Hz. Minimalne okablowanie: tylko 3 piny danych (MSB każdego kanału) + HSYNC + VSYNC.",
       "softwarePlatform": "Arduino",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
@@ -209,7 +209,7 @@
     {
       "id": "Esp32S3uPythonCurses2",
       "name": "ESP32-S3 uPython Curses 2",
-      "description": "ESP32-S3 MicroPython course part 2 \u2014 MAX7219, KY-018, AHT20+BMP280, HC-SR04, HC-SR501 and RC-522 RFID.",
+      "description": "ESP32-S3 MicroPython course part 2 — MAX7219, KY-018, AHT20+BMP280, HC-SR04, HC-SR501 and RC-522 RFID.",
       "softwarePlatform": "uPython",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
@@ -296,13 +296,12 @@
           ]
         }
       ],
-      "readmePath": "src/Esp32S3uPythonCurses2/README.md",
       "projectScriptPath": "src/Esp32S3uPythonCurses2/project.js"
     },
     {
       "id": "Esp32S3uPythonCurses3",
       "name": "ESP32-S3 uPython Curses 3",
-      "description": "ESP32-S3 MicroPython course part 3 \u2014 AHT20+BMP280 sensors on I2C0 (SDA=GP13, SCL=GP14) with readings displayed on LCD1602 over I2C1 (SDA=GP33, SCL=GP34).",
+      "description": "ESP32-S3 MicroPython course part 3 — AHT20+BMP280 sensors on I2C0 (SDA=GP13, SCL=GP14) with readings displayed on LCD1602 over I2C1 (SDA=GP33, SCL=GP34).",
       "softwarePlatform": "uPython",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
@@ -317,12 +316,7 @@
         "humidity",
         "pressure"
       ],
-      "libraries": [
-        {
-          "url": "data:text/plain;base64,aW1wb3J0IHV0aW1lCgpjbGFzcyBMQ0QxNjAyOgogICAgIiIiUENGODU3NC1iYXNlZCBJMkMgTENEIDE2MDIgZHJpdmVyIGZvciBNaWNyb1B5dGhvbi4iIiIKCiAgICBkZWYgX19pbml0X18oc2VsZiwgaTJjLCBhZGRyPTB4MjcsIGNvbHM9MTYsIHJvd3M9Mik6CiAgICAgICAgc2VsZi5pMmMgID0gaTJjCiAgICAgICAgc2VsZi5hZGRyID0gYWRkcgogICAgICAgIHNlbGYuY29scyA9IGNvbHMKICAgICAgICBzZWxmLnJvd3MgPSByb3dzCiAgICAgICAgc2VsZi5fYmwgID0gMHgwOAogICAgICAgIHNlbGYuX2luaXQoKQoKICAgIGRlZiBfd3JpdGVfYnl0ZShzZWxmLCBiKToKICAgICAgICBzZWxmLmkyYy53cml0ZXRvKHNlbGYuYWRkciwgYnl0ZXMoW2IgfCBzZWxmLl9ibF0pKQoKICAgIGRlZiBfcHVsc2Uoc2VsZiwgYik6CiAgICAgICAgc2VsZi5fd3JpdGVfYnl0ZShiIHwgMHgwNCkKICAgICAgICB1dGltZS5zbGVlcF91cygxKQogICAgICAgIHNlbGYuX3dyaXRlX2J5dGUoYiAmIH4weDA0KQogICAgICAgIHV0aW1lLnNsZWVwX3VzKDUwKQoKICAgIGRlZiBfc2VuZDQoc2VsZiwgbmliYmxlKToKICAgICAgICBzZWxmLl93cml0ZV9ieXRlKG5pYmJsZSkKICAgICAgICBzZWxmLl9wdWxzZShuaWJibGUpCgogICAgZGVmIF9jbWQoc2VsZiwgZGF0YSwgbW9kZT0wKToKICAgICAgICBycyA9IG1vZGUgJiAweDAxCiAgICAgICAgc2VsZi5fc2VuZDQoKGRhdGEgJiAweEYwKSB8IHJzKQogICAgICAgIHNlbGYuX3NlbmQ0KCgoZGF0YSA8PCA0KSAmIDB4RjApIHwgcnMpCgogICAgZGVmIF9pbml0KHNlbGYpOgogICAgICAgIHV0aW1lLnNsZWVwX21zKDUwKQogICAgICAgIHNlbGYuX3NlbmQ0KDB4MzApCiAgICAgICAgdXRpbWUuc2xlZXBfbXMoNSkKICAgICAgICBzZWxmLl9zZW5kNCgweDMwKQogICAgICAgIHV0aW1lLnNsZWVwX3VzKDE1MCkKICAgICAgICBzZWxmLl9zZW5kNCgweDMwKQogICAgICAgIHNlbGYuX3NlbmQ0KDB4MjApCiAgICAgICAgc2VsZi5fY21kKDB4MjgpCiAgICAgICAgc2VsZi5fY21kKDB4MEMpCiAgICAgICAgc2VsZi5fY21kKDB4MDYpCiAgICAgICAgc2VsZi5fY21kKDB4MDEpCiAgICAgICAgdXRpbWUuc2xlZXBfbXMoMikKCiAgICBkZWYgY2xlYXIoc2VsZik6CiAgICAgICAgc2VsZi5fY21kKDB4MDEpCiAgICAgICAgdXRpbWUuc2xlZXBfbXMoMikKCiAgICBkZWYgYmFja2xpZ2h0KHNlbGYsIG9uPVRydWUpOgogICAgICAgIHNlbGYuX2JsID0gMHgwOCBpZiBvbiBlbHNlIDB4MDAKICAgICAgICBzZWxmLl93cml0ZV9ieXRlKDApCgogICAgZGVmIG1vdmVfdG8oc2VsZiwgY29sLCByb3cpOgogICAgICAgIG9mZnNldHMgPSBbMHgwMCwgMHg0MCwgMHgxNCwgMHg1NF0KICAgICAgICBzZWxmLl9jbWQoMHg4MCB8IChvZmZzZXRzW3JvdyAlIDRdICsgY29sKSkKCiAgICBkZWYgd3JpdGUoc2VsZiwgdGV4dCk6CiAgICAgICAgZm9yIGNoIGluIHN0cih0ZXh0KToKICAgICAgICAgICAgc2VsZi5fY21kKG9yZChjaCksIG1vZGU9MSkKCiAgICBkZWYgd3JpdGVfbGluZShzZWxmLCByb3csIHRleHQpOgogICAgICAgICIiIldyaXRlIHRleHQgcGFkZGVkL3RydW5jYXRlZCB0byAxNiBjaGFycyBvbiBnaXZlbiByb3cgKDAgb3IgMSkuIiIiCiAgICAgICAgc2VsZi5tb3ZlX3RvKDAsIHJvdykKICAgICAgICBzZWxmLndyaXRlKCd7OjwxNn0nLmZvcm1hdChzdHIodGV4dClbOjE2XSkpCg==",
-          "remoteName": "lcd1602.py"
-        }
-      ],
+      "libraries": [],
       "path": "src/Esp32S3uPythonCurses3",
       "hasSrc": true,
       "hasDocs": true,
@@ -560,7 +554,7 @@
     {
       "id": "Esp32StreamingAudioPlayer",
       "name": "ESP32 Streaming Audio Player",
-      "description": "Platforma do strumieniowania audio przez WiFi w obu kierunkach \u2014 ESP32 jako odbiornik (radio internetowe, Snapcast client) i nadajnik (web serwer audio, RTSP).",
+      "description": "Platforma do strumieniowania audio przez WiFi w obu kierunkach — ESP32 jako odbiornik (radio internetowe, Snapcast client) i nadajnik (web serwer audio, RTSP).",
       "softwarePlatform": "Arduino",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
@@ -582,7 +576,7 @@
     {
       "id": "Esp32TapeForge",
       "name": "ESP32 Tape Forge",
-      "description": "Urz\u0105dzenie na ESP32 nagrywaj\u0105ce na kasety magnetofonowe dane cyfrowe kompatybilne z komputerami retro (C64, ZX Spectrum, MSX) oraz zwyk\u0142e audio WAV z karty microSD.",
+      "description": "Urządzenie na ESP32 nagrywające na kasety magnetofonowe dane cyfrowe kompatybilne z komputerami retro (C64, ZX Spectrum, MSX) oraz zwykłe audio WAV z karty microSD.",
       "softwarePlatform": "Arduino",
       "moduleId": "esp32-devkitc",
       "version": "1.0.0",
@@ -605,7 +599,7 @@
     {
       "id": "Esp32VinylCaster",
       "name": "ESP32 Vinyl Caster",
-      "description": "Bezprzewodowy digitizer audio na ESP32. Zamienia sygna\u0142 analogowy (gramofon, magnetofon) na strumie\u0144 cyfrowy przez WiFi lub zapis WAV/FLAC na kart\u0119 SD.",
+      "description": "Bezprzewodowy digitizer audio na ESP32. Zamienia sygnał analogowy (gramofon, magnetofon) na strumień cyfrowy przez WiFi lub zapis WAV/FLAC na kartę SD.",
       "softwarePlatform": "Arduino",
       "moduleId": "esp32-s3-pico",
       "version": "1.0.0",
@@ -626,8 +620,8 @@
     },
     {
       "id": "PicoSdkBlinkPico",
-      "name": "Blink \u2014 Pico (RP2040)",
-      "description": "LED blink na Raspberry Pi Pico (RP2040). GPIO 25 \u2014 wbudowana dioda.",
+      "name": "Blink — Pico (RP2040)",
+      "description": "LED blink na Raspberry Pi Pico (RP2040). GPIO 25 — wbudowana dioda.",
       "softwarePlatform": "PicoSdk",
       "moduleId": "rp2040-pico",
       "version": "1.0.0",
@@ -646,8 +640,8 @@
     },
     {
       "id": "PicoSdkBlinkPico2",
-      "name": "Blink \u2014 Pico 2 (RP2350)",
-      "description": "LED blink na Raspberry Pi Pico 2 (RP2350). GPIO 25 \u2014 wbudowana dioda.",
+      "name": "Blink — Pico 2 (RP2350)",
+      "description": "LED blink na Raspberry Pi Pico 2 (RP2350). GPIO 25 — wbudowana dioda.",
       "softwarePlatform": "PicoSdk",
       "moduleId": "rp2350-pico2",
       "version": "1.0.0",
@@ -666,8 +660,8 @@
     },
     {
       "id": "PicoSdkBlinkPico2W",
-      "name": "Blink \u2014 Pico 2 W (RP2350+WiFi)",
-      "description": "LED blink na Raspberry Pi Pico 2 W (RP2350). LED sterowany przez uk\u0142ad CYW43 (pico_cyw43_arch).",
+      "name": "Blink — Pico 2 W (RP2350+WiFi)",
+      "description": "LED blink na Raspberry Pi Pico 2 W (RP2350). LED sterowany przez układ CYW43 (pico_cyw43_arch).",
       "softwarePlatform": "PicoSdk",
       "moduleId": "rp2350-pico2-w",
       "version": "1.0.0",
@@ -687,8 +681,8 @@
     },
     {
       "id": "PicoSdkBlinkPicoW",
-      "name": "Blink \u2014 Pico W (RP2040+WiFi)",
-      "description": "LED blink na Raspberry Pi Pico W (RP2040). LED sterowany przez uk\u0142ad CYW43 (pico_cyw43_arch).",
+      "name": "Blink — Pico W (RP2040+WiFi)",
+      "description": "LED blink na Raspberry Pi Pico W (RP2040). LED sterowany przez układ CYW43 (pico_cyw43_arch).",
       "softwarePlatform": "PicoSdk",
       "moduleId": "rp2040-pico-w",
       "version": "1.0.0",
@@ -709,7 +703,7 @@
     {
       "id": "RPiPico2DisplayDVI",
       "name": "RPi Pico 2 Display DVI",
-      "description": "Raspberry Pi Pico 2 (RP2350) wy\u015bwietla obraz DVI/HDMI 640\u00d7480 1bpp. Wykorzystuje PicoDVI (PIO + DMA + SIO TMDS) bez obci\u0105\u017cenia CPU.",
+      "description": "Raspberry Pi Pico 2 (RP2350) wyświetla obraz DVI/HDMI 640×480 1bpp. Wykorzystuje PicoDVI (PIO + DMA + SIO TMDS) bez obciążenia CPU.",
       "softwarePlatform": "PicoSdk",
       "moduleId": "rp2350-pico2",
       "version": "1.0.0",
@@ -732,7 +726,7 @@
     {
       "id": "RPiPico2DisplayVGA",
       "name": "RPi Pico 2 Display VGA",
-      "description": "Raspberry Pi Pico 2 (RP2350) wy\u015bwietla tekst na monitorze VGA 640\u00d7480 1bit (monochrom). Terminal 80\u00d760 znak\u00f3w z czcionk\u0105 8\u00d78 px i obs\u0142ug\u0105 klawiatury PS/2.",
+      "description": "Raspberry Pi Pico 2 (RP2350) wyświetla tekst na monitorze VGA 640×480 1bit (monochrom). Terminal 80×60 znaków z czcionką 8×8 px i obsługą klawiatury PS/2.",
       "softwarePlatform": "cmake",
       "moduleId": "rp2350-pico2",
       "version": "1.0.0",
@@ -754,7 +748,7 @@
     {
       "id": "RPiPico2TestPlatform",
       "name": "RPi Pico 2 Test Platform",
-      "description": "Platforma testowa GPIO, PWM i protoko\u0142\u00f3w komunikacji na Raspberry Pi Pico 2 (RP2350). Obs\u0142uguje sekwencje komend przez UART/USB.",
+      "description": "Platforma testowa GPIO, PWM i protokołów komunikacji na Raspberry Pi Pico 2 (RP2350). Obsługuje sekwencje komend przez UART/USB.",
       "softwarePlatform": "cmake",
       "moduleId": "rp2350-pico2",
       "version": "1.0.0",
@@ -797,7 +791,7 @@
     {
       "id": "SimpleCassettePlayerRecorder",
       "name": "Simple Cassette Player & Recorder",
-      "description": "Rozszerzenie SimpleCassettePlayer o funkcjonalno\u015b\u0107 nagrywania. Pe\u0142ny rejestrator/odtwarzacz kasetowy z preampem dla mikrofonu, oscylatorem bias i mieszaczem audio.",
+      "description": "Rozszerzenie SimpleCassettePlayer o funkcjonalność nagrywania. Pełny rejestrator/odtwarzacz kasetowy z preampem dla mikrofonu, oscylatorem bias i mieszaczem audio.",
       "softwarePlatform": "hardware",
       "moduleId": null,
       "version": "1.0.0",
@@ -872,7 +866,7 @@
       "id": "esp32-s3-pico",
       "name": "ESP32-S3 Pico",
       "vendor": "Waveshare",
-      "description": "Compact ESP32-S3 board in Pico form factor. 8MB Flash, 2MB OPI PSRAM, native USB (HWCDC). Requires PSRAM=opi \u2014 without it the chip (ESP32-S3R2) crashes on boot.",
+      "description": "Compact ESP32-S3 board in Pico form factor. 8MB Flash, 2MB OPI PSRAM, native USB (HWCDC). Requires PSRAM=opi — without it the chip (ESP32-S3R2) crashes on boot.",
       "platform": "Arduino",
       "boardProfileKey": "esp32s3_pico",
       "fqbn": "esp32:esp32:esp32s3",
@@ -897,7 +891,7 @@
       "id": "esp32-s3-zero",
       "name": "ESP32-S3 Zero",
       "vendor": "Waveshare",
-      "description": "Ultra-compact ESP32-S3 board in Zero form factor. 4MB Flash, 2MB OPI PSRAM, native USB (HWCDC). Requires PSRAM=opi \u2014 without it the chip (ESP32-S3FH4R2) crashes on boot.",
+      "description": "Ultra-compact ESP32-S3 board in Zero form factor. 4MB Flash, 2MB OPI PSRAM, native USB (HWCDC). Requires PSRAM=opi — without it the chip (ESP32-S3FH4R2) crashes on boot.",
       "platform": "Arduino",
       "boardProfileKey": "esp32s3_zero",
       "fqbn": "esp32:esp32:esp32s3",
