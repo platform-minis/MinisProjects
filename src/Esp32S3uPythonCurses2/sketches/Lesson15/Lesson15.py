@@ -19,7 +19,7 @@ import time
 
 _i2c = I2C(0, sda=Pin(13), scl=Pin(14), freq=400000)
 _AHT20_ADDR = 0x38
-_BMP280_ADDR = 0x76
+_BMP280_ADDR = 0x77
 _bmp280_cal = None
 
 

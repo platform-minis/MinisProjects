@@ -425,7 +425,7 @@ from machine import I2C, Pin
 import time
 _i2c = I2C(0, sda=Pin(13), scl=Pin(14), freq=400000)
 _AHT_ADDR = 0x38
-_BMP_ADDR = 0x76
+_BMP_ADDR = 0x77
 _bmp_cal = None
 _aht_t = 0.0
 _aht_h = 0.0
