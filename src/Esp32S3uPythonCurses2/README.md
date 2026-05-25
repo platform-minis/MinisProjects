@@ -1,6 +1,6 @@
 # MicroPython Course — ESP32-S3 Pico · Part 2
 
-A continuation of the hands-on MicroPython course for the **ESP32-S3** microcontroller. Part 2 covers seven independent lessons — one component per lesson: MAX7219 LED matrix, KY-018 light sensor, DHT11, HC-SR04, TCRT5000 IR reflective sensor, RC-522 RFID reader, and PS2 joystick.
+A continuation of the hands-on MicroPython course for the **ESP32-S3** microcontroller. Part 2 covers seven independent lessons — one component per lesson: MAX7219 LED matrix, KY-018 light sensor, AHT20+BMP280 (I2C — temperature, humidity, pressure), HC-SR04, TCRT5000 IR reflective sensor, RC-522 RFID reader, and PS2 joystick.
 
 ---
 
@@ -37,9 +37,14 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 | **KY-018** | Photoresistor breakout module — LDR + pull-down resistor forming a voltage divider; brighter light → higher voltage at S pin → higher ADC reading |
 | **Voltage divider** | Two resistors in series between power and GND; the output voltage at their junction is proportional to the ratio of their values |
 | **VU meter** | Volume Unit meter — a bar whose height represents a signal level; used here as a visual light-level indicator on the LED matrix |
-| **DHT11** | Digital temperature and humidity sensor — communicates over a single-wire protocol; the built-in MicroPython `dht` module handles the timing automatically |
-| **Single-wire protocol** | Proprietary serial bus used by DHT sensors: one DATA pin carries power-on timing, requests and responses; requires a pull-up resistor to 3.3 V |
-| **measure()** | DHT11 method that triggers one reading cycle; must be called before `.temperature()` or `.humidity()`; do not call more often than once per second |
+| **I2C** | Inter-Integrated Circuit — a two-wire synchronous serial bus (SDA data + SCL clock) allowing multiple devices on one bus; each device has a unique 7-bit address; open-drain lines require pull-up resistors (typically 4.7 kΩ) |
+| **SDA** | I2C serial data line — bidirectional; carries address and data bytes |
+| **SCL** | I2C serial clock line — driven by the master (ESP32-S3) to synchronise all transfers |
+| **AHT20** | Digital temperature and humidity sensor (Aosong) — I2C address 0x38; triggered by command 0xAC, responds with 6 bytes; temperature −40 to 85 °C ±0.3 °C, humidity 0–100 % ±2 % |
+| **BMP280** | Barometric pressure and temperature sensor (Bosch) — I2C address 0x76 (SDO=GND) or 0x77 (SDO=3.3 V); stores 12 factory calibration coefficients that must be read once at startup and applied to every raw ADC reading |
+| **hPa** | Hectopascal — SI pressure unit; 1 hPa = 100 Pa; standard sea-level pressure is 1013.25 hPa |
+| **Calibration registers** | BMP280 factory values burned into the chip during manufacture; 24 bytes read from address 0x88; the Bosch compensation formulas convert raw ADC counts to accurate temperature and pressure |
+| **t_fine** | Intermediate variable in the BMP280 Bosch compensation algorithm: accumulates the compensated temperature and is then reused as an input to the pressure compensation formula |
 | **HC-SR04** | Ultrasonic distance sensor — emits a 40 kHz burst and measures the echo travel time to calculate distance (range 2–400 cm) |
 | **TRIG** | HC-SR04 trigger pin — a 10 µs HIGH pulse starts one measurement cycle |
 | **ECHO** | HC-SR04 echo pin — stays HIGH for a duration proportional to the measured distance; `duration [µs] / 58 ≈ distance [cm]` |
@@ -74,18 +79,19 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 | --- | ---- | --------- | ------- |
 | 1 | ADC input | Joystick VRx | 19 |
 | 2 | Digital input | TCRT5000 D0 | 17 |
-| 9 | Digital in/out | DHT11 DATA | 15 |
-| 10 | ADC input | TCRT5000 A0 | 17 |
 | 4 | SPI MISO (dummy) / Digital input | Not connected (13) · HC-SR04 ECHO (16) | 13, 16 |
 | 5 | Digital output | MAX7219 CS (13) · HC-SR04 TRIG (16) | 13, 16 |
 | 6 | ADC input | Joystick VRy | 19 |
 | 7 | ADC input | KY-018 S (signal) | 14 |
 | 8 | Digital input | Joystick SW (button) | 19 |
+| 10 | ADC input | TCRT5000 A0 | 17 |
+| 11 | SPI MOSI | MAX7219 DIN (13) · RC-522 MOSI (18) | 13, 18 |
 | 15 | Digital output | RC-522 RST | 18 |
 | 16 | SPI MISO | RC-522 MISO | 18 |
 | 17 | Digital output | RC-522 SDA (CS) | 18 |
 | 18 | SPI SCK | MAX7219 CLK (13) · RC-522 SCK (18) | 13, 18 |
-| 11 | SPI MOSI | MAX7219 DIN (13) · RC-522 MOSI (18) | 13, 18 |
+| 21 | I2C SDA | AHT20 SDA · BMP280 SDA | 15 |
+| 22 | I2C SCL | AHT20 SCL · BMP280 SCL | 15 |
 
 > GP4 and GP5 serve different purposes in different lessons. They are never used simultaneously — each lesson uses its own wiring.
 
@@ -157,68 +163,31 @@ Bar rows lit:  0–2       3–4        5–8
 
 ---
 
-## Wiring — DHT11 temperature & humidity sensor (Lesson 15)
+## Wiring — AHT20 + BMP280 (Lesson 15)
+
+Both sensors share the same I2C bus — connect SDA and SCL in parallel.
 
 ```text
-ESP32-S3 Pico         DHT11 module
-┌──────────────┐     ┌──────────────┐
-│         GP9  ├─────┤ DATA (S)     │
-│         3V3  ├─────┤ VCC (+)      │
-│         GND  ├─────┤ GND (−)      │
-└──────────────┘     └──────────────┘
+ESP32-S3 Pico         AHT20 module         BMP280 module
+┌──────────────┐     ┌────────────┐        ┌────────────┐
+│        GP21  ├─────┤ SDA        ├────────┤ SDA        │
+│        GP22  ├─────┤ SCL        ├────────┤ SCL        │
+│         3V3  ├─────┤ VCC        │        │ VCC  ──────┤── 3V3
+│         GND  ├─────┤ GND        │        │ GND  ──────┤── GND
+└──────────────┘     └────────────┘        └────────────┘
 ```
 
-> **Pull-up resistor:** The DHT11 DATA line requires a 4.7–10 kΩ pull-up to 3.3 V. Most breakout modules include it on the board. If using a bare 4-pin sensor, add a 10 kΩ resistor between DATA and 3.3 V manually.
-> **Minimum interval:** Do not call `measure()` more often than once every 1 second (2 s recommended). Faster polling returns stale or erroneous values.
-
-### Bare DHT11 sensor (no breakout module)
-
-If you have the standalone 4-pin component instead of a 3-pin breakout module, you **must** add an external 10 kΩ pull-up resistor — the bare sensor does not include one.
-
-**Pin identification** (hold the sensor with the ventilation grill facing you, pins pointing down):
-
-```text
-  ┌─────────┐
-  │ ▓▓▓▓▓▓▓ │  ← ventilation grill (front)
-  │         │
-  └─┬─┬─┬─┬─┘
-    1 2 3 4
-
-  Pin 1 — VCC   (3.3 V)
-  Pin 2 — DATA  (signal)
-  Pin 3 — NC    (leave unconnected)
-  Pin 4 — GND
-```
-
-**Wiring with pull-up resistor:**
-
-```text
-ESP32-S3 Pico              DHT11 (bare sensor)
-┌──────────────┐
-│         3V3  ├───────────────── Pin 1 (VCC)
-│              │         │
-│              │      [ 10 kΩ ]   ← pull-up resistor on breadboard
-│              │         │
-│         GP9  ├───────────────── Pin 2 (DATA)
-│              │
-│              │                  Pin 3 (NC — leave unconnected)
-│              │
-│         GND  ├───────────────── Pin 4 (GND)
-└──────────────┘
-```
+> **SDO pin on BMP280:** If your module exposes an SDO pin, connect it to GND to fix the I2C address at 0x76 (the default used in the sketch). Connecting SDO to 3.3 V changes the address to 0x77 — update `_BMP280_ADDR` in the code if you do this.
+> **Pull-up resistors:** Most breakout modules include 4.7 kΩ pull-ups on SDA and SCL. If you are stacking bare chips on a breadboard without a module, add one 4.7 kΩ resistor from SDA to 3.3 V and another from SCL to 3.3 V.
 
 **Breadboard wiring order:**
 
 ```text
-Step 1: DHT11 Pin 1 (VCC)  → breadboard rail 3V3
-Step 2: DHT11 Pin 4 (GND)  → breadboard rail GND
-Step 3: 10 kΩ resistor     → between Pin 1 (VCC) and Pin 2 (DATA) rows
-Step 4: DHT11 Pin 2 (DATA) → GP9 on ESP32-S3
-        DHT11 Pin 3 (NC)   → nothing
+Step 1: GND  (ESP32-S3) → GND  (AHT20) and GND  (BMP280)
+Step 2: 3V3  (ESP32-S3) → VCC  (AHT20) and VCC  (BMP280)
+Step 3: GP21 (ESP32-S3) → SDA  (AHT20) and SDA  (BMP280)
+Step 4: GP22 (ESP32-S3) → SCL  (AHT20) and SCL  (BMP280)
 ```
-
-> **Why the pull-up is needed:** The DHT11 uses an open-drain single-wire protocol — both the sensor and the microcontroller pull the DATA line LOW to send bits, but neither actively drives it HIGH. The pull-up resistor provides the resting HIGH state. Without it the line floats, the timing is unreliable, and `measure()` raises `OSError` or returns garbage values.
-> **⚠ Symptom without pull-up:** if you see `OSError: [Errno 110] ETIMEDOUT` or the values freeze at 0 °C / 0 % — the pull-up resistor is missing or not connected.
 
 ---
 
@@ -702,79 +671,136 @@ Light: 3991  BRIGHT
 
 ---
 
-### Lesson 15 — DHT11 temperature and humidity sensor
+### Lesson 15 — AHT20 + BMP280 (temperature, humidity, pressure)
 
-**Goal:** Read a digital sensor using a built-in MicroPython library, extract two values from a single measurement cycle, and react to threshold conditions.
+**Goal:** Drive two I2C sensors from a bare-metal MicroPython driver, read the BMP280 factory calibration data, and apply the Bosch compensation formulas to obtain accurate temperature and pressure.
 
 **What happens:**
-`setup()` prints a ready message. Every 2 seconds the `loop()` calls `read_dht()`, which triggers one `measure()` cycle and immediately reads both `.temperature()` and `.humidity()`. The values are printed to the REPL. If temperature exceeds 30 °C **or** humidity exceeds 80 %, a warning line is also printed.
+`setup()` initialises the I2C bus on GP21/GP22, sends the AHT20 init command (0xBE), puts the BMP280 into normal sampling mode (register 0xF4 = 0xB7), reads 24 bytes of BMP280 calibration data and stores them as a tuple. Every 2 seconds `loop()` triggers an AHT20 measurement, reads the BMP280 ADC registers, applies the Bosch compensation algorithm, and prints both sensors' readings to the REPL.
 
 **Components used:**
 
-- **DHT11 module** (3-pin breakout: DATA/S, VCC/+, GND/−)
-- 3× jumper wires
+- **AHT20** temperature and humidity sensor module (I2C breakout, addr 0x38)
+- **BMP280** barometric pressure sensor module (I2C breakout, addr 0x76)
+- 4× jumper wires (SDA and SCL shared between both modules)
 
-**Wiring:** see *Wiring — DHT11* section above.
+**Wiring:** see *Wiring — AHT20 + BMP280* section above.
 
 **Blockly blocks:**
 
 ```text
-╔══ ▶ START ════════════════════════════════╗
-║  [Print]  "DHT11 ready  DATA=GP9"         ║
-╚═══════════════════════════════════════════╝
+╔══ ▶ START ════════════════════════════════════════════════════╗
+║  [AHT20+BMP280 init (SDA=GP21 SCL=GP22)]                      ║
+║  [Print]  "AHT20 + BMP280 ready   SDA=GP21  SCL=GP22"         ║
+╚═══════════════════════════════════════════════════════════════╝
 
-╔══ 🔁 FOREVER ══════════════════════════════════════════╗
-║  [DHT11 measure (GP9)]                                 ║
-║  set temp = [DHT11 temperature]                        ║
-║  set hum  = [DHT11 humidity]                           ║
-║  [Print]  "Temp: " + temp + " C   Hum: " + hum + " %" ║
-║  ╔══ If  temp > 30  OR  hum > 80 ═══════════════════╗  ║
-║  ║  [Print]  "WARNING: high temp or humidity!"       ║  ║
-║  ╚═══════════════════════════════════════════════════╝  ║
-║  [Sleep]  2000 ms                                      ║
-╚════════════════════════════════════════════════════════╝
+╔══ 🔁 FOREVER ════════════════════════════════════════════════════════════╗
+║  [AHT20 measure]                                                         ║
+║  [BMP280 measure]                                                        ║
+║  set temp_a = [AHT20 temperature]                                        ║
+║  set hum    = [AHT20 humidity]                                           ║
+║  set temp_b = [BMP280 temperature]                                       ║
+║  set pres   = [BMP280 pressure (hPa)]                                    ║
+║  [Print]  "AHT20:  Temp=" + temp_a + " C   Hum=" + hum + " %"           ║
+║  [Print]  "BMP280: Temp=" + temp_b + " C   Pres=" + pres + " hPa"       ║
+║  [Sleep]  2000 ms                                                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
 **MicroPython code:**
 
 ```python
-from machine import Pin
-import dht, time
+from machine import Pin, I2C
+import time
 
-_sensor = dht.DHT11(Pin(9))
+_i2c = I2C(0, sda=Pin(21), scl=Pin(22), freq=400000)
+_AHT20_ADDR = 0x38
+_BMP280_ADDR = 0x76
+_bmp280_cal = None
 
-def read_dht():
-    _sensor.measure()
-    return _sensor.temperature(), _sensor.humidity()
+def _u16(b, i):
+    return b[i] | (b[i + 1] << 8)
+
+def _s16(b, i):
+    v = _u16(b, i)
+    return v - 65536 if v > 32767 else v
+
+def _aht20_init():
+    _i2c.writeto(_AHT20_ADDR, bytes([0xBE, 0x08, 0x00]))
+    time.sleep_ms(20)
+
+def _aht20_read():
+    _i2c.writeto(_AHT20_ADDR, bytes([0xAC, 0x33, 0x00]))
+    time.sleep_ms(80)
+    d = _i2c.readfrom(_AHT20_ADDR, 6)
+    rh = (d[1] << 12) | (d[2] << 4) | (d[3] >> 4)
+    rt = ((d[3] & 0x0F) << 16) | (d[4] << 8) | d[5]
+    return round(rt / 1048576.0 * 200.0 - 50.0, 1), round(rh / 1048576.0 * 100.0, 1)
+
+def _bmp280_init():
+    _i2c.writeto_mem(_BMP280_ADDR, 0xF4, bytes([0xB7]))   # osrs_t=2 osrs_p=5 mode=normal
+    time.sleep_ms(10)
+
+def _bmp280_read_cal():
+    c = _i2c.readfrom_mem(_BMP280_ADDR, 0x88, 24)
+    return (_u16(c,0),_s16(c,2),_s16(c,4),_u16(c,6),_s16(c,8),_s16(c,10),
+            _s16(c,12),_s16(c,14),_s16(c,16),_u16(c,18),_s16(c,20),_s16(c,22))
+
+def _bmp280_read(cal):
+    r = _i2c.readfrom_mem(_BMP280_ADDR, 0xF7, 6)
+    adc_p = (r[0] << 12) | (r[1] << 4) | (r[2] >> 4)
+    adc_t = (r[3] << 12) | (r[4] << 4) | (r[5] >> 4)
+    v1 = (adc_t / 16384.0 - cal[0] / 1024.0) * cal[1]
+    v2 = ((adc_t / 131072.0 - cal[0] / 8192.0) ** 2) * cal[2]
+    tf = v1 + v2
+    temp = round(tf / 5120.0, 1)
+    v1 = tf / 2.0 - 64000.0
+    v2 = v1 * v1 * cal[8] / 32768.0 + v1 * cal[7] * 2.0
+    v2 = v2 / 4.0 + cal[6] * 65536.0
+    v1 = (cal[5] * v1 * v1 / 524288.0 + cal[4] * v1) / 524288.0
+    v1 = (1.0 + v1 / 32768.0) * cal[3]
+    if v1 == 0:
+        return temp, 0.0
+    p = 1048576.0 - adc_p
+    p = (p - v2 / 4096.0) * 6250.0 / v1
+    v1 = cal[11] * p * p / 2147483648.0
+    v2 = p * cal[10] / 32768.0
+    return temp, round((p + (v1 + v2 + cal[9]) / 16.0) / 100.0, 1)
 
 def setup():
-    print('DHT11 ready  DATA=GP9')
+    global _bmp280_cal
+    _aht20_init()
+    _bmp280_init()
+    _bmp280_cal = _bmp280_read_cal()
+    print('AHT20 + BMP280 ready   SDA=GP21  SCL=GP22')
 
 def loop():
-    temp, hum = read_dht()
-    print('Temp: ' + str(temp) + ' C   Hum: ' + str(hum) + ' %')
-    if temp > 30 or hum > 80:
-        print('WARNING: high temp or humidity!')
+    temp_a, hum = _aht20_read()
+    temp_b, pres = _bmp280_read(_bmp280_cal)
+    print('AHT20:  Temp=' + str(temp_a) + ' C   Hum=' + str(hum) + ' %')
+    print('BMP280: Temp=' + str(temp_b) + ' C   Pres=' + str(pres) + ' hPa')
     time.sleep_ms(2000)
 ```
 
 **Example REPL output:**
 
 ```text
-DHT11 ready  DATA=GP9
-Temp: 22 C   Hum: 55 %
-Temp: 22 C   Hum: 55 %
-Temp: 31 C   Hum: 83 %
-WARNING: high temp or humidity!
+AHT20 + BMP280 ready   SDA=GP21  SCL=GP22
+AHT20:  Temp=22.4 C   Hum=51.3 %
+BMP280: Temp=22.7 C   Pres=1013.5 hPa
+AHT20:  Temp=22.4 C   Hum=51.2 %
+BMP280: Temp=22.7 C   Pres=1013.4 hPa
 ```
+
+> **Temperature difference:** AHT20 and BMP280 measure temperature independently. A small difference of 0.5–2 °C between them is normal — they use different sensing elements and have different self-heating characteristics.
 
 **What you learn:**
 
-- Using the built-in `dht` module — no external library needed
-- Calling `measure()` once per cycle to populate both temperature and humidity
-- Unpacking a tuple returned by a function: `temp, hum = read_dht()`
-- Combining two conditions with `or` in an `if` statement
-- Why sensor polling intervals matter (DHT11 hardware limitation)
+- Initialising `machine.I2C` and communicating with two devices on the same bus
+- Sending write commands to an I2C sensor and reading back a response
+- Reading and parsing BMP280 factory calibration data (24 bytes, mix of signed and unsigned 16-bit words)
+- Applying the Bosch temperature and pressure compensation algorithm step by step
+- Why sensors need factory calibration and how the `t_fine` intermediate variable links the two formulas
 
 ---
 
