@@ -333,6 +333,53 @@
       "projectScriptPath": "src/Esp32S3uPythonCurses3/project.js"
     },
     {
+      "id": "Esp32S3ZeroAudio",
+      "name": "ESP32-S3 Zero uPython Audio",
+      "description": "ESP32-S3 Zero MicroPython audio examples using MAX98357A I2S amplifier (BCLK=GP4, LRCLK=GP5, DIN=GP6). Generates sine-wave tones and melodies with no external libraries.",
+      "softwarePlatform": "uPython",
+      "moduleId": "esp32-s3-zero",
+      "version": "1.0.0",
+      "tags": [
+        "esp32s3",
+        "zero",
+        "uPython",
+        "i2s",
+        "max98357a",
+        "audio",
+        "music",
+        "tone"
+      ],
+      "libraries": [],
+      "path": "src/Esp32S3ZeroAudio",
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "Lesson40",
+          "files": [
+            "src/Esp32S3ZeroAudio/sketches/Lesson40/Lesson40.blockly",
+            "src/Esp32S3ZeroAudio/sketches/Lesson40/Lesson40.py"
+          ]
+        },
+        {
+          "name": "Lesson41",
+          "files": [
+            "src/Esp32S3ZeroAudio/sketches/Lesson41/Lesson41.blockly",
+            "src/Esp32S3ZeroAudio/sketches/Lesson41/Lesson41.py"
+          ]
+        },
+        {
+          "name": "Lesson42",
+          "files": [
+            "src/Esp32S3ZeroAudio/sketches/Lesson42/Lesson42.blockly",
+            "src/Esp32S3ZeroAudio/sketches/Lesson42/Lesson42.py"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3ZeroAudio/README.md",
+      "projectScriptPath": "src/Esp32S3ZeroAudio/project.js"
+    },
+    {
       "id": "Esp32S3uPythonDisplay",
       "name": "ESP32-S3-uPython-Display",
       "description": "ESP32-S3 MicroPython virtual display examples using minis_display.py. Frames are streamed via MQTT and rendered in the MyCastle browser widget (Virtual Display page).",

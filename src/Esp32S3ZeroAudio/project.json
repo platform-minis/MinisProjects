@@ -1,0 +1,16 @@
+{
+  "id": "Esp32S3ZeroAudio",
+  "name": "ESP32-S3 Zero uPython Audio",
+  "description": "ESP32-S3 Zero MicroPython audio examples using MAX98357A I2S amplifier (BCLK=GP4, LRCLK=GP5, DIN=GP6). Generates sine-wave tones and melodies with no external libraries.",
+  "version": "1.0.0",
+  "softwarePlatform": "uPython",
+  "tags": ["esp32s3", "zero", "uPython", "i2s", "max98357a", "audio", "music", "tone"],
+  "moduleId": "esp32-s3-zero",
+  "libraries": [],
+  "projectScriptPath": "src/Esp32S3ZeroAudio/project.js",
+  "sketches": [
+    { "name": "Lesson40" },
+    { "name": "Lesson41" },
+    { "name": "Lesson42" }
+  ]
+}
