@@ -46,7 +46,7 @@ A **continuation of the ESP32-S3 MicroPython course** introducing the MAX7219 8�
 
 ## Quick start — Lesson 15
 
-1. Connect both modules to the same I2C bus: SDA → GP21, SCL → GP22, VCC → 3.3 V, GND → GND (both modules in parallel).
+1. Connect both modules to the same I2C bus: SDA → GP13, SCL → GP14, VCC → 3.3 V, GND → GND (both modules in parallel).
 2. Make sure the BMP280 SDO pin is tied to GND (I2C address 0x76).
 3. Open `Lesson15` and click **Upload → Run only**.
 4. The REPL prints temperature and humidity from the AHT20 and temperature and pressure from the BMP280 every 2 s.

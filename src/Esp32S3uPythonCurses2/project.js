@@ -368,11 +368,11 @@ addCategory({
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'aht_bmp_init',
-    message0: 'AHT20+BMP280 init (SDA=GP21 SCL=GP22)',
+    message0: 'AHT20+BMP280 init (SDA=GP13 SCL=GP14)',
     previousStatement: null,
     nextStatement: null,
     colour: 120,
-    tooltip: 'Initialise both sensors over I2C (SDA=GP21, SCL=GP22). Call once in setup before any readings.',
+    tooltip: 'Initialise both sensors over I2C (SDA=GP13, SCL=GP14). Call once in setup before any readings.',
   },
   {
     type: 'aht_measure',
@@ -423,7 +423,7 @@ Blockly.defineBlocksWithJsonArray([
 var _AHT_BMP_DEFS = `
 from machine import I2C, Pin
 import time
-_i2c = I2C(0, sda=Pin(21), scl=Pin(22), freq=400000)
+_i2c = I2C(0, sda=Pin(13), scl=Pin(14), freq=400000)
 _AHT_ADDR = 0x38
 _BMP_ADDR = 0x76
 _bmp_cal = None

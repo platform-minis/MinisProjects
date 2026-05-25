@@ -4,8 +4,8 @@ import time
 
 # AHT20 + BMP280 via I2C
 # Wiring:
-#   SDA  -> GP21
-#   SCL  -> GP22
+#   SDA  -> GP13
+#   SCL  -> GP14
 #   VCC  -> 3.3 V
 #   GND  -> GND
 #
@@ -17,7 +17,7 @@ import time
 #   Temperature : -40 to 85 C   +/-1 C
 #   Pressure    : 300 to 1100 hPa  +/-1 hPa
 
-_i2c = I2C(0, sda=Pin(21), scl=Pin(22), freq=400000)
+_i2c = I2C(0, sda=Pin(13), scl=Pin(14), freq=400000)
 _AHT20_ADDR = 0x38
 _BMP280_ADDR = 0x76
 _bmp280_cal = None
@@ -92,7 +92,7 @@ def setup():
     _aht20_init()
     _bmp280_init()
     _bmp280_cal = _bmp280_read_cal()
-    print('AHT20 + BMP280 ready   SDA=GP21  SCL=GP22')
+    print('AHT20 + BMP280 ready   SDA=GP13  SCL=GP14')
 
 
 def loop():

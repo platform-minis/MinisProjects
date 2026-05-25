@@ -90,8 +90,8 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 | 16 | SPI MISO | RC-522 MISO | 18 |
 | 17 | Digital output | RC-522 SDA (CS) | 18 |
 | 18 | SPI SCK | MAX7219 CLK (13) · RC-522 SCK (18) | 13, 18 |
-| 21 | I2C SDA | AHT20 SDA · BMP280 SDA | 15 |
-| 22 | I2C SCL | AHT20 SCL · BMP280 SCL | 15 |
+| 13 | I2C SDA | AHT20 SDA · BMP280 SDA | 15 |
+| 14 | I2C SCL | AHT20 SCL · BMP280 SCL | 15 |
 
 > GP4 and GP5 serve different purposes in different lessons. They are never used simultaneously — each lesson uses its own wiring.
 
@@ -170,8 +170,8 @@ Both sensors share the same I2C bus — connect SDA and SCL in parallel.
 ```text
 ESP32-S3 Pico         AHT20 module         BMP280 module
 ┌──────────────┐     ┌────────────┐        ┌────────────┐
-│        GP21  ├─────┤ SDA        ├────────┤ SDA        │
-│        GP22  ├─────┤ SCL        ├────────┤ SCL        │
+│        GP13  ├─────┤ SDA        ├────────┤ SDA        │
+│        GP14  ├─────┤ SCL        ├────────┤ SCL        │
 │         3V3  ├─────┤ VCC        │        │ VCC  ──────┤── 3V3
 │         GND  ├─────┤ GND        │        │ GND  ──────┤── GND
 └──────────────┘     └────────────┘        └────────────┘
@@ -185,8 +185,8 @@ ESP32-S3 Pico         AHT20 module         BMP280 module
 ```text
 Step 1: GND  (ESP32-S3) → GND  (AHT20) and GND  (BMP280)
 Step 2: 3V3  (ESP32-S3) → VCC  (AHT20) and VCC  (BMP280)
-Step 3: GP21 (ESP32-S3) → SDA  (AHT20) and SDA  (BMP280)
-Step 4: GP22 (ESP32-S3) → SCL  (AHT20) and SCL  (BMP280)
+Step 3: GP13 (ESP32-S3) → SDA  (AHT20) and SDA  (BMP280)
+Step 4: GP14 (ESP32-S3) → SCL  (AHT20) and SCL  (BMP280)
 ```
 
 ---
@@ -676,7 +676,7 @@ Light: 3991  BRIGHT
 **Goal:** Drive two I2C sensors from a bare-metal MicroPython driver, read the BMP280 factory calibration data, and apply the Bosch compensation formulas to obtain accurate temperature and pressure.
 
 **What happens:**
-`setup()` initialises the I2C bus on GP21/GP22, sends the AHT20 init command (0xBE), puts the BMP280 into normal sampling mode (register 0xF4 = 0xB7), reads 24 bytes of BMP280 calibration data and stores them as a tuple. Every 2 seconds `loop()` triggers an AHT20 measurement, reads the BMP280 ADC registers, applies the Bosch compensation algorithm, and prints both sensors' readings to the REPL.
+`setup()` initialises the I2C bus on GP13/GP14, sends the AHT20 init command (0xBE), puts the BMP280 into normal sampling mode (register 0xF4 = 0xB7), reads 24 bytes of BMP280 calibration data and stores them as a tuple. Every 2 seconds `loop()` triggers an AHT20 measurement, reads the BMP280 ADC registers, applies the Bosch compensation algorithm, and prints both sensors' readings to the REPL.
 
 **Components used:**
 
@@ -690,8 +690,8 @@ Light: 3991  BRIGHT
 
 ```text
 ╔══ ▶ START ════════════════════════════════════════════════════╗
-║  [AHT20+BMP280 init (SDA=GP21 SCL=GP22)]                      ║
-║  [Print]  "AHT20 + BMP280 ready   SDA=GP21  SCL=GP22"         ║
+║  [AHT20+BMP280 init (SDA=GP13 SCL=GP14)]                     ║
+║  [Print]  "AHT20 + BMP280 ready   SDA=GP13  SCL=GP14"        ║
 ╚═══════════════════════════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ════════════════════════════════════════════════════════════╗
@@ -713,7 +713,7 @@ Light: 3991  BRIGHT
 from machine import Pin, I2C
 import time
 
-_i2c = I2C(0, sda=Pin(21), scl=Pin(22), freq=400000)
+_i2c = I2C(0, sda=Pin(13), scl=Pin(14), freq=400000)
 _AHT20_ADDR = 0x38
 _BMP280_ADDR = 0x76
 _bmp280_cal = None
@@ -772,7 +772,7 @@ def setup():
     _aht20_init()
     _bmp280_init()
     _bmp280_cal = _bmp280_read_cal()
-    print('AHT20 + BMP280 ready   SDA=GP21  SCL=GP22')
+    print('AHT20 + BMP280 ready   SDA=GP13  SCL=GP14')
 
 def loop():
     temp_a, hum = _aht20_read()
@@ -785,7 +785,7 @@ def loop():
 **Example REPL output:**
 
 ```text
-AHT20 + BMP280 ready   SDA=GP21  SCL=GP22
+AHT20 + BMP280 ready   SDA=GP13  SCL=GP14
 AHT20:  Temp=22.4 C   Hum=51.3 %
 BMP280: Temp=22.7 C   Pres=1013.5 hPa
 AHT20:  Temp=22.4 C   Hum=51.2 %

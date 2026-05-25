@@ -14,7 +14,7 @@
           <block type="upy_print" id="setup_print">
             <value name="TEXT">
               <block type="text" id="setup_print_v">
-                <field name="TEXT">AHT20 + BMP280 ready   SDA=GP21  SCL=GP22</field>
+                <field name="TEXT">AHT20 + BMP280 ready   SDA=GP13  SCL=GP14</field>
               </block>
             </value>
           </block>
