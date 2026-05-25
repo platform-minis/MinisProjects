@@ -1,82 +1,52 @@
 # ESP32-S3 uPython Curses 3
 
-A **continuation of the ESP32-S3 MicroPython course** — the same seven sensors and modules as Part 2, but all output is now displayed on an **LCD1602 I2C display** (SDA=GP21, SCL=GP22) instead of the terminal. If you haven't completed part 2 (Esp32S3uPythonCurses2), start there first.
+Reads temperature, humidity and pressure from **AHT20+BMP280** sensors and displays live readings on a **LCD1602 I2C** screen. The two sensor modules share I2C bus 0 (GP13/GP14); the LCD runs on a separate I2C bus 1 (GP33/GP34) to keep wiring clean.
 
 ## What you need
 
 - **ESP32-S3 Pico** (Waveshare, 8 MB OPI PSRAM)
 - MicroPython firmware flashed (use the MyCastle Flash tool)
-- **LCD1602 display with PCF8574 I2C backpack** (address 0x27)
-- MAX7219 8×8 LED matrix module
-- KY-018 photoresistor module
-- DHT11 temperature & humidity sensor module
-- HC-SR04 ultrasonic distance sensor
-- HC-SR501 PIR motion sensor module
-- RC-522 RFID reader module + RFID card or key fob
-- PS2 joystick module (KY-023 or similar)
+- AHT20 temperature & humidity sensor module (I2C addr 0x38)
+- BMP280 barometric pressure sensor module (I2C addr 0x76 or 0x77)
+- LCD1602 display with PCF8574 I2C backpack (I2C addr 0x27)
 - Jumper wires
 
 ## Skill level
 
-⭐⭐ Beginner–Intermediate — basic MicroPython experience required. Completing Parts 1 and 2 is recommended.
+⭐⭐ Beginner–Intermediate — basic MicroPython experience required. Builds on the AHT20+BMP280 lesson from Part 2 (Esp32S3uPythonCurses2) by adding a physical LCD display.
 
 ## What's included
 
-| Lesson      | Topic                                                                    |
-|-------------|--------------------------------------------------------------------------|
-| `Lesson13`  | MAX7219 + LCD — pattern cycling, pattern name on LCD1602                 |
-| `Lesson14`  | KY-018 + LCD — raw ADC value and category on LCD1602                     |
-| `Lesson15`  | DHT11 + LCD — temperature and humidity on LCD1602                        |
-| `Lesson16`  | HC-SR04 + LCD — distance measurement on LCD1602                          |
-| `Lesson17`  | HC-SR501 + LCD — PIR motion status (DETECTED / waiting) on LCD1602       |
-| `Lesson18`  | RC-522 + LCD — RFID card UID on LCD1602                                  |
-| `Lesson19`  | Joystick + LCD — axes, direction and button state on LCD1602             |
+| Lesson     | Topic                                                                         |
+|------------|-------------------------------------------------------------------------------|
+| `Lesson31` | AHT20+BMP280 + LCD1602 - dual I2C bus, live display of temp/humidity/pressure |
 
-## LCD1602 wiring (all lessons)
+## Quick start — Lesson 31
 
-The LCD1602 I2C backpack uses the same two wires in every lesson:
+1. Wire sensors to I2C bus 0: SDA → GP13, SCL → GP14, VCC → 3.3 V, GND → GND (AHT20 and BMP280 in parallel).
+2. Wire LCD1602 to I2C bus 1: SDA → GP33, SCL → GP34, VCC → 5 V (or 3.3 V), GND → GND.
+3. Make sure BMP280 SDO matches the address in the sketch (0x77 = SDO to 3.3 V; 0x76 = SDO to GND).
+4. Open `Lesson31` and click **Upload → Run only**.
+5. The LCD shows `AHT20+BMP280 / ready...` briefly, then updates every 2 s with live readings.
+
+## LCD output format
 
 ```
-ESP32-S3 Pico         LCD1602 I2C
-┌──────────────┐     ┌──────────────────┐
-│        GP21  ├─────┤ SDA              │
-│        GP22  ├─────┤ SCL              │
-│         3V3  ├─────┤ VCC              │
-│         GND  ├─────┤ GND              │
-└──────────────┘     └──────────────────┘
+Line 1:  AHT:22.4C 51.3%
+Line 2:  BMP:22.7C 1013h
 ```
 
-## Quick start — Lesson 13
+## Wiring overview
 
-1. Wire the LCD1602: SDA → GP21, SCL → GP22, VCC → 3.3 V, GND → GND.
-2. Wire the MAX7219: CLK → GP18, DIN → GP19, CS → GP5, VCC → 3.3 V, GND → GND.
-3. Open `Lesson13` and click **Upload → Run only**.
-4. The matrix cycles through four patterns; the LCD shows the pattern name.
+```
+ESP32-S3 Pico    I2C0 (sensors)          I2C1 (display)
+   GP13 ─────── SDA (AHT20 + BMP280)
+   GP14 ─────── SCL (AHT20 + BMP280)
+   GP33 ──────────────────────────────── SDA (LCD1602)
+   GP34 ──────────────────────────────── SCL (LCD1602)
+   3V3  ─────── VCC (AHT20 + BMP280)
+   5V   ──────────────────────────────── VCC (LCD1602)
+   GND  ─────── GND (all modules) ───────────────────
+```
 
-## Quick start — Lesson 15
-
-1. Wire the LCD1602 as above.
-2. Wire DHT11: DATA → GP3, VCC → 3.3 V, GND → GND.
-3. Open `Lesson15` and click **Upload → Run only**.
-4. The LCD shows temperature on line 1 and humidity on line 2, updated every 2 s.
-
-## Quick start — Lesson 17
-
-1. Wire the LCD1602 as above.
-2. Wire HC-SR501: OUT → GP2, VCC → 5V (VBUS), GND → GND.
-3. Open `Lesson17` and click **Upload → Run only**.
-4. Wait ~30 s for the sensor to stabilise. Line 2 shows `DETECTED!` on motion, `waiting...` otherwise.
-
-## Quick start — Lesson 18
-
-1. Wire the LCD1602 as above.
-2. Wire RC-522: SCK → GP18, MOSI → GP19, MISO → GP16, SDA → GP17, RST → GP15, 3V3 → 3.3 V, GND → GND.
-3. Open `Lesson18` and click **Upload → Run only**.
-4. Hold an RFID card near the reader — the UID appears on line 2 of the LCD.
-
-## Quick start — Lesson 19
-
-1. Wire the LCD1602 as above.
-2. Wire joystick: VRx → GP1, VRy → GP6, SW → GP8, VCC → 3.3 V, GND → GND.
-3. Open `Lesson19` and click **Upload → Run only**.
-4. Line 1 shows live X/Y values; line 2 shows the direction and `[BTN]` when pressed.
+> **Why two I2C buses?** All three modules can share one bus since their addresses don't clash — but running sensors and display on separate buses keeps wiring cleaner and makes it trivial to add more modules later without worrying about conflicts.

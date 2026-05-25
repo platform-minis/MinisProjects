@@ -1,0 +1,184 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+  <variables>
+    <variable id="var_temp_a">temp_a</variable>
+    <variable id="var_hum">hum</variable>
+    <variable id="var_temp_b">temp_b</variable>
+    <variable id="var_pres">pres</variable>
+  </variables>
+
+  <!-- Setup -->
+  <block type="upy_start" id="setup_block" x="50" y="50">
+    <statement name="DO">
+      <block type="aht_bmp_init" id="setup_aht_bmp">
+        <next>
+          <block type="lcd_init" id="setup_lcd">
+            <next>
+              <block type="lcd_write" id="setup_lcd_line0">
+                <field name="ROW">0</field>
+                <value name="TEXT">
+                  <block type="text" id="setup_lcd_line0_v">
+                    <field name="TEXT">AHT20+BMP280</field>
+                  </block>
+                </value>
+                <next>
+                  <block type="lcd_write" id="setup_lcd_line1">
+                    <field name="ROW">1</field>
+                    <value name="TEXT">
+                      <block type="text" id="setup_lcd_line1_v">
+                        <field name="TEXT">ready...</field>
+                      </block>
+                    </value>
+                    <next>
+                      <block type="upy_print" id="setup_print">
+                        <value name="TEXT">
+                          <block type="text" id="setup_print_v">
+                            <field name="TEXT">AHT20+BMP280+LCD1602 ready</field>
+                          </block>
+                        </value>
+                      </block>
+                    </next>
+                  </block>
+                </next>
+              </block>
+            </next>
+          </block>
+        </next>
+      </block>
+    </statement>
+  </block>
+
+  <!-- Loop -->
+  <block type="upy_forever" id="loop_block" x="50" y="380">
+    <statement name="DO">
+
+      <block type="aht_measure" id="loop_aht_meas">
+        <next>
+          <block type="bmp_measure" id="loop_bmp_meas">
+            <next>
+
+              <!-- temp_a = aht_temp() -->
+              <block type="variables_set" id="loop_set_ta">
+                <field name="VAR" id="var_temp_a">temp_a</field>
+                <value name="VALUE">
+                  <block type="aht_temp" id="loop_aht_t"></block>
+                </value>
+                <next>
+
+                  <!-- hum = aht_hum() -->
+                  <block type="variables_set" id="loop_set_hum">
+                    <field name="VAR" id="var_hum">hum</field>
+                    <value name="VALUE">
+                      <block type="aht_hum" id="loop_aht_h"></block>
+                    </value>
+                    <next>
+
+                      <!-- temp_b = bmp_temp() -->
+                      <block type="variables_set" id="loop_set_tb">
+                        <field name="VAR" id="var_temp_b">temp_b</field>
+                        <value name="VALUE">
+                          <block type="bmp_temp" id="loop_bmp_t"></block>
+                        </value>
+                        <next>
+
+                          <!-- pres = bmp_pres() -->
+                          <block type="variables_set" id="loop_set_pres">
+                            <field name="VAR" id="var_pres">pres</field>
+                            <value name="VALUE">
+                              <block type="bmp_pres" id="loop_bmp_p"></block>
+                            </value>
+                            <next>
+
+                              <!-- LCD line 0: "AHT:22.4C 51.3%" -->
+                              <block type="lcd_write" id="loop_lcd0">
+                                <field name="ROW">0</field>
+                                <value name="TEXT">
+                                  <block type="text_join" id="loop_join0">
+                                    <mutation items="5"></mutation>
+                                    <value name="ADD0">
+                                      <block type="text" id="loop_j0_0"><field name="TEXT">AHT:</field></block>
+                                    </value>
+                                    <value name="ADD1">
+                                      <block type="variables_get" id="loop_j0_1">
+                                        <field name="VAR" id="var_temp_a">temp_a</field>
+                                      </block>
+                                    </value>
+                                    <value name="ADD2">
+                                      <block type="text" id="loop_j0_2"><field name="TEXT">C </field></block>
+                                    </value>
+                                    <value name="ADD3">
+                                      <block type="variables_get" id="loop_j0_3">
+                                        <field name="VAR" id="var_hum">hum</field>
+                                      </block>
+                                    </value>
+                                    <value name="ADD4">
+                                      <block type="text" id="loop_j0_4"><field name="TEXT">%</field></block>
+                                    </value>
+                                  </block>
+                                </value>
+                                <next>
+
+                                  <!-- LCD line 1: "BMP:22.7C 1013h" -->
+                                  <block type="lcd_write" id="loop_lcd1">
+                                    <field name="ROW">1</field>
+                                    <value name="TEXT">
+                                      <block type="text_join" id="loop_join1">
+                                        <mutation items="5"></mutation>
+                                        <value name="ADD0">
+                                          <block type="text" id="loop_j1_0"><field name="TEXT">BMP:</field></block>
+                                        </value>
+                                        <value name="ADD1">
+                                          <block type="variables_get" id="loop_j1_1">
+                                            <field name="VAR" id="var_temp_b">temp_b</field>
+                                          </block>
+                                        </value>
+                                        <value name="ADD2">
+                                          <block type="text" id="loop_j1_2"><field name="TEXT">C </field></block>
+                                        </value>
+                                        <value name="ADD3">
+                                          <block type="variables_get" id="loop_j1_3">
+                                            <field name="VAR" id="var_pres">pres</field>
+                                          </block>
+                                        </value>
+                                        <value name="ADD4">
+                                          <block type="text" id="loop_j1_4"><field name="TEXT">h</field></block>
+                                        </value>
+                                      </block>
+                                    </value>
+                                    <next>
+
+                                      <!-- sleep 2000 ms -->
+                                      <block type="upy_sleep_ms" id="loop_sleep">
+                                        <value name="MS">
+                                          <shadow type="math_number" id="loop_sleep_v">
+                                            <field name="NUM">2000</field>
+                                          </shadow>
+                                        </value>
+                                      </block>
+
+                                    </next>
+                                  </block>
+
+                                </next>
+                              </block>
+
+                            </next>
+                          </block>
+
+                        </next>
+                      </block>
+
+                    </next>
+                  </block>
+
+                </next>
+              </block>
+
+            </next>
+          </block>
+        </next>
+      </block>
+
+    </statement>
+  </block>
+
+</xml>
