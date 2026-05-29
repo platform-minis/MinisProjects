@@ -26,7 +26,7 @@ Two interactive lessons combining an **LCD1602 I2C** display with different inpu
 ## Quick start — Lesson 31
 
 1. Wire sensors to I2C bus 0: SDA → GP13, SCL → GP14, VCC → 3.3 V, GND → GND (AHT20 and BMP280 in parallel).
-2. Wire LCD1602 to I2C bus 1: SDA → GP33, SCL → GP34, VCC → 5 V (or 3.3 V), GND → GND.
+2. Wire LCD1602 to I2C bus 1: SDA → GP43, SCL → GP44, VCC → 5 V (or 3.3 V), GND → GND.
 3. Make sure BMP280 SDO matches the address in the sketch (0x77 = SDO to 3.3 V; 0x76 = SDO to GND).
 4. Open `Lesson31` and click **Upload → Run only**.
 5. The LCD shows `AHT20+BMP280 / ready...` briefly, then updates every 2 s with live readings.
@@ -40,8 +40,8 @@ Line 2:  BMP:22.7C 1013h
 
 ## Quick start — Lesson 32
 
-1. Keep the LCD1602 wired to GP33/GP34 from Lesson 31.
-2. Connect the joystick: VRX → GP1, VRY → GP2, SW → GP3, VCC → 3.3 V, GND → GND.
+1. Keep the LCD1602 wired to GP43/GP44 from Lesson 31.
+2. Connect the joystick: VRX → GP1, VRY → GP2, SW → GP4, VCC → 3.3 V, GND → GND.
 3. Open `Lesson32` and click **Upload → Run only**.
 4. The LCD shows a blank line on line 1 and `Col:01 [ ]` on line 2.
 5. Push the stick **left/right** to move the cursor, **up/down** to cycle through characters, **press** the button to print the text to the REPL.
@@ -59,8 +59,8 @@ Line 2:  Col:12 [D]          (cursor position + current char)
 Lesson 31 — I2C sensors + display
    GP13 ─────── SDA (AHT20 + BMP280)      I2C bus 0
    GP14 ─────── SCL (AHT20 + BMP280)
-   GP33 ──────────────────────────────── SDA (LCD1602)   I2C bus 1
-   GP34 ──────────────────────────────── SCL (LCD1602)
+   GP43 ──────────────────────────────── SDA (LCD1602)   I2C bus 1
+   GP44 ──────────────────────────────── SCL (LCD1602)
    3V3  ─────── VCC (AHT20 + BMP280)
    5V   ──────────────────────────────── VCC (LCD1602)
    GND  ─────── GND (all modules) ─────────────────────
@@ -68,9 +68,9 @@ Lesson 31 — I2C sensors + display
 Lesson 32 — joystick + display
    GP1  ─────── VRX (joystick X axis)
    GP2  ─────── VRY (joystick Y axis)
-   GP3  ─────── SW  (joystick button)
-   GP33 ──────────────────────────────── SDA (LCD1602)   I2C bus 1 (same as L31)
-   GP34 ──────────────────────────────── SCL (LCD1602)
+   GP4  ─────── SW  (joystick button)
+   GP43 ──────────────────────────────── SDA (LCD1602)   I2C bus 1 (same as L31)
+   GP44 ──────────────────────────────── SCL (LCD1602)
    3V3  ─────── VCC (joystick)
    5V   ──────────────────────────────── VCC (LCD1602)
    GND  ─────── GND (all modules) ─────────────────────

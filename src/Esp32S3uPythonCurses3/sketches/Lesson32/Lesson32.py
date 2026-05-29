@@ -21,7 +21,7 @@ class _LCD:
 _lcd = _LCD(_i2c1, 0x27)
 _vrx = ADC(Pin(1), atten=ADC.ATTN_11DB)
 _vry = ADC(Pin(2), atten=ADC.ATTN_11DB)
-_sw = Pin(3, Pin.IN, Pin.PULL_UP)
+_sw = Pin(4, Pin.IN, Pin.PULL_UP)
 
 _CHARS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:()'
 _ed_buf = [' '] * 16
@@ -73,7 +73,7 @@ def editor_get_text(): return ''.join(_ed_buf).rstrip()
 def setup():
     editor_init()
     print('Joystick+LCD1602 Text Editor')
-    print('GP1=VRX  GP2=VRY  GP3=SW | LCD I2C1: SDA=GP33 SCL=GP34')
+    print('GP1=VRX  GP2=VRY  GP4=SW | LCD I2C1: SDA=GP33 SCL=GP34')
     print('L/R: move cursor  U/D: change char  BTN: print text')
 
 def loop():

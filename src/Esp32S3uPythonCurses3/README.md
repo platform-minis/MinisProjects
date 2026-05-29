@@ -79,8 +79,8 @@ ESP32-S3 Pico         AHT20 module         BMP280 module
 ```text
 ESP32-S3 Pico         LCD1602 I2C module
 ┌──────────────┐     ┌──────────────────┐
-│        GP33  ├─────┤ SDA              │
-│        GP34  ├─────┤ SCL              │
+│        GP43  ├─────┤ SDA              │
+│        GP44  ├─────┤ SCL              │
 │         5V   ├─────┤ VCC              │
 │         GND  ├─────┤ GND              │
 └──────────────┘     └──────────────────┘
@@ -96,8 +96,8 @@ Step 2: 3V3  (ESP32-S3) → VCC (AHT20) and VCC (BMP280)
 Step 3: 5V   (ESP32-S3) → VCC (LCD1602)
 Step 4: GP13 (ESP32-S3) → SDA (AHT20) and SDA (BMP280)
 Step 5: GP14 (ESP32-S3) → SCL (AHT20) and SCL (BMP280)
-Step 6: GP33 (ESP32-S3) → SDA (LCD1602)
-Step 7: GP34 (ESP32-S3) → SCL (LCD1602)
+Step 6: GP43 (ESP32-S3) → SDA (LCD1602)
+Step 7: GP44 (ESP32-S3) → SCL (LCD1602)
 ```
 
 ---
@@ -109,13 +109,13 @@ ESP32-S3 Pico         PS Joystick module
 ┌──────────────┐     ┌────────────┐
 │         GP1  ├─────┤ VRX        │
 │         GP2  ├─────┤ VRY        │
-│         GP3  ├─────┤ SW         │
+│         GP4  ├─────┤ SW         │
 │         3V3  ├─────┤ VCC        │
 │         GND  ├─────┤ GND        │
 └──────────────┘     └────────────┘
 ```
 
-> **LCD1602** wiring is the same as Lesson 31 — keep GP33/GP34 connected.
+> **LCD1602** wiring is the same as Lesson 31 — keep GP43/GP44 connected.
 
 **Wiring order (Lesson 32):**
 
@@ -125,9 +125,9 @@ Step 2: 3V3  (ESP32-S3) → VCC (Joystick)
 Step 3: 5V   (ESP32-S3) → VCC (LCD1602)
 Step 4: GP1  (ESP32-S3) → VRX (Joystick)
 Step 5: GP2  (ESP32-S3) → VRY (Joystick)
-Step 6: GP3  (ESP32-S3) → SW  (Joystick)
-Step 7: GP33 (ESP32-S3) → SDA (LCD1602)
-Step 8: GP34 (ESP32-S3) → SCL (LCD1602)
+Step 6: GP4  (ESP32-S3) → SW  (Joystick)
+Step 7: GP43 (ESP32-S3) → SDA (LCD1602)
+Step 8: GP44 (ESP32-S3) → SCL (LCD1602)
 ```
 
 ---
@@ -164,7 +164,7 @@ Line 2:  BMP:22.7C 1013h
 ```text
 ╔══ ▶ START ═══════════════════════════════════════════════╗
 ║  [AHT20+BMP280 init (SDA=GP13 SCL=GP14)]                 ║
-║  [LCD1602 init  SDA=GP33  SCL=GP34]                      ║
+║  [LCD1602 init  SDA=GP43  SCL=GP44]                      ║
 ║  [LCD1602 line 1]  "AHT20+BMP280"                        ║
 ║  [LCD1602 line 2]  "ready..."                            ║
 ║  [Print]  "AHT20+BMP280+LCD1602 ready"                   ║
@@ -255,7 +255,7 @@ def setup():
     _lcd.write_line(0, 'AHT20+BMP280')
     _lcd.write_line(1, 'ready...')
     print('AHT20+BMP280+LCD1602 ready')
-    print('I2C0: SDA=GP13 SCL=GP14   I2C1: SDA=GP33 SCL=GP34')
+    print('I2C0: SDA=GP13 SCL=GP14   I2C1: SDA=GP43 SCL=GP44')
 
 def loop():
     temp_a, hum = _aht20_read()
@@ -272,7 +272,7 @@ def loop():
 
 ```text
 AHT20+BMP280+LCD1602 ready
-I2C0: SDA=GP13 SCL=GP14   I2C1: SDA=GP33 SCL=GP34
+I2C0: SDA=GP13 SCL=GP14   I2C1: SDA=GP43 SCL=GP44
 AHT:22.4C 51.3%   BMP:22.7C 1013h
 AHT:22.4C 51.2%   BMP:22.7C 1013h
 ```
@@ -295,7 +295,7 @@ AHT:22.4C 51.2%   BMP:22.7C 1013h
 
 **Components used:**
 
-- **PS joystick module** (VRX on GP1, VRY on GP2, SW on GP3)
+- **PS joystick module** (VRX on GP1, VRY on GP2, SW on GP4)
 - **LCD1602** with PCF8574 I2C backpack (I2C1, addr 0x27) — same as Lesson 31
 - 8× jumper wires
 
@@ -318,8 +318,8 @@ Line 2:  >> HELLO WORLD
 
 ```text
 ╔══ ▶ START ════════════════════════════════════╗
-║  [Joystick init (VRX=GP1 VRY=GP2 SW=GP3)]     ║
-║  [LCD1602 init  SDA=GP33  SCL=GP34]            ║
+║  [Joystick init (VRX=GP1 VRY=GP2 SW=GP4)]     ║
+║  [LCD1602 init  SDA=GP43  SCL=GP44]            ║
 ║  [Text Editor init]                            ║
 ║  [Print]  "Joystick Text Editor ready"         ║
 ╚═══════════════════════════════════════════════╝
@@ -356,7 +356,7 @@ class _LCD:
 _lcd = _LCD(_i2c1, 0x27)
 _vrx = ADC(Pin(1), atten=ADC.ATTN_11DB)
 _vry = ADC(Pin(2), atten=ADC.ATTN_11DB)
-_sw = Pin(3, Pin.IN, Pin.PULL_UP)
+_sw = Pin(4, Pin.IN, Pin.PULL_UP)
 
 _CHARS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:()'
 _ed_buf = [' '] * 16
@@ -408,7 +408,7 @@ def editor_get_text(): return ''.join(_ed_buf).rstrip()
 def setup():
     editor_init()
     print('Joystick+LCD1602 Text Editor')
-    print('GP1=VRX  GP2=VRY  GP3=SW | LCD I2C1: SDA=GP33 SCL=GP34')
+    print('GP1=VRX  GP2=VRY  GP4=SW | LCD I2C1: SDA=GP43 SCL=GP44')
     print('L/R: move cursor  U/D: change char  BTN: print text')
 
 def loop():
@@ -420,7 +420,7 @@ def loop():
 
 ```text
 Joystick+LCD1602 Text Editor
-GP1=VRX  GP2=VRY  GP3=SW | LCD I2C1: SDA=GP33 SCL=GP34
+GP1=VRX  GP2=VRY  GP4=SW | LCD I2C1: SDA=GP43 SCL=GP44
 L/R: move cursor  U/D: change char  BTN: print text
 >> HELLO
 >> HELLO WORLD
@@ -471,7 +471,7 @@ if __name__ == '__main__':
 | Temperature values wrong | `_bmp_cal` not yet loaded | Ensure `_aht_bmp_init()` (or `setup()`) runs before any measurement |
 | Joystick cursor does not move | ADC reads centre (≈32768) at rest | Confirm VRX→GP1, VRY→GP2; run `ADC(Pin(1),atten=ADC.ATTN_11DB).read_u16()` at rest — expect ~28000–36000 |
 | Cursor races through characters | No debounce or too short | Default debounce is 180 ms; increase `_ed_ms` threshold if stick is noisy |
-| Button press not detected | SW wiring or missing pull-up | Confirm SW→GP3 and `Pin.PULL_UP` is set; measure GP3 voltage: ~3.3 V idle, ~0 V pressed |
+| Button press not detected | SW wiring or missing pull-up | Confirm SW→GP4 and `Pin.PULL_UP` is set; measure GP4 voltage: ~3.3 V idle, ~0 V pressed |
 | Joystick reads wrong axis | VRX/VRY swapped | Swap GP1 and GP2 connections, or swap `_vrx`/`_vry` ADC assignments in code |
 
 ---

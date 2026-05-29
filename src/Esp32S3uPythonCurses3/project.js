@@ -1,16 +1,16 @@
 // project.js — Esp32S3uPythonCurses3
-// Lesson31: AHT20+BMP280 (I2C0: SDA=GP13/SCL=GP14) + LCD1602 (I2C1: SDA=GP33/SCL=GP34)
+// Lesson31: AHT20+BMP280 (I2C0: SDA=GP13/SCL=GP14) + LCD1602 (I2C1: SDA=GP43/SCL=GP44)
 
 // ─── LCD1602 I2C1 blocks ─────────────────────────────────────────────────────
 
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'lcd_init',
-    message0: 'LCD1602 init  SDA=GP33  SCL=GP34',
+    message0: 'LCD1602 init  SDA=GP43  SCL=GP44',
     previousStatement: null,
     nextStatement: null,
     colour: 200,
-    tooltip: 'Initialise LCD1602 over I2C1 (SDA=GP33, SCL=GP34, address 0x27). Call once in setup.',
+    tooltip: 'Initialise LCD1602 over I2C1 (SDA=GP43, SCL=GP44, address 0x27). Call once in setup.',
   },
   {
     type: 'lcd_clear',
@@ -246,16 +246,16 @@ addCategory({
   blocks: ['aht_bmp_init', 'aht_measure', 'aht_temp', 'aht_hum', 'bmp_measure', 'bmp_temp', 'bmp_pres'],
 });
 
-// ─── Joystick (VRX=GP1, VRY=GP2, SW=GP3) ────────────────────────────────────
+// ─── Joystick (VRX=GP1, VRY=GP2, SW=GP4) ────────────────────────────────────
 
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'joy_init',
-    message0: 'Joystick init  VRX=GP1  VRY=GP2  SW=GP3',
+    message0: 'Joystick init  VRX=GP1  VRY=GP2  SW=GP4',
     previousStatement: null,
     nextStatement: null,
     colour: 260,
-    tooltip: 'Initialize PS joystick: GP1=X-axis ADC, GP2=Y-axis ADC, GP3=button. Call once in setup.',
+    tooltip: 'Initialize PS joystick: GP1=X-axis ADC, GP2=Y-axis ADC, GP4=button. Call once in setup.',
   },
   {
     type: 'joy_x',
@@ -312,7 +312,7 @@ var _JOY_DEFS = `
 from machine import Pin, ADC
 _vrx = ADC(Pin(1), atten=ADC.ATTN_11DB)
 _vry = ADC(Pin(2), atten=ADC.ATTN_11DB)
-_sw = Pin(3, Pin.IN, Pin.PULL_UP)
+_sw = Pin(4, Pin.IN, Pin.PULL_UP)
 def joy_init(): pass
 def joy_x(): return _vrx.read_u16()
 def joy_y(): return _vry.read_u16()
