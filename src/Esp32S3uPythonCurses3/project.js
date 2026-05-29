@@ -393,23 +393,16 @@ Blockly.defineBlocksWithJsonArray([
 var _EDITOR_DEFS = `
 _CHARS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:()'
 _ed_buf = [' '] * 16
-_ed_pos = 0; _ed_ci = 0; _ed_btn = False; _ed_ms = 0
-def _ed_dir():
-    x = _vrx.read_u16(); y = _vry.read_u16()
-    if x < 20000: return 'L'
-    if x > 45000: return 'R'
-    if y < 20000: return 'U'
-    if y > 45000: return 'D'
-    return None
+_ed_pos = 0; _ed_ci = 0; _ed_btn = False; _ed_ms_x = 0; _ed_ms_y = 0
 def _ed_show():
     _lcd.write_line(0, ''.join(_ed_buf))
     _lcd.write_line(1, 'Col:{:02d} [{:s}]     '.format(_ed_pos + 1, _CHARS[_ed_ci]))
 def editor_init():
-    global _ed_buf, _ed_pos, _ed_ci
-    _ed_buf = [' '] * 16; _ed_pos = 0; _ed_ci = 0
+    global _ed_buf, _ed_pos, _ed_ci, _ed_ms_x, _ed_ms_y
+    _ed_buf = [' '] * 16; _ed_pos = 0; _ed_ci = 0; _ed_ms_x = 0; _ed_ms_y = 0
     _ed_show()
 def editor_update():
-    global _ed_pos, _ed_ci, _ed_btn, _ed_ms
+    global _ed_pos, _ed_ci, _ed_btn, _ed_ms_x, _ed_ms_y
     btn = not _sw.value()
     if btn and not _ed_btn:
         txt = ''.join(_ed_buf).rstrip()
@@ -417,20 +410,24 @@ def editor_update():
         _lcd.write_line(1, '>> ' + txt[:13])
         time.sleep_ms(800); _ed_show()
     _ed_btn = btn
-    now = time.ticks_ms()
-    if time.ticks_diff(now, _ed_ms) < 180: return
-    d = _ed_dir()
-    if not d: return
-    _ed_ms = now
-    if d == 'L' and _ed_pos > 0:
-        _ed_pos -= 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
-    elif d == 'R' and _ed_pos < 15:
-        _ed_pos += 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
-    elif d == 'U':
-        _ed_ci = (_ed_ci - 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
-    elif d == 'D':
-        _ed_ci = (_ed_ci + 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
-    _ed_show()
+    now = time.ticks_ms(); moved = False
+    x = _vrx.read_u16()
+    if time.ticks_diff(now, _ed_ms_x) >= 200:
+        if x < 20000 and _ed_pos > 0:
+            _ed_pos -= 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
+            _ed_ms_x = now; moved = True
+        elif x > 45000 and _ed_pos < 15:
+            _ed_pos += 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
+            _ed_ms_x = now; moved = True
+    y = _vry.read_u16()
+    if time.ticks_diff(now, _ed_ms_y) >= 130:
+        if y < 20000:
+            _ed_ci = (_ed_ci + 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
+            _ed_ms_y = now; moved = True
+        elif y > 45000:
+            _ed_ci = (_ed_ci - 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
+            _ed_ms_y = now; moved = True
+    if moved: _ed_show()
 def editor_get_text(): return ''.join(_ed_buf).rstrip()
 `;
 
