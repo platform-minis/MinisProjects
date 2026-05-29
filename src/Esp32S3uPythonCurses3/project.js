@@ -59,6 +59,8 @@ class _LCD:
     def write_line(self, row, text):
         self._cmd(0x80 | (0x40 if row else 0))
         for ch in '{:<16}'.format(str(text)[:16]): self._cmd(ord(ch), 1)
+    def cursor(self, row, col):
+        self._cmd(0x80 | (0x40 if row else 0) | col)
 _lcd = _LCD(_i2c1, 0x27)
 def _lcd_init(): pass
 def _lcd_clear():
@@ -367,68 +369,71 @@ addCategory({
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'editor_init',
-    message0: 'Text editor init',
+    message0: 'Canvas editor init',
     previousStatement: null,
     nextStatement: null,
     colour: 330,
-    tooltip: 'Initialize 16-char LCD text editor. Requires joy_init and lcd_init. Call once in setup.',
+    tooltip: 'Initialize 2×16 LCD canvas editor with blinking cursor. Requires joy_init and lcd_init. Call once in setup.',
   },
   {
     type: 'editor_update',
-    message0: 'Text editor update',
+    message0: 'Canvas editor update',
     previousStatement: null,
     nextStatement: null,
     colour: 330,
-    tooltip: 'Process joystick: L/R moves cursor, U/D changes character, button prints text. Call every loop.',
+    tooltip: 'Process joystick: L/R moves column, U/D moves row, button toggles # at cursor. Call every loop.',
   },
   {
     type: 'editor_get_text',
-    message0: 'Editor text',
+    message0: 'Canvas text',
     output: 'String',
     colour: 330,
-    tooltip: 'Returns the current edited text string (trimmed).',
+    tooltip: 'Returns both canvas rows as a string: "row0 | row1" (trimmed).',
   },
 ]);
 
 var _EDITOR_DEFS = `
-_CHARS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:()'
-_ed_buf = [' '] * 16
-_ed_pos = 0; _ed_ci = 0; _ed_btn = False; _ed_ms_x = 0; _ed_ms_y = 0
-def _ed_show():
-    _lcd.write_line(0, ''.join(_ed_buf))
-    _lcd.write_line(1, 'Col:{:02d} [{:s}]     '.format(_ed_pos + 1, _CHARS[_ed_ci]))
+_buf = [[' ']*16, [' ']*16]
+_row = 0; _col = 0; _btn = False; _ms_x = 0; _ms_y = 0
+_cx = 32768; _cy = 32768; _DEAD = 12000
+def _calibrate():
+    global _cx, _cy
+    xs = [_vrx.read_u16() for _ in range(8)]
+    ys = [_vry.read_u16() for _ in range(8)]
+    _cx = sum(xs) // 8
+    _cy = sum(ys) // 8
+def _show():
+    _lcd.write_line(0, ''.join(_buf[0]))
+    _lcd.write_line(1, ''.join(_buf[1]))
+    _lcd.cursor(_row, _col)
 def editor_init():
-    global _ed_buf, _ed_pos, _ed_ci, _ed_ms_x, _ed_ms_y
-    _ed_buf = [' '] * 16; _ed_pos = 0; _ed_ci = 0; _ed_ms_x = 0; _ed_ms_y = 0
-    _ed_show()
+    global _buf, _row, _col, _ms_x, _ms_y
+    _lcd._cmd(0x0F)
+    _calibrate()
+    _buf = [[' ']*16, [' ']*16]; _row = 0; _col = 0; _ms_x = 0; _ms_y = 0
+    _show()
 def editor_update():
-    global _ed_pos, _ed_ci, _ed_btn, _ed_ms_x, _ed_ms_y
+    global _row, _col, _btn, _ms_x, _ms_y
     btn = not _sw.value()
-    if btn and not _ed_btn:
-        txt = ''.join(_ed_buf).rstrip()
-        print('>>', txt)
-        _lcd.write_line(1, '>> ' + txt[:13])
-        time.sleep_ms(800); _ed_show()
-    _ed_btn = btn
+    if btn and not _btn:
+        _buf[_row][_col] = ' ' if _buf[_row][_col] != ' ' else '#'
+        _show()
+    _btn = btn
     now = time.ticks_ms(); moved = False
     x = _vrx.read_u16()
-    if time.ticks_diff(now, _ed_ms_x) >= 200:
-        if x < 20000 and _ed_pos > 0:
-            _ed_pos -= 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
-            _ed_ms_x = now; moved = True
-        elif x > 45000 and _ed_pos < 15:
-            _ed_pos += 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
-            _ed_ms_x = now; moved = True
+    if time.ticks_diff(now, _ms_x) >= 200:
+        if x < _cx - _DEAD and _col > 0:
+            _col -= 1; _ms_x = now; moved = True
+        elif x > _cx + _DEAD and _col < 15:
+            _col += 1; _ms_x = now; moved = True
     y = _vry.read_u16()
-    if time.ticks_diff(now, _ed_ms_y) >= 130:
-        if y < 20000:
-            _ed_ci = (_ed_ci + 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
-            _ed_ms_y = now; moved = True
-        elif y > 45000:
-            _ed_ci = (_ed_ci - 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
-            _ed_ms_y = now; moved = True
-    if moved: _ed_show()
-def editor_get_text(): return ''.join(_ed_buf).rstrip()
+    if time.ticks_diff(now, _ms_y) >= 200:
+        if y < _cy - _DEAD and _row > 0:
+            _row -= 1; _ms_y = now; moved = True
+        elif y > _cy + _DEAD and _row < 1:
+            _row += 1; _ms_y = now; moved = True
+    if moved: _lcd.cursor(_row, _col)
+def editor_get_text(): return ''.join(_buf[0]).rstrip() + ' | ' + ''.join(_buf[1]).rstrip()
 `;
 
 generator.forBlock['editor_init'] = function (_block, g) {

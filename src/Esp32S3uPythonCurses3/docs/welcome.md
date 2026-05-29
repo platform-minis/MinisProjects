@@ -1,6 +1,6 @@
 # ESP32-S3 uPython Curses 3
 
-Two interactive lessons combining an **LCD1602 I2C** display with different input modules. **Lesson 31** reads live temperature, humidity and pressure from **AHT20+BMP280** sensors (I2C bus 0) and shows the data on the LCD (I2C bus 1). **Lesson 32** adds a **PS joystick** and turns the LCD into a simple 16-character text editor.
+Two interactive lessons combining an **LCD1602 I2C** display with different input modules. **Lesson 31** reads live temperature, humidity and pressure from **AHT20+BMP280** sensors (I2C bus 0) and shows the data on the LCD (I2C bus 1). **Lesson 32** adds a **PS joystick** and turns the LCD into a 2×16 canvas editor — navigate a blinking cursor and place or erase `#` marks with the button.
 
 ## What you need
 
@@ -21,7 +21,7 @@ Two interactive lessons combining an **LCD1602 I2C** display with different inpu
 | Lesson     | Topic                                                                         |
 |------------|-------------------------------------------------------------------------------|
 | `Lesson31` | AHT20+BMP280 + LCD1602 — dual I2C bus, live display of temp/humidity/pressure |
-| `Lesson32` | PS Joystick + LCD1602 — text editor with character-map navigation on 16 chars |
+| `Lesson32` | PS Joystick + LCD1602 — 2×16 canvas editor, joystick moves cursor, btn marks  |
 
 ## Quick start — Lesson 31
 
@@ -41,10 +41,10 @@ Line 2:  BMP:22.7C 1013h
 ## Quick start — Lesson 32
 
 1. Keep the LCD1602 wired to GP43/GP44 from Lesson 31.
-2. Connect the joystick: VRX → GP1, VRY → GP2, SW → GP4, VCC → 3.3 V, GND → GND.
+2. Connect the joystick: VRX → GP1, VRY → GP2, SW → GP4, VCC → **3.3 V** (not 5 V), GND → GND.
 3. Open `Lesson32` and click **Upload → Run only**.
-4. The LCD shows a blank line on line 1 and `Col:01 [ ]` on line 2.
-5. Push the stick **left/right** to move the cursor, **up/down** to cycle through characters, **press** the button to print the text to the REPL.
+4. Keep the joystick centred while the sketch starts — it calibrates the neutral position on the first run.
+5. Push the stick **left/right** to move the cursor column, **up/down** to switch rows, **press** the button to place or erase a `#` mark.
 
 ## LCD output format (Lesson 32)
 
