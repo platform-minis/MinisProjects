@@ -386,18 +386,20 @@ def editor_update():
         _show()
     _btn = btn
     now = time.ticks_ms(); moved = False
-    x = _vrx.read_u16()
-    if time.ticks_diff(now, _ms_x) >= 200:
-        if x < _cx - _DEAD and _col > 0:
-            _col -= 1; _ms_x = now; moved = True
-        elif x > _cx + _DEAD and _col < 15:
-            _col += 1; _ms_x = now; moved = True
-    y = _vry.read_u16()
-    if time.ticks_diff(now, _ms_y) >= 200:
-        if y < _cy - _DEAD and _row > 0:
-            _row -= 1; _ms_y = now; moved = True
-        elif y > _cy + _DEAD and _row < 1:
-            _row += 1; _ms_y = now; moved = True
+    x = _vrx.read_u16(); y = _vry.read_u16()
+    dx = abs(x - _cx);   dy = abs(y - _cy)
+    if dx >= dy:
+        if time.ticks_diff(now, _ms_x) >= 200:
+            if x < _cx - _DEAD and _col > 0:
+                _col -= 1; _ms_x = now; moved = True
+            elif x > _cx + _DEAD and _col < 15:
+                _col += 1; _ms_x = now; moved = True
+    else:
+        if time.ticks_diff(now, _ms_y) >= 200:
+            if y < _cy - _DEAD and _row > 0:
+                _row -= 1; _ms_y = now; moved = True
+            elif y > _cy + _DEAD and _row < 1:
+                _row += 1; _ms_y = now; moved = True
     if moved: _lcd.cursor(_row, _col)
 
 def editor_get_text(): return ''.join(_buf[0]).rstrip() + ' | ' + ''.join(_buf[1]).rstrip()
