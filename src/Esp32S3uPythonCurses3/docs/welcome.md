@@ -1,14 +1,15 @@
 # ESP32-S3 uPython Curses 3
 
-Reads temperature, humidity and pressure from **AHT20+BMP280** sensors and displays live readings on a **LCD1602 I2C** screen. The two sensor modules share I2C bus 0 (GP13/GP14); the LCD runs on a separate I2C bus 1 (GP33/GP34) to keep wiring clean.
+Two interactive lessons combining an **LCD1602 I2C** display with different input modules. **Lesson 31** reads live temperature, humidity and pressure from **AHT20+BMP280** sensors (I2C bus 0) and shows the data on the LCD (I2C bus 1). **Lesson 32** adds a **PS joystick** and turns the LCD into a simple 16-character text editor.
 
 ## What you need
 
 - **ESP32-S3 Pico** (Waveshare, 8 MB OPI PSRAM)
 - MicroPython firmware flashed (use the MyCastle Flash tool)
-- AHT20 temperature & humidity sensor module (I2C addr 0x38)
-- BMP280 barometric pressure sensor module (I2C addr 0x76 or 0x77)
-- LCD1602 display with PCF8574 I2C backpack (I2C addr 0x27)
+- AHT20 temperature & humidity sensor module (I2C addr 0x38) — Lesson 31
+- BMP280 barometric pressure sensor module (I2C addr 0x76 or 0x77) — Lesson 31
+- LCD1602 display with PCF8574 I2C backpack (I2C addr 0x27) — both lessons
+- PS joystick module (VRX/VRY/SW breakout) — Lesson 32
 - Jumper wires
 
 ## Skill level
@@ -19,7 +20,8 @@ Reads temperature, humidity and pressure from **AHT20+BMP280** sensors and displ
 
 | Lesson     | Topic                                                                         |
 |------------|-------------------------------------------------------------------------------|
-| `Lesson31` | AHT20+BMP280 + LCD1602 - dual I2C bus, live display of temp/humidity/pressure |
+| `Lesson31` | AHT20+BMP280 + LCD1602 — dual I2C bus, live display of temp/humidity/pressure |
+| `Lesson32` | PS Joystick + LCD1602 — text editor with character-map navigation on 16 chars |
 
 ## Quick start — Lesson 31
 
@@ -29,24 +31,49 @@ Reads temperature, humidity and pressure from **AHT20+BMP280** sensors and displ
 4. Open `Lesson31` and click **Upload → Run only**.
 5. The LCD shows `AHT20+BMP280 / ready...` briefly, then updates every 2 s with live readings.
 
-## LCD output format
+## LCD output format (Lesson 31)
 
-```
+```text
 Line 1:  AHT:22.4C 51.3%
 Line 2:  BMP:22.7C 1013h
 ```
 
+## Quick start — Lesson 32
+
+1. Keep the LCD1602 wired to GP33/GP34 from Lesson 31.
+2. Connect the joystick: VRX → GP1, VRY → GP2, SW → GP3, VCC → 3.3 V, GND → GND.
+3. Open `Lesson32` and click **Upload → Run only**.
+4. The LCD shows a blank line on line 1 and `Col:01 [ ]` on line 2.
+5. Push the stick **left/right** to move the cursor, **up/down** to cycle through characters, **press** the button to print the text to the REPL.
+
+## LCD output format (Lesson 32)
+
+```text
+Line 1:  HELLO WORLD_____   (edited text, 16 chars)
+Line 2:  Col:12 [D]          (cursor position + current char)
+```
+
 ## Wiring overview
 
-```
-ESP32-S3 Pico    I2C0 (sensors)          I2C1 (display)
-   GP13 ─────── SDA (AHT20 + BMP280)
+```text
+Lesson 31 — I2C sensors + display
+   GP13 ─────── SDA (AHT20 + BMP280)      I2C bus 0
    GP14 ─────── SCL (AHT20 + BMP280)
-   GP33 ──────────────────────────────── SDA (LCD1602)
+   GP33 ──────────────────────────────── SDA (LCD1602)   I2C bus 1
    GP34 ──────────────────────────────── SCL (LCD1602)
    3V3  ─────── VCC (AHT20 + BMP280)
    5V   ──────────────────────────────── VCC (LCD1602)
-   GND  ─────── GND (all modules) ───────────────────
+   GND  ─────── GND (all modules) ─────────────────────
+
+Lesson 32 — joystick + display
+   GP1  ─────── VRX (joystick X axis)
+   GP2  ─────── VRY (joystick Y axis)
+   GP3  ─────── SW  (joystick button)
+   GP33 ──────────────────────────────── SDA (LCD1602)   I2C bus 1 (same as L31)
+   GP34 ──────────────────────────────── SCL (LCD1602)
+   3V3  ─────── VCC (joystick)
+   5V   ──────────────────────────────── VCC (LCD1602)
+   GND  ─────── GND (all modules) ─────────────────────
 ```
 
-> **Why two I2C buses?** All three modules can share one bus since their addresses don't clash — but running sensors and display on separate buses keeps wiring cleaner and makes it trivial to add more modules later without worrying about conflicts.
+> **Why two I2C buses in Lesson 31?** All three modules can share one bus since their addresses don't clash — but running sensors and display on separate buses keeps wiring cleaner and makes it trivial to add more modules later without worrying about conflicts.

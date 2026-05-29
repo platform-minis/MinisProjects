@@ -1,6 +1,6 @@
 # MicroPython Course — ESP32-S3 Pico · Part 3
 
-Reads temperature, humidity and pressure from **AHT20+BMP280** sensors and displays live readings on an **LCD1602 I2C** screen. The sensor modules share I2C bus 0 (SDA=GP13, SCL=GP14); the LCD runs on I2C bus 1 (SDA=GP33, SCL=GP34).
+Two interactive lessons combining an **LCD1602 I2C** display with different input modules. **Lesson 31** reads live sensor data from AHT20+BMP280 and displays it on the LCD. **Lesson 32** builds a joystick-driven text editor: navigate characters on the LCD with a PS joystick.
 
 ---
 
@@ -32,6 +32,11 @@ Reads temperature, humidity and pressure from **AHT20+BMP280** sensors and displ
 | **setup()** | Initialisation function called once at program start |
 | **loop()** | Main loop function called repeatedly |
 | **sleep_ms(n)** | Pauses execution for *n* milliseconds |
+| **ADC** | Analogue-to-Digital Converter — reads a continuous voltage (0–3.3 V) and returns a 16-bit integer (0–65535); `atten=ADC.ATTN_11DB` extends the range to ~3.3 V |
+| **PS joystick module** | Breakout board with two potentiometers (VRX, VRY) and a push-button (SW); VRX/VRY output 0–3.3 V analogue; SW is active-low with internal pull-up |
+| **VRX / VRY** | Joystick axis outputs — analogue voltage proportional to stick position; centre ≈ 32768 (mid-range), pushed left/down < 20000, pushed right/up > 45000 |
+| **SW** | Joystick push-button — active-low: reads `0` when pressed, `1` when released; requires `Pin.PULL_UP` |
+| **debounce** | Ignoring repeated inputs within a short time window (180 ms here) so that one physical stick movement registers as exactly one step |
 
 ---
 
@@ -43,10 +48,13 @@ Reads temperature, humidity and pressure from **AHT20+BMP280** sensors and displ
 
 | Pin | Mode | Component | Lesson |
 | --- | ---- | --------- | ------ |
+| 1 | ADC | Joystick VRX | 32 |
+| 2 | ADC | Joystick VRY | 32 |
+| 3 | Input | Joystick SW | 32 |
 | 13 | I2C0 SDA | AHT20 SDA · BMP280 SDA | 31 |
 | 14 | I2C0 SCL | AHT20 SCL · BMP280 SCL | 31 |
-| 33 | I2C1 SDA | LCD1602 SDA | 31 |
-| 34 | I2C1 SCL | LCD1602 SCL | 31 |
+| 33 | I2C1 SDA | LCD1602 SDA | 31, 32 |
+| 34 | I2C1 SCL | LCD1602 SCL | 31, 32 |
 
 ---
 
@@ -90,6 +98,36 @@ Step 4: GP13 (ESP32-S3) → SDA (AHT20) and SDA (BMP280)
 Step 5: GP14 (ESP32-S3) → SCL (AHT20) and SCL (BMP280)
 Step 6: GP33 (ESP32-S3) → SDA (LCD1602)
 Step 7: GP34 (ESP32-S3) → SCL (LCD1602)
+```
+
+---
+
+## Wiring — PS Joystick (Lesson 32)
+
+```text
+ESP32-S3 Pico         PS Joystick module
+┌──────────────┐     ┌────────────┐
+│         GP1  ├─────┤ VRX        │
+│         GP2  ├─────┤ VRY        │
+│         GP3  ├─────┤ SW         │
+│         3V3  ├─────┤ VCC        │
+│         GND  ├─────┤ GND        │
+└──────────────┘     └────────────┘
+```
+
+> **LCD1602** wiring is the same as Lesson 31 — keep GP33/GP34 connected.
+
+**Wiring order (Lesson 32):**
+
+```text
+Step 1: GND  (ESP32-S3) → GND (Joystick) and GND (LCD)
+Step 2: 3V3  (ESP32-S3) → VCC (Joystick)
+Step 3: 5V   (ESP32-S3) → VCC (LCD1602)
+Step 4: GP1  (ESP32-S3) → VRX (Joystick)
+Step 5: GP2  (ESP32-S3) → VRY (Joystick)
+Step 6: GP3  (ESP32-S3) → SW  (Joystick)
+Step 7: GP33 (ESP32-S3) → SDA (LCD1602)
+Step 8: GP34 (ESP32-S3) → SCL (LCD1602)
 ```
 
 ---
@@ -248,6 +286,155 @@ AHT:22.4C 51.2%   BMP:22.7C 1013h
 
 ---
 
+### Lesson 32 — PS Joystick + LCD1602 Text Editor
+
+**Goal:** Use a PS joystick module with the LCD1602 to build an interactive 16-character text editor. Move the cursor left/right with the X axis, scroll through characters with the Y axis, press the button to print the text.
+
+**What happens:**
+`setup()` initialises the LCD on I2C bus 1 and the joystick ADC/digital pins, then shows a blank editing line. Every 20 ms `loop()` calls `editor_update()`: the Y axis scrolls through the character set (`A–Z 0–9 .,!?-:()`), the X axis moves the cursor position, and a button press prints the current text to the REPL and briefly shows it on line 2. A 180 ms debounce prevents a held stick from racing through characters.
+
+**Components used:**
+
+- **PS joystick module** (VRX on GP1, VRY on GP2, SW on GP3)
+- **LCD1602** with PCF8574 I2C backpack (I2C1, addr 0x27) — same as Lesson 31
+- 8× jumper wires
+
+**Wiring:** see wiring sections above.
+
+**LCD output:**
+
+```text
+Line 1:  HELLO WORLD_____   (edited text, 16 chars)
+Line 2:  Col:12 [D]          (cursor position + current char)
+```
+
+After button press line 2 briefly shows:
+
+```text
+Line 2:  >> HELLO WORLD
+```
+
+**Blockly blocks:**
+
+```text
+╔══ ▶ START ════════════════════════════════════╗
+║  [Joystick init (VRX=GP1 VRY=GP2 SW=GP3)]     ║
+║  [LCD1602 init  SDA=GP33  SCL=GP34]            ║
+║  [Text Editor init]                            ║
+║  [Print]  "Joystick Text Editor ready"         ║
+╚═══════════════════════════════════════════════╝
+
+╔══ 🔁 FOREVER ═════════════╗
+║  [Text Editor update]     ║
+║  [Sleep]  20 ms           ║
+╚═══════════════════════════╝
+```
+
+**MicroPython code:**
+
+```python
+from machine import Pin, I2C, ADC
+import time
+
+_i2c1 = I2C(1, sda=Pin(33), scl=Pin(34), freq=400000)
+
+class _LCD:
+    def __init__(self, i2c, addr=0x27):
+        self.i2c=i2c; self.addr=addr; self._bl=0x08; self._setup()
+    def _wb(self,b): self.i2c.writeto(self.addr,bytes([b|self._bl]))
+    def _pulse(self,b): self._wb(b|4); time.sleep_us(1); self._wb(b&~4); time.sleep_us(50)
+    def _s4(self,n): self._wb(n); self._pulse(n)
+    def _cmd(self,d,m=0): rs=m&1; self._s4((d&0xF0)|rs); self._s4(((d<<4)&0xF0)|rs)
+    def _setup(self):
+        time.sleep_ms(50); self._s4(0x30); time.sleep_ms(5); self._s4(0x30)
+        time.sleep_us(150); self._s4(0x30); self._s4(0x20)
+        self._cmd(0x28); self._cmd(0x0E); self._cmd(0x06); self._cmd(0x01); time.sleep_ms(2)
+    def write_line(self,row,text):
+        self._cmd(0x80|(0x40 if row else 0))
+        for ch in '{:<16}'.format(str(text)[:16]): self._cmd(ord(ch),1)
+
+_lcd = _LCD(_i2c1, 0x27)
+_vrx = ADC(Pin(1), atten=ADC.ATTN_11DB)
+_vry = ADC(Pin(2), atten=ADC.ATTN_11DB)
+_sw = Pin(3, Pin.IN, Pin.PULL_UP)
+
+_CHARS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:()'
+_ed_buf = [' '] * 16
+_ed_pos = 0; _ed_ci = 0; _ed_btn = False; _ed_ms = 0
+
+def _ed_dir():
+    x = _vrx.read_u16(); y = _vry.read_u16()
+    if x < 20000: return 'L'
+    if x > 45000: return 'R'
+    if y < 20000: return 'U'
+    if y > 45000: return 'D'
+    return None
+
+def _ed_show():
+    _lcd.write_line(0, ''.join(_ed_buf))
+    _lcd.write_line(1, 'Col:{:02d} [{:s}]     '.format(_ed_pos + 1, _CHARS[_ed_ci]))
+
+def editor_init():
+    global _ed_buf, _ed_pos, _ed_ci
+    _ed_buf = [' '] * 16; _ed_pos = 0; _ed_ci = 0
+    _ed_show()
+
+def editor_update():
+    global _ed_pos, _ed_ci, _ed_btn, _ed_ms
+    btn = not _sw.value()
+    if btn and not _ed_btn:
+        txt = ''.join(_ed_buf).rstrip()
+        print('>>', txt)
+        _lcd.write_line(1, '>> ' + txt[:13])
+        time.sleep_ms(800); _ed_show()
+    _ed_btn = btn
+    now = time.ticks_ms()
+    if time.ticks_diff(now, _ed_ms) < 180: return
+    d = _ed_dir()
+    if not d: return
+    _ed_ms = now
+    if d == 'L' and _ed_pos > 0:
+        _ed_pos -= 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
+    elif d == 'R' and _ed_pos < 15:
+        _ed_pos += 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
+    elif d == 'U':
+        _ed_ci = (_ed_ci - 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
+    elif d == 'D':
+        _ed_ci = (_ed_ci + 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
+    _ed_show()
+
+def editor_get_text(): return ''.join(_ed_buf).rstrip()
+
+def setup():
+    editor_init()
+    print('Joystick+LCD1602 Text Editor')
+    print('GP1=VRX  GP2=VRY  GP3=SW | LCD I2C1: SDA=GP33 SCL=GP34')
+    print('L/R: move cursor  U/D: change char  BTN: print text')
+
+def loop():
+    editor_update()
+    time.sleep_ms(20)
+```
+
+**Example REPL output:**
+
+```text
+Joystick+LCD1602 Text Editor
+GP1=VRX  GP2=VRY  GP3=SW | LCD I2C1: SDA=GP33 SCL=GP34
+L/R: move cursor  U/D: change char  BTN: print text
+>> HELLO
+>> HELLO WORLD
+```
+
+**What you learn:**
+
+- Reading analogue joystick axes with `ADC` and classifying direction from raw 16-bit values
+- Detecting a digital button press with edge detection (transition from not-pressed to pressed)
+- Implementing a simple debounce timer with `time.ticks_ms()` and `ticks_diff()`
+- Building a character-map text editor in fewer than 70 lines of MicroPython
+
+---
+
 ## Program structure
 
 Every sketch follows the same pattern:
@@ -282,6 +469,10 @@ if __name__ == '__main__':
 | LCD backlight on but no text | Contrast too low | Turn the potentiometer on the PCF8574 backpack clockwise |
 | BMP280 not found | SDO pin mismatch | Check whether SDO is GND (0x76) or 3.3 V (0x77) and update `_BMP280_ADDR` |
 | Temperature values wrong | `_bmp_cal` not yet loaded | Ensure `_aht_bmp_init()` (or `setup()`) runs before any measurement |
+| Joystick cursor does not move | ADC reads centre (≈32768) at rest | Confirm VRX→GP1, VRY→GP2; run `ADC(Pin(1),atten=ADC.ATTN_11DB).read_u16()` at rest — expect ~28000–36000 |
+| Cursor races through characters | No debounce or too short | Default debounce is 180 ms; increase `_ed_ms` threshold if stick is noisy |
+| Button press not detected | SW wiring or missing pull-up | Confirm SW→GP3 and `Pin.PULL_UP` is set; measure GP3 voltage: ~3.3 V idle, ~0 V pressed |
+| Joystick reads wrong axis | VRX/VRY swapped | Swap GP1 and GP2 connections, or swap `_vrx`/`_vry` ADC assignments in code |
 
 ---
 
