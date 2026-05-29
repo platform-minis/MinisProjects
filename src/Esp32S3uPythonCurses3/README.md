@@ -286,12 +286,12 @@ AHT:22.4C 51.2%   BMP:22.7C 1013h
 
 ---
 
-### Lesson 32 — PS Joystick + LCD1602 Canvas Editor
+### Lesson 32 — PS Joystick + LCD1602 Bomber Game
 
-**Goal:** Use a PS joystick to navigate a blinking cursor over the full 2×16 LCD grid. Press the button to place or erase a `#` mark at the cursor position — building a simple character canvas.
+**Goal:** Navigate player `@` across the 2×16 LCD grid with the joystick, plant bomb `B` with the button, then escape before it explodes — get caught in the blast `*` and the display shows GAME OVER.
 
 **What happens:**
-`setup()` initialises the LCD (cursor blink on) and the joystick pins, then reads 8 ADC samples from each axis at rest to calibrate the centre position — this makes the code work correctly regardless of whether the joystick VCC is 3.3 V or 5 V. Every 20 ms `loop()` calls `editor_update()`: the X axis moves the cursor left/right across 16 columns, the Y axis moves it between the two rows, and a button press toggles `#` ↔ ` ` at the current position. Cursor movement is debounced at 200 ms; a button press immediately redraws both lines and repositions the cursor.
+`setup()` calibrates the joystick centre (8 ADC samples per axis at rest), then shows `@` at top-left on a blank grid. Every 20 ms `loop()` calls `game_update()`. A single 200 ms debounce timer handles both axes — the axis with the larger deflection from centre wins, preventing diagonal movement. Pressing the button plants bomb `B` at the player's current cell and starts a 3-second fuse. When the fuse expires the bomb turns into a 3×3 explosion `*`. After 0.6 s the blast clears — if `@` is within one step of the bomb in any direction the display shows `GAME OVER` and the score, and pressing the button restarts. Surviving scores one point and the player can plant the next bomb.
 
 **Components used:**
 
@@ -304,11 +304,18 @@ AHT:22.4C 51.2%   BMP:22.7C 1013h
 **LCD output:**
 
 ```text
-Line 1:  ### ##  ###_____   (row 0 — marks placed with button)
-Line 2:  ___#__##________   (row 1 — blinking cursor at current position)
-```
+Normal play (bomb planted, player escaped):
+Line 1:  _B____@_________   (bomb at col 1, player at col 6)
+Line 2:  ________________
 
-The hardware cursor blinks at the current joystick position.
+Explosion:
+Line 1:  ***_____________   (3×3 blast — bomb was at col 1)
+Line 2:  ***_____________
+
+Game over:
+Line 1:     GAME  OVER
+Line 2:   Score: 3
+```
 
 **Blockly blocks:**
 
@@ -316,12 +323,11 @@ The hardware cursor blinks at the current joystick position.
 ╔══ ▶ START ════════════════════════════════════╗
 ║  [Joystick init (VRX=GP1 VRY=GP2 SW=GP4)]     ║
 ║  [LCD1602 init  SDA=GP33  SCL=GP34]            ║
-║  [Canvas editor init]                          ║
-║  [Print]  "Joystick Canvas Editor ready"       ║
+║  [Bomber game init]                            ║
 ╚═══════════════════════════════════════════════╝
 
 ╔══ 🔁 FOREVER ══════════════════╗
-║  [Canvas editor update]        ║
+║  [Bomber game update]          ║
 ║  [Sleep]  20 ms                ║
 ╚════════════════════════════════╝
 ```
@@ -344,93 +350,112 @@ class _LCD:
     def _setup(self):
         time.sleep_ms(50); self._s4(0x30); time.sleep_ms(5); self._s4(0x30)
         time.sleep_us(150); self._s4(0x30); self._s4(0x20)
-        self._cmd(0x28); self._cmd(0x0F); self._cmd(0x06); self._cmd(0x01); time.sleep_ms(2)
+        self._cmd(0x28); self._cmd(0x0C); self._cmd(0x06); self._cmd(0x01); time.sleep_ms(2)
     def write_line(self,row,text):
         self._cmd(0x80|(0x40 if row else 0))
         for ch in '{:<16}'.format(str(text)[:16]): self._cmd(ord(ch),1)
-    def cursor(self,row,col):
-        self._cmd(0x80|(0x40 if row else 0)|col)
 
 _lcd = _LCD(_i2c1, 0x27)
 _vrx = ADC(Pin(1), atten=ADC.ATTN_11DB)
 _vry = ADC(Pin(2), atten=ADC.ATTN_11DB)
-_sw = Pin(4, Pin.IN, Pin.PULL_UP)
+_sw  = Pin(4, Pin.IN, Pin.PULL_UP)
 
-_buf = [[' ']*16, [' ']*16]
-_row = 0; _col = 0; _btn = False; _ms_x = 0; _ms_y = 0
 _cx = 32768; _cy = 32768; _DEAD = 12000
 
 def _calibrate():
     global _cx, _cy
     xs = [_vrx.read_u16() for _ in range(8)]
     ys = [_vry.read_u16() for _ in range(8)]
-    _cx = sum(xs) // 8
-    _cy = sum(ys) // 8
+    _cx = sum(xs)//8; _cy = sum(ys)//8
 
-def _show():
-    _lcd.write_line(0, ''.join(_buf[0]))
-    _lcd.write_line(1, ''.join(_buf[1]))
-    _lcd.cursor(_row, _col)
+FUSE_MS = 3000
+BLAST_MS = 600
 
-def editor_init():
-    global _buf, _row, _col, _ms_x, _ms_y
+_px=0; _py=0; _bx=-1; _by=-1
+_bomb_t=0; _blast_t=0
+_state=0   # 0=play  1=fuse  2=blast  3=dead
+_score=0; _btn=False; _mv_t=0
+
+def _draw():
+    if _state == 3:
+        _lcd.write_line(0, '   GAME  OVER   ')
+        _lcd.write_line(1, ' Score: %-8d' % _score)
+        return
+    g = [[' ']*16, [' ']*16]
+    if _state == 2:
+        for dr in range(-1, 2):
+            for dc in range(-1, 2):
+                r, c = _by+dr, _bx+dc
+                if 0<=r<2 and 0<=c<16: g[r][c] = '*'
+    elif _state == 1:
+        g[_by][_bx] = 'B'
+    g[_py][_px] = '@'
+    _lcd.write_line(0, ''.join(g[0]))
+    _lcd.write_line(1, ''.join(g[1]))
+
+def game_init():
+    global _px,_py,_bx,_by,_bomb_t,_blast_t,_state,_score,_btn,_mv_t
     _calibrate()
-    _buf = [[' ']*16, [' ']*16]; _row = 0; _col = 0; _ms_x = 0; _ms_y = 0
-    _show()
+    _px=0; _py=0; _bx=-1; _by=-1; _bomb_t=0; _blast_t=0
+    _state=0; _score=0; _btn=False; _mv_t=0
+    _draw()
 
-def editor_update():
-    global _row, _col, _btn, _ms_x, _ms_y
+def game_update():
+    global _px,_py,_bx,_by,_bomb_t,_blast_t,_state,_score,_btn,_mv_t
+    now = time.ticks_ms()
     btn = not _sw.value()
-    if btn and not _btn:
-        _buf[_row][_col] = ' ' if _buf[_row][_col] != ' ' else '#'
-        _show()
+    if _state == 3:
+        if btn and not _btn: game_init()
+        _btn = btn; return
+    if _state == 1 and time.ticks_diff(now, _bomb_t) >= FUSE_MS:
+        _state = 2; _blast_t = now; _draw()
+    if _state == 2 and time.ticks_diff(now, _blast_t) >= BLAST_MS:
+        if abs(_px-_bx) <= 1 and abs(_py-_by) <= 1:
+            _state = 3
+        else:
+            _score += 1; _state = 0; _bx=-1; _by=-1
+        _draw()
+    if btn and not _btn and _state == 0:
+        _bx=_px; _by=_py; _state=1; _bomb_t=now; _draw()
     _btn = btn
-    now = time.ticks_ms(); moved = False
-    x = _vrx.read_u16(); y = _vry.read_u16()
-    dx = abs(x - _cx);   dy = abs(y - _cy)
-    if dx >= dy:
-        if time.ticks_diff(now, _ms_x) >= 200:
-            if x < _cx - _DEAD and _col > 0:
-                _col -= 1; _ms_x = now; moved = True
-            elif x > _cx + _DEAD and _col < 15:
-                _col += 1; _ms_x = now; moved = True
-    else:
-        if time.ticks_diff(now, _ms_y) >= 200:
-            if y < _cy - _DEAD and _row > 0:
-                _row -= 1; _ms_y = now; moved = True
-            elif y > _cy + _DEAD and _row < 1:
-                _row += 1; _ms_y = now; moved = True
-    if moved: _lcd.cursor(_row, _col)
+    if time.ticks_diff(now, _mv_t) >= 200:
+        x=_vrx.read_u16(); y=_vry.read_u16()
+        dx=abs(x-_cx); dy=abs(y-_cy); moved=False
+        if dx >= dy and dx > _DEAD:
+            if   x < _cx-_DEAD and _px > 0:  _px-=1; moved=True
+            elif x > _cx+_DEAD and _px < 15: _px+=1; moved=True
+        elif dy > _DEAD:
+            if   y < _cy-_DEAD and _py > 0:  _py-=1; moved=True
+            elif y > _cy+_DEAD and _py < 1:  _py+=1; moved=True
+        if moved: _mv_t=now; _draw()
 
-def editor_get_text(): return ''.join(_buf[0]).rstrip() + ' | ' + ''.join(_buf[1]).rstrip()
+def game_score(): return _score
 
 def setup():
-    editor_init()
-    print('Joystick+LCD1602 Canvas Editor')
-    print('GP1=VRX  GP2=VRY  GP4=SW | LCD I2C1: SDA=GP33 SCL=GP34')
-    print('L/R: col  U/D: row  BTN: place/erase #')
+    game_init()
+    print('Bomberman 2x16')
+    print('BTN=plant bomb  escape before it blows!')
     print('cal: cx=%d cy=%d dead=%d' % (_cx, _cy, _DEAD))
 
 def loop():
-    editor_update()
+    game_update()
     time.sleep_ms(20)
 ```
 
 **Example REPL output:**
 
 ```text
-Joystick+LCD1602 Canvas Editor
-GP1=VRX  GP2=VRY  GP4=SW | LCD I2C1: SDA=GP33 SCL=GP34
-L/R: col  U/D: row  BTN: place/erase #
+Bomberman 2x16
+BTN=plant bomb  escape before it blows!
 cal: cx=32741 cy=33012 dead=12000
 ```
 
 **What you learn:**
 
-- Navigating a 2D cursor (row + column) with separate ADC axes and independent debounce timers
-- Using the LCD hardware cursor blink command (`0x0F`) to show position without extra drawing
-- Sending a DDRAM address command to reposition the cursor without redrawing content
-- Toggling cell state on a button edge-detection pattern (press vs. hold)
+- Building a real-time state machine (play → fuse → blast → dead) on a microcontroller
+- Dominant-axis joystick selection: reading both axes simultaneously and firing only the larger deflection prevents diagonal movement without hardware changes
+- Startup ADC calibration makes joystick code portable across 3.3 V and 5 V supply voltages
+- Rendering a 2D character grid on a 16×2 LCD using a 2×16 Python list buffer
 
 ---
 

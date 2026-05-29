@@ -364,78 +364,88 @@ addCategory({
   blocks: ['joy_init', 'joy_x', 'joy_y', 'joy_button', 'joy_is_left', 'joy_is_right', 'joy_is_up', 'joy_is_down'],
 });
 
-// ─── LCD Text Editor ─────────────────────────────────────────────────────────
+// ─── Bomber Game ─────────────────────────────────────────────────────────────
 
 Blockly.defineBlocksWithJsonArray([
   {
     type: 'editor_init',
-    message0: 'Canvas editor init',
+    message0: 'Bomber game init',
     previousStatement: null,
     nextStatement: null,
     colour: 330,
-    tooltip: 'Initialize 2×16 LCD canvas editor with blinking cursor. Requires joy_init and lcd_init. Call once in setup.',
+    tooltip: 'Calibrate joystick centre and start bomber game. Player @ at top-left. Requires joy_init and lcd_init. Call once in setup.',
   },
   {
     type: 'editor_update',
-    message0: 'Canvas editor update',
+    message0: 'Bomber game update',
     previousStatement: null,
     nextStatement: null,
     colour: 330,
-    tooltip: 'Process joystick: L/R moves column, U/D moves row, button toggles # at cursor. Call every loop.',
+    tooltip: 'Process joystick (move @), button (plant bomb B), fuse/blast timers and GAME OVER detection. Call every loop.',
   },
   {
     type: 'editor_get_text',
-    message0: 'Canvas text',
+    message0: 'Bomber score',
     output: 'String',
     colour: 330,
-    tooltip: 'Returns both canvas rows as a string: "row0 | row1" (trimmed).',
+    tooltip: 'Returns current score as a string (number of bombs survived).',
   },
 ]);
 
 var _EDITOR_DEFS = `
-_buf = [[' ']*16, [' ']*16]
-_row = 0; _col = 0; _btn = False; _ms_x = 0; _ms_y = 0
 _cx = 32768; _cy = 32768; _DEAD = 12000
 def _calibrate():
     global _cx, _cy
     xs = [_vrx.read_u16() for _ in range(8)]
     ys = [_vry.read_u16() for _ in range(8)]
-    _cx = sum(xs) // 8
-    _cy = sum(ys) // 8
-def _show():
-    _lcd.write_line(0, ''.join(_buf[0]))
-    _lcd.write_line(1, ''.join(_buf[1]))
-    _lcd.cursor(_row, _col)
+    _cx = sum(xs)//8; _cy = sum(ys)//8
+FUSE_MS = 3000; BLAST_MS = 600
+_px=0; _py=0; _bx=-1; _by=-1
+_bomb_t=0; _blast_t=0; _state=0; _score=0; _btn=False; _mv_t=0
+def _draw():
+    if _state==3:
+        _lcd.write_line(0,'   GAME  OVER   ')
+        _lcd.write_line(1,' Score: %-8d'%_score); return
+    g=[[' ']*16,[' ']*16]
+    if _state==2:
+        for dr in range(-1,2):
+            for dc in range(-1,2):
+                r,c=_by+dr,_bx+dc
+                if 0<=r<2 and 0<=c<16: g[r][c]='*'
+    elif _state==1: g[_by][_bx]='B'
+    g[_py][_px]='@'
+    _lcd.write_line(0,''.join(g[0])); _lcd.write_line(1,''.join(g[1]))
 def editor_init():
-    global _buf, _row, _col, _ms_x, _ms_y
-    _lcd._cmd(0x0F)
+    global _px,_py,_bx,_by,_bomb_t,_blast_t,_state,_score,_btn,_mv_t
     _calibrate()
-    _buf = [[' ']*16, [' ']*16]; _row = 0; _col = 0; _ms_x = 0; _ms_y = 0
-    _show()
+    _px=0;_py=0;_bx=-1;_by=-1;_bomb_t=0;_blast_t=0
+    _state=0;_score=0;_btn=False;_mv_t=0; _draw()
 def editor_update():
-    global _row, _col, _btn, _ms_x, _ms_y
-    btn = not _sw.value()
-    if btn and not _btn:
-        _buf[_row][_col] = ' ' if _buf[_row][_col] != ' ' else '#'
-        _show()
-    _btn = btn
-    now = time.ticks_ms(); moved = False
-    x = _vrx.read_u16(); y = _vry.read_u16()
-    dx = abs(x - _cx);   dy = abs(y - _cy)
-    if dx >= dy:
-        if time.ticks_diff(now, _ms_x) >= 200:
-            if x < _cx - _DEAD and _col > 0:
-                _col -= 1; _ms_x = now; moved = True
-            elif x > _cx + _DEAD and _col < 15:
-                _col += 1; _ms_x = now; moved = True
-    else:
-        if time.ticks_diff(now, _ms_y) >= 200:
-            if y < _cy - _DEAD and _row > 0:
-                _row -= 1; _ms_y = now; moved = True
-            elif y > _cy + _DEAD and _row < 1:
-                _row += 1; _ms_y = now; moved = True
-    if moved: _lcd.cursor(_row, _col)
-def editor_get_text(): return ''.join(_buf[0]).rstrip() + ' | ' + ''.join(_buf[1]).rstrip()
+    global _px,_py,_bx,_by,_bomb_t,_blast_t,_state,_score,_btn,_mv_t
+    now=time.ticks_ms(); btn=not _sw.value()
+    if _state==3:
+        if btn and not _btn: editor_init()
+        _btn=btn; return
+    if _state==1 and time.ticks_diff(now,_bomb_t)>=FUSE_MS:
+        _state=2; _blast_t=now; _draw()
+    if _state==2 and time.ticks_diff(now,_blast_t)>=BLAST_MS:
+        if abs(_px-_bx)<=1 and abs(_py-_by)<=1: _state=3
+        else: _score+=1; _state=0; _bx=-1; _by=-1
+        _draw()
+    if btn and not _btn and _state==0:
+        _bx=_px; _by=_py; _state=1; _bomb_t=now; _draw()
+    _btn=btn
+    if time.ticks_diff(now,_mv_t)>=200:
+        x=_vrx.read_u16(); y=_vry.read_u16()
+        dx=abs(x-_cx); dy=abs(y-_cy); moved=False
+        if dx>=dy and dx>_DEAD:
+            if x<_cx-_DEAD and _px>0: _px-=1; moved=True
+            elif x>_cx+_DEAD and _px<15: _px+=1; moved=True
+        elif dy>_DEAD:
+            if y<_cy-_DEAD and _py>0: _py-=1; moved=True
+            elif y>_cy+_DEAD and _py<1: _py+=1; moved=True
+        if moved: _mv_t=now; _draw()
+def editor_get_text(): return str(_score)
 `;
 
 generator.forBlock['editor_init'] = function (_block, g) {
@@ -458,7 +468,7 @@ generator.forBlock['editor_get_text'] = function (_block, g) {
 };
 
 addCategory({
-  name: 'LCD Editor',
+  name: 'Bomber Game',
   colour: '#ad1457',
   blocks: ['editor_init', 'editor_update', 'editor_get_text'],
 });

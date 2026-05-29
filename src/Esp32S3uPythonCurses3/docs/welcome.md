@@ -1,6 +1,6 @@
 # ESP32-S3 uPython Curses 3
 
-Two interactive lessons combining an **LCD1602 I2C** display with different input modules. **Lesson 31** reads live temperature, humidity and pressure from **AHT20+BMP280** sensors (I2C bus 0) and shows the data on the LCD (I2C bus 1). **Lesson 32** adds a **PS joystick** and turns the LCD into a 2×16 canvas editor — navigate a blinking cursor and place or erase `#` marks with the button.
+Two interactive lessons combining an **LCD1602 I2C** display with different input modules. **Lesson 31** reads live temperature, humidity and pressure from **AHT20+BMP280** sensors (I2C bus 0) and shows the data on the LCD (I2C bus 1). **Lesson 32** adds a **PS joystick** and turns the LCD into a bomber game — navigate player `@` across the 2×16 grid, plant bomb `B` with the button, escape before it explodes, and survive the `*` blast.
 
 ## What you need
 
@@ -21,7 +21,7 @@ Two interactive lessons combining an **LCD1602 I2C** display with different inpu
 | Lesson     | Topic                                                                         |
 |------------|-------------------------------------------------------------------------------|
 | `Lesson31` | AHT20+BMP280 + LCD1602 — dual I2C bus, live display of temp/humidity/pressure |
-| `Lesson32` | PS Joystick + LCD1602 — 2×16 canvas editor, joystick moves cursor, btn marks  |
+| `Lesson32` | PS Joystick + LCD1602 — bomber game: move @, plant B, escape blast, game over |
 
 ## Quick start — Lesson 31
 
