@@ -1,14 +1,15 @@
 {
   "id": "Esp32S3uPythonCurses3",
   "name": "ESP32-S3 uPython Curses 3",
-  "description": "ESP32-S3 MicroPython course part 3 — AHT20+BMP280 sensors on I2C0 (SDA=GP13, SCL=GP14) with readings displayed on LCD1602 over I2C1 (SDA=GP33, SCL=GP34).",
-  "version": "1.0.0",
+  "description": "ESP32-S3 MicroPython course part 3 — Lesson31: AHT20+BMP280+LCD1602 dual I2C; Lesson32: PS joystick+LCD1602 text editor.",
+  "version": "1.1.0",
   "softwarePlatform": "uPython",
-  "tags": ["esp32s3", "uPython", "lcd1602", "i2c", "aht20", "bmp280", "temperature", "humidity", "pressure"],
+  "tags": ["esp32s3", "uPython", "lcd1602", "i2c", "aht20", "bmp280", "joystick", "temperature", "humidity", "pressure"],
   "moduleId": "esp32-s3-pico",
   "libraries": [],
   "projectScriptPath": "src/Esp32S3uPythonCurses3/project.js",
   "sketches": [
-    { "name": "Lesson31" }
+    { "name": "Lesson31" },
+    { "name": "Lesson32" }
   ]
 }

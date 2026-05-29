@@ -245,3 +245,216 @@ addCategory({
   colour: '#2e7d32',
   blocks: ['aht_bmp_init', 'aht_measure', 'aht_temp', 'aht_hum', 'bmp_measure', 'bmp_temp', 'bmp_pres'],
 });
+
+// ─── Joystick (VRX=GP1, VRY=GP2, SW=GP3) ────────────────────────────────────
+
+Blockly.defineBlocksWithJsonArray([
+  {
+    type: 'joy_init',
+    message0: 'Joystick init  VRX=GP1  VRY=GP2  SW=GP3',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 260,
+    tooltip: 'Initialize PS joystick: GP1=X-axis ADC, GP2=Y-axis ADC, GP3=button. Call once in setup.',
+  },
+  {
+    type: 'joy_x',
+    message0: 'Joystick X (0–65535)',
+    output: 'Number',
+    colour: 260,
+    tooltip: 'Raw ADC value of joystick X-axis. Center ≈ 32767, left < 20000, right > 45000.',
+  },
+  {
+    type: 'joy_y',
+    message0: 'Joystick Y (0–65535)',
+    output: 'Number',
+    colour: 260,
+    tooltip: 'Raw ADC value of joystick Y-axis. Center ≈ 32767, up < 20000, down > 45000.',
+  },
+  {
+    type: 'joy_button',
+    message0: 'Joystick button pressed',
+    output: 'Boolean',
+    colour: 260,
+    tooltip: 'True when the joystick button is pressed (active-low with pull-up).',
+  },
+  {
+    type: 'joy_is_left',
+    message0: 'Joystick ← left',
+    output: 'Boolean',
+    colour: 260,
+    tooltip: 'True when joystick is pushed left (X < 20000).',
+  },
+  {
+    type: 'joy_is_right',
+    message0: 'Joystick → right',
+    output: 'Boolean',
+    colour: 260,
+    tooltip: 'True when joystick is pushed right (X > 45000).',
+  },
+  {
+    type: 'joy_is_up',
+    message0: 'Joystick ↑ up',
+    output: 'Boolean',
+    colour: 260,
+    tooltip: 'True when joystick is pushed up (Y < 20000).',
+  },
+  {
+    type: 'joy_is_down',
+    message0: 'Joystick ↓ down',
+    output: 'Boolean',
+    colour: 260,
+    tooltip: 'True when joystick is pushed down (Y > 45000).',
+  },
+]);
+
+var _JOY_DEFS = `
+from machine import Pin, ADC
+_vrx = ADC(Pin(1), atten=ADC.ATTN_11DB)
+_vry = ADC(Pin(2), atten=ADC.ATTN_11DB)
+_sw = Pin(3, Pin.IN, Pin.PULL_UP)
+def joy_init(): pass
+def joy_x(): return _vrx.read_u16()
+def joy_y(): return _vry.read_u16()
+def joy_button(): return not _sw.value()
+def joy_is_left(): return _vrx.read_u16() < 20000
+def joy_is_right(): return _vrx.read_u16() > 45000
+def joy_is_up(): return _vry.read_u16() < 20000
+def joy_is_down(): return _vry.read_u16() > 45000
+`;
+
+generator.forBlock['joy_init'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return 'joy_init()\n';
+};
+generator.forBlock['joy_x'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return ['joy_x()', Order.ATOMIC];
+};
+generator.forBlock['joy_y'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return ['joy_y()', Order.ATOMIC];
+};
+generator.forBlock['joy_button'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return ['joy_button()', Order.ATOMIC];
+};
+generator.forBlock['joy_is_left'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return ['joy_is_left()', Order.ATOMIC];
+};
+generator.forBlock['joy_is_right'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return ['joy_is_right()', Order.ATOMIC];
+};
+generator.forBlock['joy_is_up'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return ['joy_is_up()', Order.ATOMIC];
+};
+generator.forBlock['joy_is_down'] = function (_block, g) {
+  g.addImport('joy_defs', _JOY_DEFS);
+  return ['joy_is_down()', Order.ATOMIC];
+};
+
+addCategory({
+  name: 'Joystick',
+  colour: '#6a1b9a',
+  blocks: ['joy_init', 'joy_x', 'joy_y', 'joy_button', 'joy_is_left', 'joy_is_right', 'joy_is_up', 'joy_is_down'],
+});
+
+// ─── LCD Text Editor ─────────────────────────────────────────────────────────
+
+Blockly.defineBlocksWithJsonArray([
+  {
+    type: 'editor_init',
+    message0: 'Text editor init',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 330,
+    tooltip: 'Initialize 16-char LCD text editor. Requires joy_init and lcd_init. Call once in setup.',
+  },
+  {
+    type: 'editor_update',
+    message0: 'Text editor update',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 330,
+    tooltip: 'Process joystick: L/R moves cursor, U/D changes character, button prints text. Call every loop.',
+  },
+  {
+    type: 'editor_get_text',
+    message0: 'Editor text',
+    output: 'String',
+    colour: 330,
+    tooltip: 'Returns the current edited text string (trimmed).',
+  },
+]);
+
+var _EDITOR_DEFS = `
+_CHARS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:()'
+_ed_buf = [' '] * 16
+_ed_pos = 0; _ed_ci = 0; _ed_btn = False; _ed_ms = 0
+def _ed_dir():
+    x = _vrx.read_u16(); y = _vry.read_u16()
+    if x < 20000: return 'L'
+    if x > 45000: return 'R'
+    if y < 20000: return 'U'
+    if y > 45000: return 'D'
+    return None
+def _ed_show():
+    _lcd.write_line(0, ''.join(_ed_buf))
+    _lcd.write_line(1, 'Col:{:02d} [{:s}]     '.format(_ed_pos + 1, _CHARS[_ed_ci]))
+def editor_init():
+    global _ed_buf, _ed_pos, _ed_ci
+    _ed_buf = [' '] * 16; _ed_pos = 0; _ed_ci = 0
+    _ed_show()
+def editor_update():
+    global _ed_pos, _ed_ci, _ed_btn, _ed_ms
+    btn = not _sw.value()
+    if btn and not _ed_btn:
+        txt = ''.join(_ed_buf).rstrip()
+        print('>>', txt)
+        _lcd.write_line(1, '>> ' + txt[:13])
+        time.sleep_ms(800); _ed_show()
+    _ed_btn = btn
+    now = time.ticks_ms()
+    if time.ticks_diff(now, _ed_ms) < 180: return
+    d = _ed_dir()
+    if not d: return
+    _ed_ms = now
+    if d == 'L' and _ed_pos > 0:
+        _ed_pos -= 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
+    elif d == 'R' and _ed_pos < 15:
+        _ed_pos += 1; _ed_ci = _CHARS.index(_ed_buf[_ed_pos]) if _ed_buf[_ed_pos] in _CHARS else 0
+    elif d == 'U':
+        _ed_ci = (_ed_ci - 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
+    elif d == 'D':
+        _ed_ci = (_ed_ci + 1) % len(_CHARS); _ed_buf[_ed_pos] = _CHARS[_ed_ci]
+    _ed_show()
+def editor_get_text(): return ''.join(_ed_buf).rstrip()
+`;
+
+generator.forBlock['editor_init'] = function (_block, g) {
+  g.addImport('lcd_defs', _LCD_DEFS);
+  g.addImport('joy_defs', _JOY_DEFS);
+  g.addImport('editor_defs', _EDITOR_DEFS);
+  return 'editor_init()\n';
+};
+generator.forBlock['editor_update'] = function (_block, g) {
+  g.addImport('lcd_defs', _LCD_DEFS);
+  g.addImport('joy_defs', _JOY_DEFS);
+  g.addImport('editor_defs', _EDITOR_DEFS);
+  return 'editor_update()\n';
+};
+generator.forBlock['editor_get_text'] = function (_block, g) {
+  g.addImport('lcd_defs', _LCD_DEFS);
+  g.addImport('joy_defs', _JOY_DEFS);
+  g.addImport('editor_defs', _EDITOR_DEFS);
+  return ['editor_get_text()', Order.ATOMIC];
+};
+
+addCategory({
+  name: 'LCD Editor',
+  colour: '#ad1457',
+  blocks: ['editor_init', 'editor_update', 'editor_get_text'],
+});
