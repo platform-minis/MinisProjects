@@ -71,7 +71,6 @@ A continuation of the hands-on MicroPython course for the **ESP32-S3** microcont
 
 ![Alt text](https://raw.githubusercontent.com/platform-minis/MinisProjects/refs/heads/main/docs/Esp32S3Pico/esp32s3pico_pinout.gif "Esp32 S3 Pico Pinout Top")
 
-![Alt text](https://raw.githubusercontent.com/platform-minis/MinisProjects/refs/heads/main/docs/Esp32S3Pico/esp32s3pico_pinout_buttom.jpg "Esp32 S3 Pico Pinout Bottom")
 
 ## Pin Overview
 

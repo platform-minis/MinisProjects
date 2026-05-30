@@ -246,6 +246,90 @@ generator.forBlock['boot_btn_held'] = function (_block, g) {
   return ["_btn_state['held']", Order.ATOMIC];
 };
 
+// ─── External button (GP16, active HIGH, external pull-down) ─────────────────
+// State machine: short press → clicked, long press (≥500 ms) → held
+
+var _EXT_BTN_DEFS = `
+_ext_pin = Pin(16, Pin.IN)
+_ext_state = {'pressed': False, 'last_ms': 0, 'clicked': False, 'held': False}
+_HOLD_MS = 500
+def _ext_tick():
+    now = time.ticks_ms()
+    p = _ext_pin.value() == 1
+    _ext_state['clicked'] = False
+    _ext_state['held'] = False
+    if p and not _ext_state['pressed']:
+        _ext_state['pressed'] = True
+        _ext_state['last_ms'] = now
+    elif not p and _ext_state['pressed']:
+        _ext_state['pressed'] = False
+        if time.ticks_diff(now, _ext_state['last_ms']) < _HOLD_MS:
+            _ext_state['clicked'] = True
+        else:
+            _ext_state['held'] = True
+`;
+
+Blockly.defineBlocksWithJsonArray([
+  {
+    type: 'ext_btn_init',
+    message0: 'Ext button init (GP16)',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 30,
+    tooltip: 'Initialize the external button on GP16 (active HIGH, 10 kΩ pull-down to GND).',
+  },
+  {
+    type: 'ext_btn_tick',
+    message0: 'Ext button tick',
+    previousStatement: null,
+    nextStatement: null,
+    colour: 30,
+    tooltip: 'Update external button state — call once per loop iteration.',
+  },
+  {
+    type: 'ext_btn_clicked',
+    message0: 'Ext button clicked?',
+    output: 'Boolean',
+    colour: 30,
+    tooltip: 'True if external button was short-pressed since last tick.',
+  },
+  {
+    type: 'ext_btn_held',
+    message0: 'Ext button held?',
+    output: 'Boolean',
+    colour: 30,
+    tooltip: 'True if external button was held (long press) since last tick.',
+  },
+]);
+
+generator.forBlock['ext_btn_init'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('ext_btn_defs', _EXT_BTN_DEFS);
+  return 'print("Ext button ready")\n';
+};
+
+generator.forBlock['ext_btn_tick'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('ext_btn_defs', _EXT_BTN_DEFS);
+  return '_ext_tick()\n';
+};
+
+generator.forBlock['ext_btn_clicked'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('ext_btn_defs', _EXT_BTN_DEFS);
+  return ["_ext_state['clicked']", Order.ATOMIC];
+};
+
+generator.forBlock['ext_btn_held'] = function (_block, g) {
+  g.addImport('machine_pin', 'from machine import Pin');
+  g.addImport('time_import', 'import time');
+  g.addImport('ext_btn_defs', _EXT_BTN_DEFS);
+  return ["_ext_state['held']", Order.ATOMIC];
+};
+
 addCategory({
   name: 'RGB LED',
   colour: '#8b008b',
@@ -256,4 +340,10 @@ addCategory({
   name: 'BOOT Button',
   colour: '#1565c0',
   blocks: ['boot_btn_init', 'boot_btn_tick', 'boot_btn_clicked', 'boot_btn_held'],
+});
+
+addCategory({
+  name: 'Ext Button',
+  colour: '#e65100',
+  blocks: ['ext_btn_init', 'ext_btn_tick', 'ext_btn_clicked', 'ext_btn_held'],
 });

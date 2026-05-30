@@ -162,13 +162,6 @@
       "hasDocs": true,
       "sketches": [
         {
-          "name": "Lesson0",
-          "files": [
-            "src/Esp32S3uPythonCurses/sketches/Lesson0/Lesson0.blockly",
-            "src/Esp32S3uPythonCurses/sketches/Lesson0/Lesson0.py"
-          ]
-        },
-        {
           "name": "Lesson1",
           "files": [
             "src/Esp32S3uPythonCurses/sketches/Lesson1/Lesson1.blockly",
@@ -194,6 +187,13 @@
           "files": [
             "src/Esp32S3uPythonCurses/sketches/Lesson4/Lesson4.blockly",
             "src/Esp32S3uPythonCurses/sketches/Lesson4/Lesson4.py"
+          ]
+        },
+        {
+          "name": "Lesson5",
+          "files": [
+            "src/Esp32S3uPythonCurses/sketches/Lesson5/Lesson5.blockly",
+            "src/Esp32S3uPythonCurses/sketches/Lesson5/Lesson5.py"
           ]
         },
         {

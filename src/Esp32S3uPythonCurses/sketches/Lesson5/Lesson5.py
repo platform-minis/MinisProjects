@@ -5,10 +5,10 @@ import math
 
 # ── Hardware ──────────────────────────────────────────────────────────────────
 _RGB_PIN = 21   # WS2812B on-board LED — Waveshare ESP32-S3-Pico = GP21
-_BTN_PIN = 0    # BOOT button, active LOW (GP0); internal pull-up used
+_BTN_PIN = 16   # External button on GP16, active HIGH; wire: GP16 → button → 3.3 V, 10 kΩ pull-down to GND
 
 _np  = neopixel.NeoPixel(Pin(_RGB_PIN), 1)
-_btn = Pin(_BTN_PIN, Pin.IN, Pin.PULL_UP)
+_btn = Pin(_BTN_PIN, Pin.IN)   # no internal pull — external pull-down resistor required
 
 # ── Animation registry ────────────────────────────────────────────────────────
 _ANIM_COUNT = 5
@@ -101,7 +101,7 @@ _ANIMS = (_rainbow, _breathing, _heartbeat, _colorshift, _strobe)
 # ── Button polling ────────────────────────────────────────────────────────────
 def _poll_btn():
     global _anim_idx, _btn_down, _btn_pressed_at, _frame
-    pressed = _btn.value() == 0   # BOOT button is active LOW
+    pressed = _btn.value() == 1   # external button is active HIGH
     now     = time.ticks_ms()
     if pressed and not _btn_down:
         _btn_down       = True
@@ -119,7 +119,7 @@ def setup():
     _np[0] = (0, 0, 0)
     _np.write()
     print('RGB LED Animations — 5 modes')
-    print('Short press BOOT = next   |   Long press BOOT = prev')
+    print('Short press GP16 = next   |   Long press GP16 = prev')
     print('Active:', _NAMES[_anim_idx])
 
 def loop():

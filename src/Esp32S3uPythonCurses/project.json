@@ -12,9 +12,6 @@
   "moduleId": "esp32-s3-pico",
   "sketches": [
     {
-      "name": "Lesson0"
-    },
-    {
       "name": "Lesson1"
     },
     {
@@ -25,6 +22,9 @@
     },
     {
       "name": "Lesson4"
+    },
+    {
+      "name": "Lesson5"
     },
     {
       "name": "Lesson9"

@@ -1,8 +1,9 @@
 <xml xmlns="https://developers.google.com/blockly/xml">
   <!--
-    Lesson0 — On-board RGB LED (WS2812B, GP21) + BOOT button (GP0).
+    Lesson5 — On-board RGB LED (WS2812B, GP21) + external button (GP16, active HIGH).
     Uses custom project.js blocks — no hardware.py required.
-    Short press = next color, long press = prev color.
+    Short press GP16 = next animation, long press = prev animation.
+    Wire: GP16 → button → 3.3 V, 10 kΩ pull-down to GND.
   -->
 
   <variables>
@@ -10,37 +11,37 @@
   </variables>
 
   <!-- ─── Setup ───────────────────────────────────────────────────────────── -->
-  <block type="upy_start" id="L0_start" x="50" y="50">
+  <block type="upy_start" id="L5_start" x="50" y="50">
     <statement name="DO">
 
-      <block type="ws2812b_init" id="L0_rgb_init">
+      <block type="ws2812b_init" id="L5_rgb_init">
         <next>
 
-          <block type="boot_btn_init" id="L0_btn_init">
+          <block type="ext_btn_init" id="L5_btn_init">
             <next>
 
-              <block type="variables_set" id="L0_anim_init">
+              <block type="variables_set" id="L5_anim_init">
                 <field name="VAR" id="var_anim">anim</field>
                 <value name="VALUE">
-                  <block type="math_number" id="L0_zero">
+                  <block type="math_number" id="L5_zero">
                     <field name="NUM">0</field>
                   </block>
                 </value>
                 <next>
 
-                  <block type="ws2812b_fill" id="L0_fill_off">
+                  <block type="ws2812b_fill" id="L5_fill_off">
                     <value name="COLOR">
-                      <block type="upy_ui_color" id="L0_color_off">
+                      <block type="upy_ui_color" id="L5_color_off">
                         <field name="MODE">PALETTE</field>
                         <field name="COLOR">0x000000</field>
                       </block>
                     </value>
                     <next>
 
-                      <block type="upy_print" id="L0_print_ready">
+                      <block type="upy_print" id="L5_print_ready">
                         <value name="TEXT">
-                          <block type="text" id="L0_text_ready">
-                            <field name="TEXT">RGB ready — short press = next, hold = prev</field>
+                          <block type="text" id="L5_text_ready">
+                            <field name="TEXT">RGB ready — short press GP16 = next, hold = prev</field>
                           </block>
                         </value>
                       </block>
@@ -61,40 +62,40 @@
   </block>
 
   <!-- ─── Forever (loop) ──────────────────────────────────────────────────── -->
-  <block type="upy_forever" id="L0_forever" x="50" y="480">
+  <block type="upy_forever" id="L5_forever" x="50" y="480">
     <statement name="DO">
 
-      <block type="boot_btn_tick" id="L0_tick">
+      <block type="ext_btn_tick" id="L5_tick">
         <next>
 
           <!-- short press → next color: anim = (anim + 1) % 3 -->
-          <block type="controls_if" id="L0_if_click">
+          <block type="controls_if" id="L5_if_click">
             <value name="IF0">
-              <block type="boot_btn_clicked" id="L0_clicked"/>
+              <block type="ext_btn_clicked" id="L5_clicked"/>
             </value>
             <statement name="DO0">
-              <block type="variables_set" id="L0_next">
+              <block type="variables_set" id="L5_next">
                 <field name="VAR" id="var_anim">anim</field>
                 <value name="VALUE">
-                  <block type="math_arithmetic" id="L0_next_mod">
+                  <block type="math_arithmetic" id="L5_next_mod">
                     <field name="OP">MODULO</field>
                     <value name="A">
-                      <block type="math_arithmetic" id="L0_next_add">
+                      <block type="math_arithmetic" id="L5_next_add">
                         <field name="OP">ADD</field>
                         <value name="A">
-                          <block type="variables_get" id="L0_anim_g1">
+                          <block type="variables_get" id="L5_anim_g1">
                             <field name="VAR" id="var_anim">anim</field>
                           </block>
                         </value>
                         <value name="B">
-                          <block type="math_number" id="L0_n1">
+                          <block type="math_number" id="L5_n1">
                             <field name="NUM">1</field>
                           </block>
                         </value>
                       </block>
                     </value>
                     <value name="B">
-                      <block type="math_number" id="L0_mod3a">
+                      <block type="math_number" id="L5_mod3a">
                         <field name="NUM">3</field>
                       </block>
                     </value>
@@ -105,33 +106,33 @@
             <next>
 
               <!-- long press → prev color: anim = (anim + 2) % 3  [= (anim-1) mod 3] -->
-              <block type="controls_if" id="L0_if_hold">
+              <block type="controls_if" id="L5_if_hold">
                 <value name="IF0">
-                  <block type="boot_btn_held" id="L0_held"/>
+                  <block type="ext_btn_held" id="L5_held"/>
                 </value>
                 <statement name="DO0">
-                  <block type="variables_set" id="L0_prev">
+                  <block type="variables_set" id="L5_prev">
                     <field name="VAR" id="var_anim">anim</field>
                     <value name="VALUE">
-                      <block type="math_arithmetic" id="L0_prev_mod">
+                      <block type="math_arithmetic" id="L5_prev_mod">
                         <field name="OP">MODULO</field>
                         <value name="A">
-                          <block type="math_arithmetic" id="L0_prev_add">
+                          <block type="math_arithmetic" id="L5_prev_add">
                             <field name="OP">ADD</field>
                             <value name="A">
-                              <block type="variables_get" id="L0_anim_g2">
+                              <block type="variables_get" id="L5_anim_g2">
                                 <field name="VAR" id="var_anim">anim</field>
                               </block>
                             </value>
                             <value name="B">
-                              <block type="math_number" id="L0_n2">
+                              <block type="math_number" id="L5_n2">
                                 <field name="NUM">2</field>
                               </block>
                             </value>
                           </block>
                         </value>
                         <value name="B">
-                          <block type="math_number" id="L0_mod3b">
+                          <block type="math_number" id="L5_mod3b">
                             <field name="NUM">3</field>
                           </block>
                         </value>
@@ -142,28 +143,28 @@
                 <next>
 
                   <!-- display color based on anim index (0=red, 1=green, 2=blue) -->
-                  <block type="controls_if" id="L0_if_anim" inline="false">
+                  <block type="controls_if" id="L5_if_anim" inline="false">
                     <mutation elseif="1" else="1"/>
                     <!-- anim == 0 → red -->
                     <value name="IF0">
-                      <block type="logic_compare" id="L0_cmp0">
+                      <block type="logic_compare" id="L5_cmp0">
                         <field name="OP">EQ</field>
                         <value name="A">
-                          <block type="variables_get" id="L0_anim_g3">
+                          <block type="variables_get" id="L5_anim_g3">
                             <field name="VAR" id="var_anim">anim</field>
                           </block>
                         </value>
                         <value name="B">
-                          <block type="math_number" id="L0_v0">
+                          <block type="math_number" id="L5_v0">
                             <field name="NUM">0</field>
                           </block>
                         </value>
                       </block>
                     </value>
                     <statement name="DO0">
-                      <block type="ws2812b_fill" id="L0_fill_red">
+                      <block type="ws2812b_fill" id="L5_fill_red">
                         <value name="COLOR">
-                          <block type="upy_ui_color" id="L0_color_red">
+                          <block type="upy_ui_color" id="L5_color_red">
                             <field name="MODE">PALETTE</field>
                             <field name="COLOR">0xff0000</field>
                           </block>
@@ -172,24 +173,24 @@
                     </statement>
                     <!-- anim == 1 → green -->
                     <value name="IF1">
-                      <block type="logic_compare" id="L0_cmp1">
+                      <block type="logic_compare" id="L5_cmp1">
                         <field name="OP">EQ</field>
                         <value name="A">
-                          <block type="variables_get" id="L0_anim_g4">
+                          <block type="variables_get" id="L5_anim_g4">
                             <field name="VAR" id="var_anim">anim</field>
                           </block>
                         </value>
                         <value name="B">
-                          <block type="math_number" id="L0_v1">
+                          <block type="math_number" id="L5_v1">
                             <field name="NUM">1</field>
                           </block>
                         </value>
                       </block>
                     </value>
                     <statement name="DO1">
-                      <block type="ws2812b_fill" id="L0_fill_green">
+                      <block type="ws2812b_fill" id="L5_fill_green">
                         <value name="COLOR">
-                          <block type="upy_ui_color" id="L0_color_green">
+                          <block type="upy_ui_color" id="L5_color_green">
                             <field name="MODE">PALETTE</field>
                             <field name="COLOR">0x00ff00</field>
                           </block>
@@ -198,9 +199,9 @@
                     </statement>
                     <!-- else → blue -->
                     <statement name="ELSE">
-                      <block type="ws2812b_fill" id="L0_fill_blue">
+                      <block type="ws2812b_fill" id="L5_fill_blue">
                         <value name="COLOR">
-                          <block type="upy_ui_color" id="L0_color_blue">
+                          <block type="upy_ui_color" id="L5_color_blue">
                             <field name="MODE">PALETTE</field>
                             <field name="COLOR">0x0000ff</field>
                           </block>
@@ -209,9 +210,9 @@
                     </statement>
                     <next>
 
-                      <block type="upy_sleep_ms" id="L0_sleep">
+                      <block type="upy_sleep_ms" id="L5_sleep">
                         <value name="MS">
-                          <shadow type="math_number" id="L0_sleep_val">
+                          <shadow type="math_number" id="L5_sleep_val">
                             <field name="NUM">20</field>
                           </shadow>
                         </value>

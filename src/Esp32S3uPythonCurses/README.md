@@ -50,49 +50,47 @@ A hands-on programming course for the **ESP32-S3** microcontroller using **Micro
 
 ![Alt text](https://raw.githubusercontent.com/platform-minis/MinisProjects/refs/heads/main/docs/Esp32S3Pico/esp32s3pico_pinout.gif "Esp32 S3 Pico Pinout Top")
 
-![Alt text](https://raw.githubusercontent.com/platform-minis/MinisProjects/refs/heads/main/docs/Esp32S3Pico/esp32s3pico_pinout_buttom.jpg "Esp32 S3 Pico Pinout Bottom")
-
 ## Pin Overview
 
 | Pin | Mode | Component | Lessons |
 | --- | ---- | --------- | ------- |
-| 0 | Digital input | BOOT button (active LOW, built-in) | Lesson0 |
-| 3 | Digital in/out | DHT11 DATA | Lesson 12 |
-| 4 | Digital input | PIR motion sensor (OUT) | Lesson 11 |
 | 11 | Digital output | LED | Lesson 1, 2, 4 |
 | 12 | Digital output | LED (red) | Lesson 3 |
 | 13 | Digital output | LED (yellow) | Lesson 3 |
 | 14 | Digital output | LED (green) | Lesson 3 |
-| 16 | Digital input | Tactile button | Lesson 4 |
+| 16 | Digital input | Tactile button (active HIGH, pull-down) | Lesson 4, 5 |
 | 18 | PWM output | Passive buzzer | Lesson 9 |
-| 21 | Digital output | WS2812B on-board RGB LED (built-in) | Lesson0 |
+| 21 | Digital output | WS2812B on-board RGB LED (built-in) | Lesson 5 |
 
 ---
 
 ## Wiring Diagrams
 
-### On-board RGB LED and BOOT button (Lesson0)
+### On-board RGB LED and external button (Lesson 5)
 
-No external wiring needed — both components are soldered onto the board.
+The WS2812B is on-board (GP21, no wiring needed). The external button on GP16 is wired the same way as in Lesson 4 — see the *Button connection* section above.
 
 ```text
-ESP32-S3 Pico — built-in components
+ESP32-S3 Pico
 ┌──────────────────────────────────────────┐
 │  GP21 ──── WS2812B (RGB LED)  ←on-board │
-│  GP0  ──── BOOT button        ←on-board │
-│            (active LOW — reads 0 when    │
-│             pressed, 1 when released)    │
 └──────────────────────────────────────────┘
+
+GP16 ──── Button ──── 3.3 V
+     │
+ R 10 kΩ (pull-down)
+     │
+    GND
 ```
 
-> **No external components needed for Lesson0.** The WS2812B and BOOT button are mounted directly on the PCB.
+> **Only the external button requires wiring for Lesson 5.** The WS2812B is mounted directly on the PCB.
 > If the LED does not light up, check that your MicroPython firmware was compiled with NeoPixel support (all standard ESP32-S3 builds include it).
 
-**BOOT button behaviour:**
+**External button behaviour:**
 
 ```text
-Button released:  GP0 ──[internal pull-up]── 3.3 V   → reads 1
-Button pressed:   GP0 ──[switch]── GND                → reads 0
+Button released:  GP16 ──[10 kΩ pull-down]── GND   → reads 0
+Button pressed:   GP16 ──[switch]── 3.3 V          → reads 1
 ```
 
 ---
@@ -184,7 +182,6 @@ ESP32-S3 Pico
 GP18 ──── (+) terminal of passive buzzer
 GND  ──── (−) terminal of passive buzzer
 ```
-
 
 ---
 
@@ -557,12 +554,12 @@ Each lesson is shown in two forms: **Blockly blocks** (visual editor) and **Micr
 
 ---
 
-### Lesson0 — On-board RGB LED animations
+### Lesson 5 — RGB LED animations with external button
 
-**Goal:** Drive the WS2812B RGB LED built into the ESP32-S3 Pico board through five different light animations, switching between them with the BOOT button — no external components required.
+**Goal:** Drive the WS2812B RGB LED through five different light animations, switching between them with an external button on GP16 — builds on the button wiring from Lesson 4.
 
 **What happens:**
-The sketch runs one of five animations on the on-board RGB LED (GP47). Pressing the BOOT button (GP0) cycles forward through animations; holding it for more than 600 ms cycles backward. The active animation name is printed to the REPL each time it changes.
+The sketch runs one of five animations on the on-board RGB LED (GP21). Short-pressing the external button (GP16) cycles forward through animations; holding it for ≥ 600 ms cycles backward. The active animation name is printed to the REPL each time it changes.
 
 | # | Animation | Description |
 | - | --------- | ----------- |
@@ -580,19 +577,19 @@ Long press   (≥ 600 ms):  prev animation  ←
 ```
 
 > **Note:** This lesson requires **Code mode** for the full implementation.
-> The Blockly view shows a simplified 3-colour version using the RGB and Button blocks.
+> The Blockly view shows a simplified 3-colour version using the RGB and Ext Button blocks.
 > Open the sketch in Code mode to see and run all five animations.
 
-**No wiring needed** — see the *On-board RGB LED and BOOT button* section.
+**Wiring:** see the *Button connection* section (GP16) plus *On-board RGB LED and external button* section.
 
 **Key concepts:**
 
 ```text
-neopixel.NeoPixel(Pin(47), 1)   # 1 addressable LED on GP47
+neopixel.NeoPixel(Pin(21), 1)   # 1 addressable LED on GP21
 _np[0] = (R, G, B)              # set colour as (0-255, 0-255, 0-255)
 _np.write()                     # push data to the LED
-Pin(0, Pin.IN, Pin.PULL_UP)     # BOOT button with internal pull-up
-_btn.value() == 0               # True when button is pressed (active LOW)
+Pin(16, Pin.IN)                 # external button, no pull (external pull-down)
+_btn.value() == 1               # True when button is pressed (active HIGH)
 time.ticks_ms()                 # millisecond timestamp for long-press detection
 time.ticks_diff(now, start)     # elapsed time, safe across 32-bit rollover
 ```
@@ -614,31 +611,31 @@ Example:
 **Blockly blocks (simplified — 3 colours):**
 
 ```text
-╔══ ▶ START ══════════════════════════════════════════════════╗
-║  [Init RGB]    rgb                                          ║
-║  [Init Button] Btn1  pin=0  active_low=True  pullup=True   ║
-║  [Set]         anim = 0                                     ║
-║  [RGB fill]    rgb  color=OFF                               ║
-║  [Print]       "RGB ready — short press = next, hold = prev"║
-╚═════════════════════════════════════════════════════════════╝
+╔══ ▶ START ═══════════════════════════════════════════════════╗
+║  [Init RGB]      rgb                                         ║
+║  [Init Ext Btn]  GP16  active_high  pull-down               ║
+║  [Set]           anim = 0                                    ║
+║  [RGB fill]      rgb  color=OFF                              ║
+║  [Print]  "RGB ready — short press GP16 = next, hold = prev" ║
+╚══════════════════════════════════════════════════════════════╝
 
-╔══ 🔁 FOREVER ═══════════════════════════════════════════════╗
-║  [Button tick]  Btn1                                        ║
-║  ╔══ If  Btn1  was clicked ═══════════════════════════════╗  ║
-║  ║  [Set]  anim = (anim + 1) % 3                         ║  ║
-║  ╚════════════════════════════════════════════════════════╝  ║
-║  ╔══ If  Btn1  was hold ══════════════════════════════════╗  ║
-║  ║  [Set]  anim = (anim + 2) % 3   [= prev mod 3]        ║  ║
-║  ╚════════════════════════════════════════════════════════╝  ║
-║  ╔══ If anim == 0 ════════════════════════════════════════╗  ║
-║  ║  [RGB fill]  rgb  red                                  ║  ║
-║  ╠══ Else if anim == 1 ══════════════════════════════════╣  ║
-║  ║  [RGB fill]  rgb  green                                ║  ║
-║  ╠══ Else ════════════════════════════════════════════════╣  ║
-║  ║  [RGB fill]  rgb  blue                                 ║  ║
-║  ╚════════════════════════════════════════════════════════╝  ║
+╔══ 🔁 FOREVER ════════════════════════════════════════════════╗
+║  [Ext btn tick]                                              ║
+║  ╔══ If  ext btn clicked ════════════════════════════════╗   ║
+║  ║  [Set]  anim = (anim + 1) % 3                        ║   ║
+║  ╚═══════════════════════════════════════════════════════╝   ║
+║  ╔══ If  ext btn held ═══════════════════════════════════╗   ║
+║  ║  [Set]  anim = (anim + 2) % 3   [= prev mod 3]       ║   ║
+║  ╚═══════════════════════════════════════════════════════╝   ║
+║  ╔══ If anim == 0 ═══════════════════════════════════════╗   ║
+║  ║  [RGB fill]  rgb  red                                 ║   ║
+║  ╠══ Else if anim == 1 ══════════════════════════════════╣   ║
+║  ║  [RGB fill]  rgb  green                               ║   ║
+║  ╠══ Else ════════════════════════════════════════════════╣   ║
+║  ║  [RGB fill]  rgb  blue                                ║   ║
+║  ╚═══════════════════════════════════════════════════════╝   ║
 ║  [Sleep]  20 ms                                             ║
-╚═════════════════════════════════════════════════════════════╝
+╚══════════════════════════════════════════════════════════════╝
 ```
 
 **MicroPython code (full 5-animation version — Code mode):**
@@ -649,11 +646,11 @@ from machine import Pin
 import time
 import math
 
-_RGB_PIN = 47   # WS2812B on-board LED
-_BTN_PIN = 0    # BOOT button, active LOW
+_RGB_PIN = 21   # WS2812B on-board LED
+_BTN_PIN = 16   # external button, active HIGH; 10 kΩ pull-down to GND
 
 _np  = neopixel.NeoPixel(Pin(_RGB_PIN), 1)
-_btn = Pin(_BTN_PIN, Pin.IN, Pin.PULL_UP)
+_btn = Pin(_BTN_PIN, Pin.IN)   # no internal pull — external pull-down required
 
 _ANIM_COUNT = 5
 _anim_idx   = 0
@@ -669,14 +666,12 @@ def _hsv(h, s, v):
     r, g, b = ((v,t,p),(q,v,p),(p,v,t),(p,q,v),(t,p,v),(v,p,q))[i]
     return (int(r*255), int(g*255), int(b*255))
 
-# Animation 0 — Rainbow
 _rb_hue = 0
 def _rainbow():
     global _rb_hue
     _rb_hue = (_rb_hue + 3) % 360
     _np[0] = _hsv(_rb_hue, 1.0, 1.0); _np.write(); time.sleep_ms(20)
 
-# Animation 1 — Breathing
 _br_deg = 0
 def _breathing():
     global _br_deg
@@ -684,7 +679,6 @@ def _breathing():
     _np[0] = (c, c, c); _np.write()
     _br_deg = (_br_deg + 3) % 360; time.sleep_ms(15)
 
-# Animation 2 — Heartbeat
 _PULSE = (0, 30, 120, 220, 255, 220, 80, 0, 0, 60, 160, 80, 0, 0, 0, 0)
 _hb_i  = 0
 def _heartbeat():
@@ -692,7 +686,6 @@ def _heartbeat():
     _np[0] = (_PULSE[_hb_i % len(_PULSE)], 0, 0); _np.write()
     _hb_i += 1; time.sleep_ms(75)
 
-# Animation 3 — Color shift (golden-angle steps)
 _cs_hue, _cs_target = 0, 137
 def _colorshift():
     global _cs_hue, _cs_target
@@ -704,7 +697,6 @@ def _colorshift():
         _cs_hue = (_cs_hue + (2 if diff > 0 else -2)) % 360
     _np[0] = _hsv(_cs_hue, 1.0, 0.9); _np.write(); time.sleep_ms(18)
 
-# Animation 4 — Strobe
 _ST = (1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0); _st_i = 0
 def _strobe():
     global _st_i
@@ -715,7 +707,7 @@ _ANIMS = (_rainbow, _breathing, _heartbeat, _colorshift, _strobe)
 
 def _poll_btn():
     global _anim_idx, _btn_down, _btn_pressed_at
-    pressed = _btn.value() == 0
+    pressed = _btn.value() == 1   # active HIGH
     now = time.ticks_ms()
     if pressed and not _btn_down:
         _btn_down = True; _btn_pressed_at = now
@@ -728,7 +720,7 @@ def _poll_btn():
 def setup():
     _np[0] = (0,0,0); _np.write()
     print('RGB LED Animations — 5 modes')
-    print('Short press BOOT = next   |   Long press BOOT = prev')
+    print('Short press GP16 = next   |   Long press GP16 = prev')
     print('Active:', _NAMES[_anim_idx])
 
 def loop():
@@ -739,7 +731,7 @@ def loop():
 
 - Driving a WS2812B (NeoPixel) with the built-in `neopixel` module
 - HSV → RGB colour conversion — separating hue from brightness
-- Reading an active-LOW button using `Pin.PULL_UP`
+- Reading an active-HIGH external button without internal pull (`Pin.IN`, external pull-down)
 - Short-press vs long-press detection using `ticks_ms()` and `ticks_diff()`
 - Python function tables (`_ANIMS` tuple) as a simple state machine
 - Multiple independent animation state variables (hue counter, sine angle, sequence index…)
@@ -1081,7 +1073,6 @@ C4=262  D4=294  E4=330  F4=349  G4=392  A4=440  B4=494  C5=523
 - Controlling pitch with `freq()` and volume/silence with `duty()`
 - Building a simple melody loop in MicroPython
 
-
 ---
 
 ## Program structure
@@ -1120,14 +1111,12 @@ if __name__ == '__main__':
 ## Course progress
 
 ```text
-Lesson0 ──  On-board RGB LED (WS2812B) + BOOT button animations
 Lesson 1  ──  Digital output (LED ON)
 Lesson 2  ──  Timing and cycle (LED blink)
-Lesson 3  ──  Multiple outputs + sequence (3× LED)
-Lesson 4  ──  Digital input + control (button → LED)
-Lesson 9  ──  Passive buzzer (melody)
-Lesson 11 ──  PIR motion sensor
-Lesson 12 ──  DHT11 temperature and humidity
+Lesson 3  ──  Multiple outputs + sequence (3× LED traffic light)
+Lesson 4  ──  Digital input + control (external button → LED)
+Lesson 5  ──  WS2812B animations (5 modes) + external button
+Lesson 9  ──  Passive buzzer (PWM melody)
 ```
 
 ---
