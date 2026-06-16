@@ -1,0 +1,35 @@
+{
+  "id": "CYDTest",
+  "name": "CYD micro-gui Test",
+  "description": "MicroPython micro-gui framework demo for ESP32-2432S028 (Cheap Yellow Display). ILI9341 2.8\" 320x240 TFT with the peterhinch/micropython-micro-gui widget toolkit.",
+  "version": "1.0.0",
+  "softwarePlatform": "uPython",
+  "tags": ["cyd", "ili9341", "esp32", "micro-gui", "display", "widgets", "uPython"],
+  "moduleId": "esp32-devkitc",
+  "libraries": [
+    {
+      "url": "https://raw.githubusercontent.com/peterhinch/micropython-micro-gui/master/drivers/display/ili9341.py",
+      "remoteName": "drivers/display/ili9341.py"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/peterhinch/micropython-micro-gui/master/gui/core/nanogui.py",
+      "remoteName": "gui/core/nanogui.py"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/peterhinch/micropython-micro-gui/master/gui/core/writer.py",
+      "remoteName": "gui/core/writer.py"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/peterhinch/micropython-micro-gui/master/gui/widgets/label.py",
+      "remoteName": "gui/widgets/label.py"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/peterhinch/micropython-micro-gui/master/gui/widgets/button.py",
+      "remoteName": "gui/widgets/button.py"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/peterhinch/micropython-micro-gui/master/gui/fonts/freesans20.py",
+      "remoteName": "gui/fonts/freesans20.py"
+    }
+  ]
+}

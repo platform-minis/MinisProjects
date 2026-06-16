@@ -108,8 +108,10 @@ class ILI9341:
         self._cmd(_SLPOUT);  time.sleep_ms(500)
         self._cmd(_COLMOD);  self._data(b'\x55')   # 16-bit RGB565
         # MADCTL: MY MX MV ML BGR MH 0 0
-        # Tuned for CYD (ESP32-2432S028) ILI9341 panel orientation
-        madctl = (0x08, 0xE8, 0x48, 0x28)[rotation & 3]
+        # Tuned for CYD (ESP32-2432S028) ILI9341 panel orientation.
+        # 0x28 = MV+BGR: landscape, origin top-left (USB-C on left side).
+        # 0xE8 = MY+MX+MV+BGR: landscape-inverted, origin bottom-right.
+        madctl = (0x08, 0x28, 0xC8, 0xE8)[rotation & 3]
         self._cmd(_MADCTL);  self._data(bytes([madctl]))
         self._cmd(_DISPON)
 
