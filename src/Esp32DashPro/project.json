@@ -10,7 +10,7 @@
     { "name": "Adafruit ILI9341" },
     { "name": "Adafruit GFX Library" },
     { "name": "ESP-DASH",           "url": "https://github.com/ayushsharma82/ESP-DASH" },
-    { "name": "AsyncTCP",           "url": "https://github.com/me-no-dev/AsyncTCP" },
-    { "name": "ESPAsyncWebServer",  "url": "https://github.com/me-no-dev/ESPAsyncWebServer" }
+    { "name": "AsyncTCP",           "url": "https://github.com/mathieucarbou/AsyncTCP" },
+    { "name": "ESPAsyncWebServer",  "url": "https://github.com/mathieucarbou/ESPAsyncWebServer" }
   ]
 }

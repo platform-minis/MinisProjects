@@ -20,8 +20,8 @@ The ESP32 serves a dashboard at its IP address — no cloud, no phone app, just 
 | Library | Source |
 |---------|--------|
 | ESP-DASH (free) | https://github.com/ayushsharma82/ESP-DASH |
-| ESPAsyncWebServer | https://github.com/me-no-dev/ESPAsyncWebServer |
-| AsyncTCP | https://github.com/me-no-dev/AsyncTCP |
+| ESPAsyncWebServer | https://github.com/mathieucarbou/ESPAsyncWebServer |
+| AsyncTCP | https://github.com/mathieucarbou/AsyncTCP |
 | Adafruit ILI9341 | Arduino Library Manager |
 | Adafruit GFX | Arduino Library Manager |
 

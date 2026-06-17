@@ -1006,6 +1006,43 @@
         }
       ],
       "readmePath": "src/Esp32DashPro/README.md"
+    },
+    {
+      "id": "CYDEspDash",
+      "name": "CYD ESP-DASH Dashboard",
+      "description": "Real-time web dashboard for ESP32-2432S028 (Cheap Yellow Display) using ESP-DASH (ayushsharma82/ESP-DASH). Cards: Temperature, Humidity, Status, Chart, Button, Slider. ILI9341 TFT shows the URL and live values. Button toggles LED, Slider controls backlight PWM.",
+      "softwarePlatform": "Arduino",
+      "moduleId": "esp32-devkitc",
+      "version": "1.0.0",
+      "tags": [
+        "cyd",
+        "esp32",
+        "esp-dash",
+        "dashboard",
+        "wifi",
+        "ili9341",
+        "chart",
+        "arduino"
+      ],
+      "libraries": [
+        { "name": "Adafruit ILI9341" },
+        { "name": "Adafruit GFX Library" },
+        { "name": "ESP-DASH",          "url": "https://github.com/ayushsharma82/ESP-DASH" },
+        { "name": "AsyncTCP",          "url": "https://github.com/me-no-dev/AsyncTCP" },
+        { "name": "ESPAsyncWebServer", "url": "https://github.com/me-no-dev/ESPAsyncWebServer" }
+      ],
+      "path": "src/CYDEspDash",
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "CYDEspDash",
+          "files": [
+            "src/CYDEspDash/src/CYDEspDash/CYDEspDash.ino"
+          ]
+        }
+      ],
+      "readmePath": "src/CYDEspDash/README.md"
     }
   ],
   "modules": [
