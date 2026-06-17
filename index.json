@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-06-16",
+  "updatedAt": "2026-06-17",
   "repoUrl": "https://github.com/platform-minis/MinisProjects",
   "projects": [
     {
@@ -970,6 +970,42 @@
         }
       ],
       "readmePath": "src/CYDTest/README.md"
+    },
+    {
+      "id": "Esp32DashPro",
+      "name": "ESP32 DashPro – CYD Dashboard",
+      "description": "Web dashboard for ESP32-2432S028 (Cheap Yellow Display) using ESP-DASH (free). The ESP32 hosts a real-time dashboard at its IP address — open it in any browser on the same WiFi network. The ILI9341 TFT shows the URL to connect.",
+      "softwarePlatform": "Arduino",
+      "moduleId": "esp32-devkitc",
+      "version": "1.0.0",
+      "tags": [
+        "cyd",
+        "esp32",
+        "esp-dash",
+        "dashboard",
+        "wifi",
+        "ili9341",
+        "arduino"
+      ],
+      "libraries": [
+        { "name": "Adafruit ILI9341" },
+        { "name": "Adafruit GFX Library" },
+        { "name": "ESP-DASH",          "url": "https://github.com/ayushsharma82/ESP-DASH" },
+        { "name": "AsyncTCP",          "url": "https://github.com/me-no-dev/AsyncTCP" },
+        { "name": "ESPAsyncWebServer", "url": "https://github.com/me-no-dev/ESPAsyncWebServer" }
+      ],
+      "path": "src/Esp32DashPro",
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "CYDDashboard",
+          "files": [
+            "src/Esp32DashPro/src/CYDDashboard/CYDDashboard.ino"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32DashPro/README.md"
     }
   ],
   "modules": [
