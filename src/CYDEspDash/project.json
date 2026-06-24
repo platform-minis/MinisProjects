@@ -7,6 +7,7 @@
   "tags": ["cyd", "esp32", "esp-dash", "dashboard", "wifi", "ili9341", "chart", "arduino"],
   "moduleId": "esp32-devkitc",
   "libraries": [
+    { "name": "ArduinoJson" },
     { "name": "Adafruit ILI9341" },
     { "name": "Adafruit GFX Library" },
     { "name": "ESP-DASH",          "url": "https://github.com/ayushsharma82/ESP-DASH" },
