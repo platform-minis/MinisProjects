@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-06-27T06:10:00.000Z",
+  "updatedAt": "2026-06-27T12:30:00.000Z",
   "repoUrl": "https://github.com/platform-minis/MinisProjects",
   "projects": [
     {
@@ -177,6 +177,43 @@
         }
       ],
       "readmePath": "src/Esp32S3ZeroQtDemo/README.md"
+    },
+    {
+      "id": "Esp32S3ZeroGfxDemo",
+      "name": "ESP32-S3-Zero-Gfx-Demo",
+      "description": "Universal graphics demo for ESP32-S3 Zero using the MinisGfx abstraction (libs/MinisLib). One backend-agnostic scene rendered into an RGBA framebuffer; runs in the in-browser WASM simulator and re-targets RGB565/mono buffers or vendor libraries on hardware.",
+      "softwarePlatform": "Arduino",
+      "moduleId": "esp32-s3-zero",
+      "version": "1.0.0",
+      "tags": [
+        "esp32s3",
+        "zero",
+        "arduino",
+        "graphics",
+        "gfx",
+        "display",
+        "wasm"
+      ],
+      "libraries": [
+        {
+          "name": "MinisLib",
+          "url": "https://github.com/platform-minis/MinisLib"
+        }
+      ],
+      "path": "src/Esp32S3ZeroGfxDemo",
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "GfxDemo",
+          "files": [
+            "src/Esp32S3ZeroGfxDemo/src/GfxDemo/GfxDemo.ino",
+            "src/Esp32S3ZeroGfxDemo/src/GfxDemo/MinisGfx.h",
+            "src/Esp32S3ZeroGfxDemo/src/GfxDemo/MinisGfx.cpp"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3ZeroGfxDemo/README.md"
     },
     {
       "id": "Esp32S3uPythonCurses",
