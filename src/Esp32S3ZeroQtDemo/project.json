@@ -1,0 +1,12 @@
+{
+  "id": "Esp32S3ZeroQtDemo",
+  "name": "ESP32-S3-Zero-Qt-Demo",
+  "description": "Qt-style touch UI on ESP32-S3 Zero, drawn with the header-only MinisQt library. Renders into an RGBA framebuffer and runs in the in-browser WASM simulator.",
+  "version": "1.0.0",
+  "softwarePlatform": "Arduino",
+  "tags": ["esp32s3", "zero", "arduino", "qt", "ui", "wasm"],
+  "moduleId": "esp32-s3-zero",
+  "libraries": [
+    { "name": "Qt", "url": "https://github.com/platform-minis/Qt" }
+  ]
+}

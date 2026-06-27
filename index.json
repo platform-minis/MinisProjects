@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updatedAt": "2026-06-17",
+  "updatedAt": "2026-06-27T06:10:00.000Z",
   "repoUrl": "https://github.com/platform-minis/MinisProjects",
   "projects": [
     {
@@ -142,6 +142,41 @@
         }
       ],
       "readmePath": "src/Esp32S3ZeroTest/README.md"
+    },
+    {
+      "id": "Esp32S3ZeroQtDemo",
+      "name": "ESP32-S3-Zero-Qt-Demo",
+      "description": "Qt-style touch UI on ESP32-S3 Zero, drawn with the header-only MinisQt library. Renders into an RGBA framebuffer and runs in the in-browser WASM simulator.",
+      "softwarePlatform": "Arduino",
+      "moduleId": "esp32-s3-zero",
+      "version": "1.0.0",
+      "tags": [
+        "esp32s3",
+        "zero",
+        "arduino",
+        "qt",
+        "ui",
+        "wasm"
+      ],
+      "libraries": [
+        {
+          "name": "Qt",
+          "url": "https://github.com/platform-minis/Qt"
+        }
+      ],
+      "path": "src/Esp32S3ZeroQtDemo",
+      "hasSrc": true,
+      "hasDocs": true,
+      "sketches": [
+        {
+          "name": "QtDemo",
+          "files": [
+            "src/Esp32S3ZeroQtDemo/src/QtDemo/QtDemo.ino",
+            "src/Esp32S3ZeroQtDemo/src/QtDemo/MinisQt.h"
+          ]
+        }
+      ],
+      "readmePath": "src/Esp32S3ZeroQtDemo/README.md"
     },
     {
       "id": "Esp32S3uPythonCurses",
@@ -988,12 +1023,27 @@
         "arduino"
       ],
       "libraries": [
-        { "name": "ArduinoJson" },
-        { "name": "Adafruit ILI9341" },
-        { "name": "Adafruit GFX Library" },
-        { "name": "ESP-DASH",          "url": "https://github.com/ayushsharma82/ESP-DASH" },
-        { "name": "AsyncTCP",          "url": "https://github.com/mathieucarbou/AsyncTCP" },
-        { "name": "ESPAsyncWebServer", "url": "https://github.com/mathieucarbou/ESPAsyncWebServer" }
+        {
+          "name": "ArduinoJson"
+        },
+        {
+          "name": "Adafruit ILI9341"
+        },
+        {
+          "name": "Adafruit GFX Library"
+        },
+        {
+          "name": "ESP-DASH",
+          "url": "https://github.com/ayushsharma82/ESP-DASH"
+        },
+        {
+          "name": "AsyncTCP",
+          "url": "https://github.com/mathieucarbou/AsyncTCP"
+        },
+        {
+          "name": "ESPAsyncWebServer",
+          "url": "https://github.com/mathieucarbou/ESPAsyncWebServer"
+        }
       ],
       "path": "src/Esp32DashPro",
       "hasSrc": true,
@@ -1026,12 +1076,27 @@
         "arduino"
       ],
       "libraries": [
-        { "name": "ArduinoJson" },
-        { "name": "Adafruit ILI9341" },
-        { "name": "Adafruit GFX Library" },
-        { "name": "ESP-DASH",          "url": "https://github.com/ayushsharma82/ESP-DASH" },
-        { "name": "AsyncTCP",          "url": "https://github.com/mathieucarbou/AsyncTCP" },
-        { "name": "ESPAsyncWebServer", "url": "https://github.com/mathieucarbou/ESPAsyncWebServer" }
+        {
+          "name": "ArduinoJson"
+        },
+        {
+          "name": "Adafruit ILI9341"
+        },
+        {
+          "name": "Adafruit GFX Library"
+        },
+        {
+          "name": "ESP-DASH",
+          "url": "https://github.com/ayushsharma82/ESP-DASH"
+        },
+        {
+          "name": "AsyncTCP",
+          "url": "https://github.com/mathieucarbou/AsyncTCP"
+        },
+        {
+          "name": "ESPAsyncWebServer",
+          "url": "https://github.com/mathieucarbou/ESPAsyncWebServer"
+        }
       ],
       "path": "src/CYDEspDash",
       "hasSrc": true,
