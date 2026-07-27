@@ -1,0 +1,85 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+MinisIoT	KEYWORD1
+MinisMetric	KEYWORD1
+MinisCommandCallback	KEYWORD1
+MinisEntity	KEYWORD1
+MinisSensor	KEYWORD1
+MinisBinarySensor	KEYWORD1
+MinisSwitch	KEYWORD1
+MinisNumber	KEYWORD1
+MinisButton	KEYWORD1
+MinisSelect	KEYWORD1
+MinisGfx	KEYWORD1
+MinisGfxFramebuffer	KEYWORD1
+MinisGfxBuffer565	KEYWORD1
+MinisGfxBufferMono	KEYWORD1
+MGMonoLayout	KEYWORD1
+MinisGfxAdafruit	KEYWORD1
+MinisGfxGxEPD2	KEYWORD1
+MinisGfxLovyan	KEYWORD1
+MinisGfxQt	KEYWORD1
+MGColor	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+display	KEYWORD2
+clear	KEYWORD2
+drawPixel	KEYWORD2
+drawLine	KEYWORD2
+drawRect	KEYWORD2
+fillRect	KEYWORD2
+drawRoundRect	KEYWORD2
+fillRoundRect	KEYWORD2
+drawCircle	KEYWORD2
+fillCircle	KEYWORD2
+drawTriangle	KEYWORD2
+fillTriangle	KEYWORD2
+fillScreen	KEYWORD2
+drawBitmap	KEYWORD2
+drawRGBBitmap	KEYWORD2
+drawText	KEYWORD2
+drawChar	KEYWORD2
+setTextColor	KEYWORD2
+setTextSize	KEYWORD2
+setCursor	KEYWORD2
+setFlush	KEYWORD2
+setPresentCallback	KEYWORD2
+setInverted	KEYWORD2
+pixels	KEYWORD2
+byteCount	KEYWORD2
+paged	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+MG_MONO_HMSB	LITERAL1
+MG_MONO_VLSB	LITERAL1
+loop	KEYWORD2
+setWifi	KEYWORD2
+onCommand	KEYWORD2
+setHeartbeatInterval	KEYWORD2
+setDebug	KEYWORD2
+addEntity	KEYWORD2
+sendTelemetry	KEYWORD2
+sendHeartbeat	KEYWORD2
+ackCommand	KEYWORD2
+handleCommand	KEYWORD2
+toJsonObject	KEYWORD2
+isConnected	KEYWORD2
+brokerUri	KEYWORD2
+clientId	KEYWORD2
+
+#######################################
+# MinisMetric factories (KEYWORD2)
+#######################################
+
+Float	KEYWORD2
+Bool	KEYWORD2
+Str	KEYWORD2
