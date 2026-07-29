@@ -109,6 +109,7 @@ class MinisIoT:
 
         self._t_telemetry = 'minis/{}/{}/telemetry'.format(user_id, device_id)
         self._t_hello     = 'minis/{}/{}/hello'.format(user_id, device_id)
+        self._t_register  = 'minis/{}/{}/register-request'.format(user_id, device_id)
         self._t_heartbeat = 'minis/{}/{}/heartbeat'.format(user_id, device_id)
         self._t_command   = 'minis/{}/{}/command'.format(user_id, device_id)
         self._t_cmd_ack   = 'minis/{}/{}/command/ack'.format(user_id, device_id)
@@ -302,6 +303,36 @@ class MinisIoT:
             self._connected = False
             return False
 
+    # ── Register request ──────────────────────────────────────────────────────
+
+    def send_register_request(self, label=None):
+        """
+        Ask MyCastle to add this device to the user's device list.
+
+        Sent automatically after every successful MQTT connection, right before
+        `hello`. The server keeps ONE pending request per device (repeats only
+        refresh it) and the entry appears on the list only after the user
+        accepts it in Electronics → Devices — connecting to the broker is not
+        enough to show up there.
+        """
+        if not self._connected:
+            return False
+        try:
+            payload = {
+                'kind':  'firmware',
+                'label': label or self._device,
+                # Device id IS the serial number flashed into the board, so the
+                # request panel can show it without extra configuration.
+                'sn':    self._device,
+            }
+            self._client.publish(self._t_register, json.dumps(payload), qos=1)
+            self._log('Register request sent (czeka na akceptację w Electronics → Devices)')
+            return True
+        except Exception as e:
+            self._log('sendRegisterRequest error: {}', e)
+            self._connected = False
+            return False
+
     # ── Hello ─────────────────────────────────────────────────────────────────
 
     def send_hello(self):
@@ -435,6 +466,7 @@ class MinisIoT:
             self._connected = True
             self._last_hb   = _ticks()
             self._log('Connected  broker: {}  clientId: {}', self.broker_uri(), self._client_id)
+            self.send_register_request()
             self.send_hello()
             gc.collect()
             return True

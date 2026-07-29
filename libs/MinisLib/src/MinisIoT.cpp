@@ -221,6 +221,23 @@ bool MinisIoT::sendHello() {
     return _publish(_topicHello, buf);
 }
 
+// ─── Register request ─────────────────────────────────────────────────────────
+
+bool MinisIoT::sendRegisterRequest(const char* label) {
+    if (!_connected) return false;
+
+    JsonDocument doc;
+    doc["kind"] = "firmware";
+    doc["label"] = (label && label[0]) ? label : _deviceId;
+    // Device id IS the serial number injected at build time (MINIS_DEVICE_SN),
+    // so the panel can show it without any extra configuration.
+    doc["sn"] = _deviceId;
+
+    char buf[256];
+    serializeJson(doc, buf, sizeof(buf));
+    return _publish(_topicRegisterRequest, buf);
+}
+
 // ─── Heartbeat ────────────────────────────────────────────────────────────────
 
 bool MinisIoT::sendHeartbeat(float battery) {
@@ -299,6 +316,8 @@ void MinisIoT::_buildTopics() {
              "minis/%s/%s/telemetry",   _userId, _deviceId);
     snprintf(_topicHello,      sizeof(_topicHello),
              "minis/%s/%s/hello",       _userId, _deviceId);
+    snprintf(_topicRegisterRequest, sizeof(_topicRegisterRequest),
+             "minis/%s/%s/register-request", _userId, _deviceId);
     snprintf(_topicHeartbeat,  sizeof(_topicHeartbeat),
              "minis/%s/%s/heartbeat",   _userId, _deviceId);
     snprintf(_topicCommand,    sizeof(_topicCommand),
@@ -468,6 +487,7 @@ void MinisIoT::_mqttEventHandler(void* arg, esp_event_base_t /*base*/,
                 esp_mqtt_client_subscribe(client, kv.second.c_str(), 1);
                 self->_log("Subscribed ext: %s", kv.second.c_str());
             }
+            self->sendRegisterRequest();
             self->sendHello();
             self->_lastHeartbeatMs = millis();
             break;

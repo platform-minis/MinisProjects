@@ -228,6 +228,7 @@ Returns the MQTT client ID (`"{user_id}_{device_id}"`).
 | Method | Description |
 | ------ | ----------- |
 | `send_hello() -> bool` | Publishes device presence announcement |
+| `send_register_request(label=None) -> bool` | Asks MyCastle to add the device to the user's list (pending until accepted in Electronics → Devices) |
 | `send_heartbeat(battery=None) -> bool` | Publishes a heartbeat (called automatically) |
 | `ext_respond(ext_type, req_id, ok, data=None, error=None) -> bool` | Sends a response for a custom extension request |
 
@@ -592,6 +593,7 @@ All topics follow the pattern `minis/{user_id}/{device_id}/{suffix}`:
 | ------------ | --------- | ----------- |
 | `telemetry` | Device → Server | Sensor readings |
 | `hello` | Device → Server | Presence announcement on connect |
+| `register-request` | Device → Server | Request to be added to the user's device list; waits for approval in Electronics → Devices |
 | `heartbeat` | Device → Server | Periodic keep-alive |
 | `command` | Server → Device | Incoming commands |
 | `command/ack` | Device → Server | Command acknowledgment |

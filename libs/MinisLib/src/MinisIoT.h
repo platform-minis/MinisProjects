@@ -209,6 +209,22 @@ public:
      */
     bool sendHello();
 
+    // ── Register request ──────────────────────────────────────────────────────
+
+    /**
+     * Ask MyCastle to add this device to the user's device list.
+     *
+     * Sent automatically after every successful MQTT connection, right before
+     * `hello`. The server keeps ONE pending request per device (repeats only
+     * refresh it), and the entry is created only after the user accepts it in
+     * Electronics → Devices — connecting to the broker is not enough to appear
+     * on the list.
+     *
+     * @param label  Human-readable name shown in the request panel;
+     *               `nullptr` = fall back to the device id.
+     */
+    bool sendRegisterRequest(const char* label = nullptr);
+
     // ── Heartbeat ─────────────────────────────────────────────────────────────
 
     /**
@@ -273,6 +289,7 @@ private:
     // ── Derived strings ───────────────────────────────────────────────────────
     char _topicTelemetry [128];
     char _topicHello     [128];
+    char _topicRegisterRequest[128];
     char _topicHeartbeat [128];
     char _topicCommand   [128];
     char _topicCommandAck[128];
