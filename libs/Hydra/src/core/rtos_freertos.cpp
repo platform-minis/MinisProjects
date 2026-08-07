@@ -10,6 +10,7 @@
  * Rdzeń Hydry nie widzi żadnej z tych różnic.
  */
 
+#include <new>
 #include "hydra/core/Config.hpp"
 
 #if !HYDRA_PLAT_HOST
@@ -22,11 +23,13 @@
 #  include "freertos/queue.h"
 #  include "freertos/semphr.h"
 #  include "freertos/task.h"
+#  include "freertos/timers.h"
 #else
 #  include <FreeRTOS.h>
 #  include <queue.h>
 #  include <semphr.h>
 #  include <task.h>
+#  include <timers.h>
 #  if HYDRA_PLAT_RP2
 #    include <pico/time.h>
 #  endif
@@ -290,6 +293,80 @@ namespace {
 portMUX_TYPE gCriticalMux = portMUX_INITIALIZER_UNLOCKED;
 }
 #endif
+
+// ---------------------------------------------------------------------------
+// Timer
+
+namespace {
+
+/**
+ * Przejściówka między wywołaniem FreeRTOS a naszym `Callback`.
+ *
+ * FreeRTOS przekazuje do wywołania zwrotnego uchwyt timera, a nie dowolny
+ * wskaźnik. Argument użytkownika trzyma więc identyfikator timera (`pvTimerID`),
+ * a tu go rozpakowujemy.
+ */
+struct TimerBinding {
+    Timer::Callback callback;
+    void*           arg;
+};
+
+void timerTrampoline(TimerHandle_t handle) {
+    auto* binding = static_cast<TimerBinding*>(pvTimerGetTimerID(handle));
+    if (binding && binding->callback) binding->callback(binding->arg);
+}
+
+}  // namespace
+
+Timer::~Timer() { destroy(); }
+
+Status Timer::create(const char* name, u32 periodMs, bool periodic,
+                     Callback callback, void* arg) {
+    if (h_) return fail(Err::AlreadyExists);
+    if (!callback || periodMs == 0) return fail(Err::BadArgument);
+
+    // Przydział w fazie inicjalizacji (rozdz. 11) — zwolnienie tylko w destroy().
+    auto* binding = new (std::nothrow) TimerBinding{callback, arg};
+    if (!binding) return fail(Err::OutOfMemory);
+
+    h_ = xTimerCreate(name ? name : "hydra", msToTicks(periodMs),
+                      periodic ? pdTRUE : pdFALSE, binding, timerTrampoline);
+    if (!h_) {
+        delete binding;
+        return fail(Err::OutOfMemory);
+    }
+    return ok();
+}
+
+void Timer::destroy() {
+    if (!h_) return;
+    auto handle = static_cast<TimerHandle_t>(h_);
+    auto* binding = static_cast<TimerBinding*>(pvTimerGetTimerID(handle));
+    xTimerStop(handle, 0);
+    xTimerDelete(handle, 0);
+    delete binding;
+    h_ = nullptr;
+}
+
+bool Timer::start(u32 timeoutMs) {
+    if (!h_) return false;
+    return xTimerStart(static_cast<TimerHandle_t>(h_), toTimeout(timeoutMs)) == pdPASS;
+}
+
+bool Timer::stop(u32 timeoutMs) {
+    if (!h_) return false;
+    return xTimerStop(static_cast<TimerHandle_t>(h_), toTimeout(timeoutMs)) == pdPASS;
+}
+
+bool Timer::setPeriod(u32 periodMs, u32 timeoutMs) {
+    if (!h_ || periodMs == 0) return false;
+    return xTimerChangePeriod(static_cast<TimerHandle_t>(h_), msToTicks(periodMs),
+                              toTimeout(timeoutMs)) == pdPASS;
+}
+
+bool Timer::running() const {
+    return h_ && xTimerIsTimerActive(static_cast<TimerHandle_t>(h_)) != pdFALSE;
+}
 
 CriticalSection::CriticalSection() {
 #if HYDRA_PLAT_ESP32

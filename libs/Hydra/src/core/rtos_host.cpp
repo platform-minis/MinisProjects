@@ -13,6 +13,7 @@
  *   - inIsr() zawsze zwraca false — na hoście nie ma przerwań.
  */
 
+#include <new>
 #include "hydra/core/Config.hpp"
 
 #if HYDRA_PLAT_HOST
@@ -409,6 +410,157 @@ u32 Queue::waiting() const {
 
 // ---------------------------------------------------------------------------
 // Sekcja krytyczna
+// ---------------------------------------------------------------------------
+// Timer
+//
+// Host nie ma jądra, które obsłużyłoby timery, więc każdy dostaje własny
+// wątek śpiący do następnego wystrzelenia. Na mikrokontrolerze byłoby to
+// marnotrawstwo, przed którym Timer ma chronić — tutaj pamięci jest pod
+// dostatkiem, a chodzi o zgodność zachowania, nie o oszczędność.
+
+namespace {
+
+struct HostTimer {
+    Timer::Callback callback = nullptr;
+    void*           arg      = nullptr;
+    u32             periodMs = 0;
+    bool            periodic = false;
+    bool            running  = false;
+    bool            stopping = false;
+    /** Rośnie przy każdym uzbrojeniu — po tym wątek poznaje przezbrojenie
+     *  timera, którego stan `running` się nie zmienił. */
+    u32             generation = 0;
+    pthread_t       thread{};
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
+};
+
+/** Czeka `ms` albo do zmiany stanu — czekanie na zmiennej warunkowej,
+ *  żeby `stop()` i `destroy()` nie musiały czekać na koniec okresu. */
+bool waitOrWake(HostTimer& t, u32 ms) {
+    struct timespec deadline{};
+    clock_gettime(CLOCK_REALTIME, &deadline);
+    deadline.tv_sec  += static_cast<time_t>(ms / 1000u);
+    deadline.tv_nsec += static_cast<long>((ms % 1000u) * 1000000L);
+    if (deadline.tv_nsec >= 1000000000L) { deadline.tv_sec += 1; deadline.tv_nsec -= 1000000000L; }
+
+    const bool wasRunning  = t.running;
+    const u32  atGeneration = t.generation;
+    while (t.running == wasRunning && t.generation == atGeneration && !t.stopping) {
+        if (pthread_cond_timedwait(&t.cond, &t.mutex, &deadline) == ETIMEDOUT) return true;
+    }
+    return false;   // zatrzymany albo przezbrojony — okres nie dobiegł końca
+}
+
+void* timerThread(void* arg) {
+    auto* t = static_cast<HostTimer*>(arg);
+    pthread_mutex_lock(&t->mutex);
+    for (;;) {
+        while (!t->running && !t->stopping) pthread_cond_wait(&t->cond, &t->mutex);
+        if (t->stopping) break;
+
+        const u32 period = t->periodMs;
+        if (!waitOrWake(*t, period)) continue;   // zatrzymany albo przezbrojony
+        if (t->stopping) break;
+
+        const Timer::Callback callback = t->callback;
+        void* const           userArg  = t->arg;
+        if (!t->periodic) t->running = false;
+
+        // Wywołanie poza blokadą: gdyby callback sięgnął po start()/stop(),
+        // trzymanie mutexu byłoby zakleszczeniem.
+        pthread_mutex_unlock(&t->mutex);
+        if (callback) callback(userArg);
+        pthread_mutex_lock(&t->mutex);
+    }
+    pthread_mutex_unlock(&t->mutex);
+    return nullptr;
+}
+
+}  // namespace
+
+Timer::~Timer() { destroy(); }
+
+Status Timer::create(const char* name, u32 periodMs, bool periodic,
+                     Callback callback, void* arg) {
+    (void) name;   // host nie nazywa wątków timerów — nazwa służy diagnostyce na MCU
+    if (h_) return fail(Err::AlreadyExists);
+    if (!callback || periodMs == 0) return fail(Err::BadArgument);
+
+    auto* t = new (std::nothrow) HostTimer{};
+    if (!t) return fail(Err::OutOfMemory);
+    t->callback = callback;
+    t->arg      = arg;
+    t->periodMs = periodMs;
+    t->periodic = periodic;
+
+    if (pthread_create(&t->thread, nullptr, timerThread, t) != 0) {
+        delete t;
+        return fail(Err::OutOfMemory);
+    }
+    h_ = t;
+    return ok();
+}
+
+void Timer::destroy() {
+    if (!h_) return;
+    auto* t = static_cast<HostTimer*>(h_);
+
+    pthread_mutex_lock(&t->mutex);
+    t->stopping = true;
+    pthread_cond_broadcast(&t->cond);
+    pthread_mutex_unlock(&t->mutex);
+
+    pthread_join(t->thread, nullptr);
+    delete t;
+    h_ = nullptr;
+}
+
+bool Timer::start(u32 timeoutMs) {
+    (void) timeoutMs;   // host nie kolejkuje poleceń — nie ma na co czekać
+    if (!h_) return false;
+    auto* t = static_cast<HostTimer*>(h_);
+    pthread_mutex_lock(&t->mutex);
+    t->running = true;
+    t->generation += 1;          // także dla już biegnącego: liczy od nowa
+    pthread_cond_broadcast(&t->cond);
+    pthread_mutex_unlock(&t->mutex);
+    return true;
+}
+
+bool Timer::stop(u32 timeoutMs) {
+    (void) timeoutMs;
+    if (!h_) return false;
+    auto* t = static_cast<HostTimer*>(h_);
+    pthread_mutex_lock(&t->mutex);
+    t->running = false;
+    pthread_cond_broadcast(&t->cond);
+    pthread_mutex_unlock(&t->mutex);
+    return true;
+}
+
+bool Timer::setPeriod(u32 periodMs, u32 timeoutMs) {
+    (void) timeoutMs;
+    if (!h_ || periodMs == 0) return false;
+    auto* t = static_cast<HostTimer*>(h_);
+    pthread_mutex_lock(&t->mutex);
+    t->periodMs = periodMs;
+    t->running  = true;
+    t->generation += 1;
+    pthread_cond_broadcast(&t->cond);
+    pthread_mutex_unlock(&t->mutex);
+    return true;
+}
+
+bool Timer::running() const {
+    if (!h_) return false;
+    auto* t = static_cast<HostTimer*>(h_);
+    pthread_mutex_lock(&t->mutex);
+    const bool value = t->running;
+    pthread_mutex_unlock(&t->mutex);
+    return value;
+}
+
 // ---------------------------------------------------------------------------
 
 CriticalSection::CriticalSection() {

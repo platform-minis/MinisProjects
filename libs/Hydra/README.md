@@ -100,6 +100,8 @@ szczegóły w [templates/starter/README.md](templates/starter/README.md).
 
 ## Dokumentacja
 
+- [docs/](docs/) — **dokumentacja techniczna**: architektura, płytki, budowanie,
+  testy, format `.hydra`, paczki, schemat, Studio i zebrane pułapki.
 - [docs/api.md](docs/api.md) — przegląd publicznego API warstwa po warstwie.
   Każdy fragment kodu w tym dokumencie jest kompilowany przez `make -C test docs`,
   więc nie może opisywać funkcji, których nie ma.

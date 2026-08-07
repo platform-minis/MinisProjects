@@ -5,3 +5,4 @@ description: 2× mostek H, 1.5 A na kanał
 provides: [motion.motor]
 requires: [pwm]
 component: drv8833.hcomp
+config_schema: drv8833.schema.json

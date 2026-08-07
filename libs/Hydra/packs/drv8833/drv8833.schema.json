@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "title": "DRV8833 — podwójny mostek H",
+  "properties": {
+    "pwm_hz": {
+      "type": "integer", "minimum": 1000, "maximum": 100000, "default": 20000, "unit": "Hz",
+      "description": "Powyżej 20 kHz silnik przestaje piszczeć w paśmie słyszalnym"
+    },
+    "decay": {
+      "type": "string", "enum": ["slow", "fast"], "default": "slow",
+      "description": "Zanik prądu: wolny daje płynniejszy bieg, szybki lepszą kontrolę"
+    },
+    "min_duty_permille": {
+      "type": "integer", "minimum": 0, "maximum": 500, "default": 120, "unit": "‰",
+      "description": "Poniżej tego wypełnienia silnik nie rusza — regulator nie ma powodu marnować na ten zakres części swojego wyjścia"
+    },
+    "current_limit_a": {
+      "type": "number", "minimum": 0.1, "maximum": 1.5, "default": 1.2, "unit": "A",
+      "description": "Próg, powyżej którego mostek zgłasza usterkę na nFAULT"
+    }
+  },
+  "required": ["pwm_hz"]
+}

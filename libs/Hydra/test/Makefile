@@ -36,7 +36,8 @@ CXXFLAGS  = -std=c++17 -O1 -g -Wall -Wextra -Wshadow -Wno-unused-parameter \
 LDFLAGS   = -lpthread $(EXTRA)
 
 CORE_SRC  = $(wildcard ../src/core/*.cpp)
-HAL_SRC   = $(wildcard ../src/hal/*.cpp) $(wildcard ../src/hal/mock/*.cpp)
+HAL_SRC   = $(wildcard ../src/hal/*.cpp) $(wildcard ../src/hal/mock/*.cpp) \
+            $(wildcard ../src/hal/host/*.cpp)
 SENSE_SRC = $(wildcard ../src/sense/*.cpp) $(wildcard ../src/drivers/sense/*.cpp)
 NET_SRC   = $(wildcard ../src/net/*.cpp) $(wildcard ../src/net/mock/*.cpp)
 GFX_SRC   = $(wildcard ../src/gfx/*.cpp)
@@ -50,7 +51,7 @@ SRC       = $(CORE_SRC) $(HAL_SRC) $(SENSE_SRC) $(NET_SRC) $(GFX_SRC) $(UI_SRC) 
 OBJ       = $(patsubst %.cpp,$(BUILD)/%.o,$(notdir $(SRC)))
 DEP       = $(OBJ:.o=.d)
 
-VPATH     = ../src/core:../src/hal:../src/hal/mock:../src/sense:../src/drivers/sense:\
+VPATH     = ../src/core:../src/hal:../src/hal/mock:../src/hal/host:../src/sense:../src/drivers/sense:\
             ../src/net:../src/net/mock:../src/gfx:../src/ui:../src/ui/mock:../src/ui/lvgl:../src/motion:../src/shell:../src/diag:../src/util:../src/ota:.
 
 .PHONY: docs all run asan tsan examples stub clean

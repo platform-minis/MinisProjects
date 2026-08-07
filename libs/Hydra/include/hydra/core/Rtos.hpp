@@ -142,6 +142,50 @@ private:
     u32   itemSize_ = 0;
 };
 
+/**
+ * Timer programowy.
+ *
+ * Do tej pory rzadkie zdarzenia okresowe robiło się taskiem z `delayUntil`,
+ * co za każdy taki zegar płaci osobnym stosem — kilkaset bajtów RAM-u po to,
+ * żeby raz na minutę coś sprawdzić. Timer wykonuje się w kontekście
+ * współdzielonym, więc koszt jest jednorazowy.
+ *
+ * Wywołanie zwrotne biegnie w zadaniu obsługi timerów, nie w przerwaniu —
+ * ale to zadanie ma wysoki priorytet i obsługuje wszystkie timery po kolei,
+ * więc obowiązuje ta sama zasada co w ISR: krótko i bez blokowania. Długą
+ * robotę publikuje się na EventBus (rozdz. 10).
+ */
+class Timer : NonCopyable {
+public:
+    using Callback = void (*)(void*);
+
+    Timer() = default;
+    ~Timer();
+
+    /**
+     * Tworzy timer. Wywoływane wyłącznie w fazie inicjalizacji (rozdz. 11).
+     *
+     * `periodic = false` daje timer jednorazowy — po wystrzeleniu trzeba go
+     * uzbroić ponownie przez `start()`.
+     */
+    Status create(const char* name, u32 periodMs, bool periodic,
+                  Callback callback, void* arg);
+    void   destroy();
+
+    /** Uzbraja albo przezbraja timer. Dla jednorazowego liczy od teraz. */
+    bool start(u32 timeoutMs = 0);
+    bool stop(u32 timeoutMs = 0);
+
+    /** Zmienia okres i uzbraja. Okres 0 jest odrzucany — nie zatrzymuje timera. */
+    bool setPeriod(u32 periodMs, u32 timeoutMs = 0);
+
+    bool running() const;
+    bool valid() const { return h_ != nullptr; }
+
+private:
+    void* h_ = nullptr;
+};
+
 /** Krytyczna sekcja ISR-safe — używana wyłącznie w rdzeniu, na krótkich odcinkach. */
 class CriticalSection : NonCopyable {
 public:
