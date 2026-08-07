@@ -1,0 +1,34 @@
+# ═══════════════════════════════════════════════════════════════════
+#  hello-blink — najmniejszy projekt Hydry, jaki ma sens
+#
+#  Ten plik jest źródłem prawdy. Z niego powstają:
+#      platformio.ini    — środowiska budowania
+#      CMakeLists.txt    — to samo dla pico-sdk, ESP-IDF i buildu hostowego
+#
+#  Nic z powyższych nie jest w repozytorium: pliki wygenerowane trzymają
+#  znacznik w nagłówku i odtwarzają się poleceniem `hydra gen`.
+#
+#      hydra check .        sprawdza projekt
+#      hydra gen .          generuje pliki budowania
+#      hydra build . -e esp32s3
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: hello-blink
+  version: 1.0.0
+  description: "Mruganie diodą z taska — najkrótsza droga do działającego wsadu"
+  license: MIT
+
+targets:
+  default: esp32s3
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]

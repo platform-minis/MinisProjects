@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "title": "BMP280 — ciśnienie i temperatura",
+  "properties": {
+    "address": {
+      "type": "string", "enum": ["0x76", "0x77"], "default": "0x76",
+      "description": "Wybierany zworką SDO: do masy 0x76, do zasilania 0x77"
+    },
+    "period_ms": {
+      "type": "integer", "minimum": 10, "maximum": 60000, "default": 1000, "unit": "ms",
+      "description": "Odstęp między odczytami"
+    },
+    "filter": {
+      "type": "string", "enum": ["none", "ema", "median"], "default": "ema",
+      "description": "Filtr nakładany przez SensorHub"
+    },
+    "measure": {
+      "type": "object", "title": "Pomiar",
+      "properties": {
+        "mode": { "type": "string", "enum": ["normal", "forced"], "default": "normal" },
+        "osrs_p": { "type": "string", "enum": ["x1", "x2", "x4", "x8", "x16"], "default": "x16",
+                    "description": "Nadpróbkowanie ciśnienia" },
+        "iir": { "type": "integer", "enum": [0, 2, 4, 8, 16], "default": 4,
+                 "description": "Filtr wewnętrzny układu" }
+      }
+    }
+  },
+  "required": ["address"]
+}

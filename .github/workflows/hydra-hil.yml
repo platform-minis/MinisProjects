@@ -1,0 +1,91 @@
+# Hydra — testy na fizycznym sprzęcie.
+#
+# Wymaga własnego runnera z podłączonymi płytkami. Uruchamiany ręcznie albo
+# nocnie, nie przy każdym pushu: fizyczny sprzęt jest jeden, a wgranie
+# wsadu trwa dłużej niż cały zestaw testów hostowych.
+#
+# Konfiguracja runnera: etykiety `self-hosted` i `hydra-hil`, zainstalowane
+# pio oraz pyserial, płytki widoczne pod stałymi ścieżkami (reguła udev
+# po numerze seryjnym — /dev/ttyUSB0 zmienia się przy każdym przepięciu).
+
+name: hydra-hil
+
+on:
+  workflow_dispatch:
+    inputs:
+      board:
+        description: Płytka do przetestowania
+        type: choice
+        options: [esp32s3, pico2, all]
+        default: esp32s3
+  schedule:
+    # Nocnie, po tym jak testy hostowe przeszły w ciągu dnia.
+    - cron: '0 2 * * *'
+
+jobs:
+  hil:
+    runs-on: [self-hosted, hydra-hil]
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - board: esp32s3
+            env: esp32s3
+            port: /dev/hydra-esp32s3
+            expect_i2c: "0x76"
+          - board: pico2
+            env: pico2
+            port: /dev/hydra-pico2
+            expect_i2c: ""
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Pominięcie płytki spoza wyboru
+        id: gate
+        run: |
+          wanted="${{ github.event.inputs.board || 'all' }}"
+          if [ "$wanted" != "all" ] && [ "$wanted" != "${{ matrix.board }}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Obecność płytki
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          # Bez tego sprawdzenia niepodłączona płytka daje niepowodzenie
+          # wyglądające na błąd wsadu.
+          test -e "${{ matrix.port }}" || {
+            echo "::error::brak urządzenia pod ${{ matrix.port }}"
+            exit 1
+          }
+
+      - name: Budowa i wgranie wsadu testowego
+        if: steps.gate.outputs.run == 'true'
+        working-directory: libs/Hydra/templates/starter
+        run: |
+          pio run -e ${{ matrix.env }} -t upload --upload-port ${{ matrix.port }}
+
+      - name: Zestaw testów
+        if: steps.gate.outputs.run == 'true'
+        working-directory: libs/Hydra
+        run: |
+          expect=""
+          if [ -n "${{ matrix.expect_i2c }}" ]; then
+            expect="--expect-i2c ${{ matrix.expect_i2c }}"
+          fi
+          python3 tools/hil_run.py \
+            --port ${{ matrix.port }} \
+            --suite all \
+            $expect
+
+      - name: Zwolnienie portu
+        if: always() && steps.gate.outputs.run == 'true'
+        run: |
+          # Runner jest współdzielony — porzucony uchwyt do portu zablokuje
+          # następne uruchomienie.
+          fuser -k "${{ matrix.port }}" 2>/dev/null || true

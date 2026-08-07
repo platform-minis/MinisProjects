@@ -1,0 +1,6 @@
+hcomp: "0.1"
+component: resistor
+name: Rezystor
+pins:
+  - { name: A, kind: passive }
+  - { name: B, kind: passive }

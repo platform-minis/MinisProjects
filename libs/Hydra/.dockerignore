@@ -1,0 +1,9 @@
+# Kontekst budowy obrazu to katalog docker/ — reszta repozytorium nie jest
+# potrzebna i tylko wydłużałaby wysyłkę kontekstu do demona.
+**/.pio
+**/build
+**/build-asan
+**/build-tsan
+**/*.o
+**/*.d
+.git

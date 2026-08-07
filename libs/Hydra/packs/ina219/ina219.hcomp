@@ -1,0 +1,11 @@
+hcomp: "0.1"
+component: ina219
+name: INA219
+package: SOT-23-8
+pins:
+  - { name: VCC, kind: power_in }
+  - { name: GND, kind: ground }
+  - { name: SDA, kind: bidirectional, bus: i2c, role: sda }
+  - { name: SCL, kind: input,         bus: i2c, role: scl }
+  - { name: A0,  kind: input, optional: true, description: Wybór adresu }
+  - { name: A1,  kind: input, optional: true, description: Wybór adresu }

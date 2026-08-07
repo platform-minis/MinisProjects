@@ -1,0 +1,137 @@
+{
+  "name": "Hydra",
+  "version": "1.0.0",
+  "description": "Uniwersalny framework robotyczno-IoT dla ESP32, RP2040/RP2350 i STM32. Jednolite API dla cyklu życia, tasków, magistrali zdarzeń i sprzętu; FreeRTOS i Arduino ukryte pod warstwą HAL.",
+  "keywords": [
+    "robotics",
+    "iot",
+    "freertos",
+    "hal",
+    "esp32",
+    "rp2040",
+    "rp2350",
+    "stm32"
+  ],
+  "license": "MIT",
+  "frameworks": [
+    "arduino"
+  ],
+  "platforms": [
+    "espressif32",
+    "raspberrypi",
+    "ststm32"
+  ],
+  "headers": [
+    "Hydra.h"
+  ],
+  "export": {
+    "exclude": [
+      "test/build*",
+      ".pio",
+      "docs/_build"
+    ]
+  },
+  "build": {
+    "srcDir": "src",
+    "includeDir": "include",
+    "libArchive": false
+  },
+  "dependencies": [
+    {
+      "name": "SPI",
+      "frameworks": [
+        "arduino"
+      ]
+    },
+    {
+      "name": "Wire",
+      "frameworks": [
+        "arduino"
+      ]
+    },
+    {
+      "name": "Preferences",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "espressif32"
+      ]
+    },
+    {
+      "name": "WiFi",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "espressif32"
+      ]
+    },
+    {
+      "name": "ESPmDNS",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "espressif32"
+      ]
+    },
+    {
+      "name": "Update",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "espressif32"
+      ]
+    },
+    {
+      "name": "EEPROM",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "raspberrypi",
+        "ststm32"
+      ]
+    },
+    {
+      "name": "WiFi",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "raspberrypi"
+      ]
+    },
+    {
+      "name": "LEAmDNS",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "raspberrypi"
+      ]
+    },
+    {
+      "name": "Updater",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "raspberrypi"
+      ]
+    },
+    {
+      "owner": "stm32duino",
+      "name": "STM32duino FreeRTOS",
+      "version": "^10.3.2",
+      "frameworks": [
+        "arduino"
+      ],
+      "platforms": [
+        "ststm32"
+      ]
+    }
+  ]
+}

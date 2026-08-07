@@ -1,0 +1,152 @@
+# Hydra — testy jednostkowe rdzenia na hoście (rozdz. 12).
+#
+# Rdzeń kompiluje się natywnie na PC z backendem RTOS opartym o pthread,
+# bez FreeRTOS-a i bez Arduino. To główny poligon testów jednostkowych.
+#
+#   make              — kompilacja i uruchomienie
+#   make FILTER=Event — tylko przypadki zawierające podany napis
+#   make asan         — sanitizer adresów i zachowań niezdefiniowanych
+#   make tsan         — sanitizer wyścigów (patrz uwaga niżej)
+#   make clean
+#
+# Warianty z sanitizerami budują się do osobnych katalogów — mieszanie obiektów
+# z różnymi flagami kończy się błędem linkowania albo, gorzej, cichą korupcją.
+
+CXX      ?= c++
+# Katalog budowy rozdzielony po systemie i architekturze. Drzewo źródeł bywa
+# montowane do kontenera, więc ten sam `build/` widzą naraz macOS i Linux —
+# bez rozdzielenia kontener uznawał binarkę Mach-O za aktualną i próbował ją
+# uruchomić („Syntax error: word unexpected").
+HOST_TAG := $(shell uname -s)-$(shell uname -m)
+BUILD    ?= build/$(HOST_TAG)
+EXTRA    ?=
+BIN       = $(BUILD)/hydra_tests
+
+INCLUDES  = -I../include -I.
+# Wyjątki i RTTI wyłączone tak samo jak w buildzie na MCU (rozdz. 11) —
+# inaczej testy nie sprawdzałyby tego samego kodu, co urządzenie.
+#
+# -MMD -MP jest tu obowiązkowe, nie kosmetyczne: bez śledzenia zależności od
+# nagłówków zmiana pola w klasie przebudowuje tylko jedną jednostkę translacji,
+# a reszta zostaje ze starym układem obiektu — objawem jest losowy SIGABRT,
+# nie błąd kompilacji.
+CXXFLAGS  = -std=c++17 -O1 -g -Wall -Wextra -Wshadow -Wno-unused-parameter \
+            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 \
+            -MMD -MP $(INCLUDES) $(EXTRA)
+LDFLAGS   = -lpthread $(EXTRA)
+
+CORE_SRC  = $(wildcard ../src/core/*.cpp)
+HAL_SRC   = $(wildcard ../src/hal/*.cpp) $(wildcard ../src/hal/mock/*.cpp)
+SENSE_SRC = $(wildcard ../src/sense/*.cpp) $(wildcard ../src/drivers/sense/*.cpp)
+NET_SRC   = $(wildcard ../src/net/*.cpp) $(wildcard ../src/net/mock/*.cpp)
+GFX_SRC   = $(wildcard ../src/gfx/*.cpp)
+MOTION_SRC = $(wildcard ../src/motion/*.cpp)
+SHELL_SRC = $(wildcard ../src/shell/*.cpp) $(wildcard ../src/diag/*.cpp)
+UTIL_SRC  = $(wildcard ../src/util/*.cpp) $(wildcard ../src/ota/*.cpp)
+UI_SRC    = $(wildcard ../src/ui/*.cpp) $(wildcard ../src/ui/mock/*.cpp) \
+            $(wildcard ../src/ui/lvgl/*.cpp)
+TEST_SRC  = $(wildcard test_*.cpp)
+SRC       = $(CORE_SRC) $(HAL_SRC) $(SENSE_SRC) $(NET_SRC) $(GFX_SRC) $(UI_SRC) $(MOTION_SRC) $(SHELL_SRC) $(UTIL_SRC) $(TEST_SRC)
+OBJ       = $(patsubst %.cpp,$(BUILD)/%.o,$(notdir $(SRC)))
+DEP       = $(OBJ:.o=.d)
+
+VPATH     = ../src/core:../src/hal:../src/hal/mock:../src/sense:../src/drivers/sense:\
+            ../src/net:../src/net/mock:../src/gfx:../src/ui:../src/ui/mock:../src/ui/lvgl:../src/motion:../src/shell:../src/diag:../src/util:../src/ota:.
+
+.PHONY: docs all run asan tsan examples stub clean
+
+all: run
+
+$(BUILD):
+	@mkdir -p $(BUILD)
+
+$(BUILD)/%.o: %.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BIN): $(OBJ)
+	$(CXX) $(OBJ) $(LDFLAGS) -o $@
+
+run: $(BIN)
+	@./$(BIN) $(FILTER)
+
+asan:
+	@$(MAKE) BUILD=build-asan/$(HOST_TAG) \
+	         EXTRA="-fsanitize=address,undefined -fno-omit-frame-pointer" run
+
+# TSan zgłasza też wyścigi z założenia nieszkodliwe: pola Task::Stats pisze
+# wyłącznie sam task, a diagnostyka je tylko czyta (patrz komentarz przy
+# strukturze Stats). Ostrzeżenia spoza tej kategorii traktujemy jak błędy.
+tsan:
+	@$(MAKE) BUILD=build-tsan/$(HOST_TAG) EXTRA="-fsanitize=thread" run
+
+# Przykłady kompilujemy na backendzie hostowym. To sprawdza dwie rzeczy naraz:
+# że API biblioteki się nie rozjechało i że przykład nie sięga po Arduino —
+# gdyby sięgał, na hoście nie byłoby czego dołączyć.
+EXAMPLES = $(wildcard ../examples/*/main.cpp)
+# Bez -MMD/-MP: przy -fsyntax-only generowałyby osierocone pliki .d.
+SYNTAX_FLAGS = $(filter-out -MMD -MP,$(CXXFLAGS))
+
+# Aplikacja urządzenia wymaga pliku płytki tego urządzenia — rover odwołuje się
+# do nazw takich jak Pin::MotorLeftPwm, których ogólny plik modułu nie zna.
+# To nie niedogodność, tylko sedno warstwy boards/.
+examples:
+	@for f in $(EXAMPLES); do \
+		case "$$f" in \
+			*rover*) board=rover_s3 ;; \
+			*)       board=esp32s3_pico ;; \
+		esac; \
+		printf '  %-40s (%s)\n' "$$f" "$$board"; \
+		$(CXX) $(SYNTAX_FLAGS) -fsyntax-only \
+			-D HYDRA_BOARD_HEADER="\"hydra/boards/$$board.hpp\"" "$$f" || exit 1; \
+	done
+	@printf '  %-40s (%s)\n' "../templates/starter/src/main.cpp" "esp32s3_pico"
+	@$(CXX) $(SYNTAX_FLAGS) -fsyntax-only \
+		-D HYDRA_BOARD_HEADER='"hydra/boards/esp32s3_pico.hpp"' \
+		../templates/starter/src/main.cpp
+	@printf 'Przykłady i szablon kompilują się na backendzie hostowym.\n'
+
+# Sprawdzenie składni backendu Arduino na atrapach nagłówków. Nie zastępuje
+# buildu `pio ci` — łapie literówki i błędy typów w gałęziach platformowych,
+# których na tej maszynie nie da się skompilować inaczej.
+# ESP32 występuje dwukrotnie, bo rdzenie 2.x i 3.x mają różne API LEDC,
+# a kod obsługuje oba. Bez drugiego przejścia jedna z gałęzi nigdy nie
+# przechodziłaby przez kompilator.
+STUB_PLATFORMS = CONFIG_IDF_TARGET_ESP32S3:esp32s3_pico \
+                 CONFIG_IDF_TARGET_ESP32S3,ESP_ARDUINO_VERSION_MAJOR=3:esp32s3_pico \
+                 ARDUINO_ARCH_RP2040:rp2040_pico \
+                 ARDUINO_ARCH_STM32:stm32_nucleo_g474
+ARDUINO_SRC = $(wildcard ../src/hal/arduino/*.cpp) $(wildcard ../src/net/arduino/*.cpp) \
+              $(wildcard ../src/ota/arduino/*.cpp)
+
+stub:
+	@for spec in $(STUB_PLATFORMS); do \
+		def=$${spec%%:*}; board=$${spec##*:}; \
+		defs=""; \
+		for d in $$(printf '%s' "$$def" | tr ',' ' '); do defs="$$defs -D$$d"; done; \
+		for f in $(ARDUINO_SRC); do \
+			$(CXX) -std=c++17 -fsyntax-only -fno-exceptions -fno-rtti \
+				-Wall -Wextra -Wno-unused-parameter \
+				$$defs -D HYDRA_ENABLE_NET=1 -D HYDRA_ENABLE_OTA=1 \
+				-D HYDRA_BOARD_HEADER="\"hydra/boards/$$board.hpp\"" \
+				-I arduino_stub -I ../include "$$f" || exit 1; \
+		done; \
+		printf '  %s\n' "$$def"; \
+	done
+	@printf 'Backend Arduino przechodzi kontrolę składni dla wszystkich platform.\n'
+
+# Fragmenty z docs/api.md w postaci kompilowalnej. Dokumentacja opisująca
+# nieistniejące funkcje wygląda wiarygodnie i kosztuje czytelnika godzinę,
+# zanim zorientuje się, że problem jest w tekście.
+docs:
+	@echo "  SPRAWDZAM  docs/api.md"
+	@$(CXX) -std=c++17 -fsyntax-only -fno-exceptions -fno-rtti -Wall -Wextra \
+	  -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 \
+	  -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 \
+	  -DHYDRA_BOARD_HEADER='"hydra/boards/esp32s3_pico.hpp"' \
+	  -I../include ../docs/snippets.cpp
+	@echo "  Fragmenty dokumentacji zgodne z API."
+
+clean:
+	@rm -rf build build-asan build-tsan
+
+-include $(DEP)

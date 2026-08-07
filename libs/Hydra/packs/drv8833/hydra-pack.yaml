@@ -1,0 +1,7 @@
+# Podwójny mostek H DRV8833 — sterownik dwóch silników prądu stałego.
+pack: drv8833
+version: 1.0.0
+description: 2× mostek H, 1.5 A na kanał
+provides: [motion.motor]
+requires: [pwm]
+component: drv8833.hcomp

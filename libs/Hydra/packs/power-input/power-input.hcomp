@@ -1,0 +1,6 @@
+hcomp: "0.1"
+component: power-input
+name: Złącze zasilania
+pins:
+  - { name: VIN, kind: power_out, description: "Plus akumulatora" }
+  - { name: GND, kind: ground }

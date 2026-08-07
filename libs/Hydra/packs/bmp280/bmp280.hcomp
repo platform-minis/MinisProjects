@@ -1,0 +1,10 @@
+hcomp: "0.1"
+component: bmp280
+name: BMP280
+package: LGA-8
+pins:
+  - { name: VCC, kind: power_in,      description: Zasilanie 1.8–3.6 V }
+  - { name: GND, kind: ground }
+  - { name: SDA, kind: bidirectional, bus: i2c, role: sda }
+  - { name: SCL, kind: input,         bus: i2c, role: scl }
+  - { name: SDO, kind: input,         optional: true, description: Wybór adresu zworką }

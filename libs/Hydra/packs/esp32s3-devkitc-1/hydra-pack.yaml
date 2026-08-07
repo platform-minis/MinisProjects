@@ -1,0 +1,9 @@
+# Płytka rozwojowa ESP32-S3-DevKitC-1.
+#
+# Paczka opisująca płytkę, a nie układ peryferyjny: jej definicja jest jedynym
+# miejscem, w którym występują numery wyprowadzeń. Wszystko inne mówi nazwami.
+pack: esp32s3-devkitc-1
+version: 1.0.0
+description: Płytka rozwojowa ESP32-S3, 44 wyprowadzenia
+provides: [board]
+component: board.hcomp

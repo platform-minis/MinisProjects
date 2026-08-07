@@ -1,0 +1,13 @@
+# Katalogi budowy testów — rozdzielone po systemie i architekturze, bo drzewo
+# bywa montowane do kontenera i ten sam katalog widzi macOS i Linux naraz.
+build/
+build-asan/
+build-tsan/
+.pio/
+*.o
+*.d
+
+# Pliki generowane z .hydra — odtwarza je `hydra gen`.
+projects/*/platformio.ini
+projects/*/CMakeLists.txt
+projects/*/boards/

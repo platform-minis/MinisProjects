@@ -1,0 +1,165 @@
+# ═══════════════════════════════════════════════════════════════════
+#  rover — pełny obieg: schemat, napęd, warianty sprzętu i farma testowa
+#
+#  Trzeci krok. Pokazuje to, czego nie widać na mniejszych przykładach:
+#
+#    • wyprowadzenia biorą się ze schematu, nie z ręcznego wpisu —
+#      boards/rover_s3.hpp jest generowany z połączeń w hardware/rover.hsch,
+#      więc numer w kodzie i ścieżka na płytce nie mogą się rozjechać;
+#    • trzy warianty sprzętu z jednego opisu, każdy z innym zestawem modułów;
+#    • pętla czasu rzeczywistego z jawnym terminem i reakcją na jego przekroczenie;
+#    • farma testowa — co, na czym i jak często sprawdzać.
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: rover
+  version: 2.0.0
+  description: "Łazik: napęd różnicowy, odometria, telemetria i ekran"
+  license: MIT
+
+dependencies:
+  as5600:             { path: ../../packs/as5600 }
+  ina219:             { path: ../../packs/ina219 }
+  drv8833:            { path: ../../packs/drv8833 }
+  resistor:           { path: ../../packs/resistor }
+  power-input:        { path: ../../packs/power-input }
+  esp32s3-devkitc-1:  { path: ../../packs/esp32s3-devkitc-1 }
+
+targets:
+  default: esp32s3-main
+
+  # Wariant docelowy — wszystko włączone.
+  esp32s3-main:
+    mcu: esp32s3
+    board: boards/rover_s3.hpp
+    platformio: { board: esp32-s3-devkitc-1, f_cpu: 240000000 }
+    capabilities: [i2c, spi, uart, pwm, adc, wifi, ble, psram, usb-device, smp, fpu]
+    memory: { psram: opi, flash: 16MB, partitions: ota_2app }
+    smp:
+      # Pętla napędu na własnym rdzeniu: sieć i ekran nie mogą jej opóźnić,
+      # bo od jej terminu zależy, czy łazik jedzie prosto.
+      pin_tasks:
+        motion.control: 1
+        net.worker: 0
+        ui.render: 0
+
+  # Płytka rozwojowa bez napędu — do pracy nad czujnikami przy biurku.
+  pico2-dev:
+    mcu: rp2350
+    board: boards/rover_pico2.hpp
+    platformio: { board: rpipico2 }
+    capabilities: [i2c, spi, uart, pwm, adc, usb-device, smp, fpu]
+    modules:
+      motion: off
+      net: off        # Pico 2 bez „W" nie ma radia
+      ui: off
+
+  # Wariant produkcyjny: napęd i telemetria, bez ekranu.
+  stm32-minimal:
+    mcu: stm32g4
+    board: boards/rover_g474.hpp
+    platformio: { board: nucleo_g474re }
+    capabilities: [i2c, spi, uart, pwm, adc, can, fpu]
+    modules:
+      ui: off
+      net: off        # Nucleo-G474RE nie ma ani Wi-Fi, ani warstwy fizycznej
+
+modules:
+  core:
+    log:
+      default: info
+      per_module: { motion: debug, net: warn }
+      sinks: [uart0, ringbuf]
+      ringbuf_kb: 8
+    eventbus:
+      queue_depth: 32
+    watchdog: { task_timeout_ms: 5000, hw: true }
+    shell: { transports: [usb], history: 20 }
+
+  sense:
+    hub: { max_sensors: 16, timestamp: us }
+    calibration_store: nvs
+
+  net:
+    profile: mqtt-wifi
+    hostname: "rover-01"
+    wifi:
+      credentials: secrets
+      fallback_ap: { ssid: "rover-01-setup", timeout_s: 300 }
+    mqtt:
+      broker: "mqtt://broker.local:1883"
+      base_topic: "hydra/rover-01"
+      lwt: { topic: "sys/online", payload: "0", qos: 1, retain: true }
+
+  ui:
+    backend: lvgl9
+    theme: { base: dark, accent: "#e0993f" }
+    screens: [StatusScreen, DriveScreen]
+    home: StatusScreen
+
+  motion:
+    kinematics: { model: differential, wheel_mm: 68, track_mm: 142 }
+    control:
+      period_us: 2000              # twarda pętla 500 Hz
+      # Po dziesięciu spóźnieniach z rzędu nie udajemy, że jest dobrze:
+      # napęd przechodzi w tryb ograniczony zamiast jechać na ślepo.
+      deadline_policy: { miss_limit: 10, on_breach: degrade }
+    safety:
+      estop: { gpio: Pin.EStop, active: low }
+      cmd_watchdog_ms: 250         # brak nowego zadania przez ćwierć sekundy → stop
+      current_limit_a: 2.5
+
+hardware:
+  # Źródło prawdy dla wyprowadzeń. Z niego powstaje boards/rover_s3.hpp:
+  # sieć I2C0_SDA dotyka pinu IO8, więc w nagłówku jest 8.
+  schematic: hardware/rover.hsch
+  codegen:
+    boards_header: true
+    fail_on_erc: true              # błąd reguł elektrycznych zatrzymuje budowę
+
+  buses:
+    i2c0: { hz: 400000, pullups: external, recovery: true }
+
+  components:
+    enc_left:
+      part: AS5600 @ i2c0:0x36
+      role: motion.encoder.left
+      hub: { period_ms: 10, filter: "butterworth(2)" }
+    power:
+      part: INA219 @ i2c0:0x40
+      hub: { period_ms: 200, topic: sense/power }
+      shunt_mohm: 100
+      # Przy przeciążeniu napęd sam się ogranicza, zanim zadziała bezpiecznik.
+      alerts: { overcurrent_a: 2.2 }
+
+simulation:
+  engine: functional
+  timestep_us: 1000
+  sources:
+    enc_left: { model: ramp, from: 0, to: 360, period_s: 4 }
+    power: { model: sine, center: 0.8, amplitude: 0.4, period_s: 20 }
+  world:
+    physics: diffdrive2d
+  record:
+    vcd: [i2c0]
+    eventbus: true
+
+test:
+  host:
+    env: native
+    sanitizers: [address, undefined, thread]
+  target:
+    envs: [esp32s3-main, pico2-dev]
+  hil:
+    runner: proxmox-hil
+    fixtures:
+      esp32s3-main: { probe: usb-jtag, power: "uhubctl -l 1-1 -p 2", shield: selftest-v2 }
+      pico2-dev:    { probe: debugprobe, power: "uhubctl -l 1-1 -p 3", shield: selftest-v2 }
+    suites:
+      smoke: { on: push, timeout_s: 120 }
+      soak:  { on: nightly, duration_h: 8, monitor: [heap_hwm, stack_hwm, deadline_miss] }
+
+secrets:
+  source: .hydra-secrets.yaml
+  required: [WIFI_SSID, WIFI_PASS, MQTT_USER, MQTT_PASS]

@@ -1,0 +1,56 @@
+# Hydra — środowisko budowania dla serwera.
+#
+#   docker compose -f docker/compose.yaml run --rm ci      # pełna weryfikacja
+#   docker compose -f docker/compose.yaml run --rm test    # same testy hostowe
+#   docker compose -f docker/compose.yaml run --rm shell
+#
+# Domyślnie pobiera gotowy obraz z rejestru. Żeby zbudować lokalnie:
+#   docker compose -f docker/compose.yaml --profile build build builder
+
+x-common: &common
+  image: ${HYDRA_IMAGE:-ghcr.io/platform-minis/hydra-build:latest}
+  # UID i GID wywołującego — artefakty w podmontowanym drzewie należą wtedy
+  # do właściciela repozytorium, a nie do roota.
+  user: "${UID:-1000}:${GID:-1000}"
+  environment:
+    HOME: /tmp
+  volumes:
+    - ..:/workspace
+  working_dir: /workspace
+
+services:
+  test:
+    <<: *common
+    # Wykrywanie wyścigów wyłącza losowanie układu pamięci, a domyślny profil
+    # seccomp blokuje potrzebne do tego wywołanie systemowe.
+    security_opt: ["seccomp:unconfined"]
+    cap_add: ["SYS_PTRACE"]
+    command: >
+      bash -c "make -C test && make -C test asan && make -C test tsan &&
+               make -C test examples && make -C test stub && make -C test docs &&
+               ./tools/check_includes.sh"
+
+  fw:
+    <<: *common
+    # docker compose run --rm fw -e esp32s3 examples/blink-task
+    entrypoint: ["pio", "ci", "--project-conf", "platformio.ini", "--lib", "."]
+
+  ci:
+    <<: *common
+    security_opt: ["seccomp:unconfined"]
+    cap_add: ["SYS_PTRACE"]
+    command: ["./docker/hydra-in-container.sh"]
+
+  shell:
+    <<: *common
+    command: ["bash"]
+    stdin_open: true
+    tty: true
+
+  builder:
+    profiles: [build]
+    build:
+      context: .
+      args:
+        PIO_ENVS: ${HYDRA_ENVS:-esp32s3 esp32c3 pico pico2 stm32g4}
+    image: ${HYDRA_IMAGE:-ghcr.io/platform-minis/hydra-build:latest}

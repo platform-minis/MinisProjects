@@ -1,0 +1,17 @@
+hcomp: "0.1"
+component: esp32s3-devkitc-1
+name: ESP32-S3-DevKitC-1
+pins:
+  - { name: "3V3", kind: power_out }
+  - { name: GND,  kind: ground }
+  - { name: IO4,  kind: bidirectional, gpio: 4,  optional: true }
+  - { name: IO5,  kind: bidirectional, gpio: 5,  optional: true }
+  - { name: IO6,  kind: bidirectional, gpio: 6,  optional: true }
+  - { name: IO7,  kind: bidirectional, gpio: 7,  optional: true }
+  - { name: IO8,  kind: bidirectional, gpio: 8,  optional: true }
+  - { name: IO9,  kind: bidirectional, gpio: 9,  optional: true }
+  - { name: IO15, kind: bidirectional, gpio: 15, optional: true }
+  - { name: IO16, kind: bidirectional, gpio: 16, optional: true }
+  - { name: IO17, kind: bidirectional, gpio: 17, optional: true }
+  - { name: IO18, kind: bidirectional, gpio: 18, optional: true }
+  - { name: IO48, kind: output,        gpio: 48, optional: true, description: Dioda }

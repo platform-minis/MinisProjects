@@ -1,0 +1,9 @@
+# Złącze zasilania — punkt, w którym prąd wchodzi na płytkę.
+#
+# Bez niego zasilanie silników byłoby siecią o jednym węźle i reguły
+# elektryczne słusznie zgłaszałyby niedokończone połączenie.
+pack: power-input
+version: 1.0.0
+description: Złącze zasilania (listwa zaciskowa)
+provides: [core.extension]
+component: power-input.hcomp

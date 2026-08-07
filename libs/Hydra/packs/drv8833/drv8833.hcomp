@@ -1,0 +1,13 @@
+hcomp: "0.1"
+component: drv8833
+name: DRV8833
+package: HTSSOP-16
+pins:
+  - { name: VM,    kind: power_in, description: Zasilanie silników }
+  - { name: GND,   kind: ground }
+  - { name: AIN1,  kind: input, role: pwm, description: "Kanał A, kierunek 1" }
+  - { name: AIN2,  kind: input, role: pwm, description: "Kanał A, kierunek 2" }
+  - { name: BIN1,  kind: input, role: pwm, description: "Kanał B, kierunek 1" }
+  - { name: BIN2,  kind: input, role: pwm, description: "Kanał B, kierunek 2" }
+  - { name: nSLEEP, kind: input, optional: true, description: Uśpienie mostka }
+  - { name: nFAULT, kind: output, optional: true, description: Zgłoszenie usterki }

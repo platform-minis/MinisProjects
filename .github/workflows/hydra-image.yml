@@ -1,0 +1,89 @@
+# Hydra — budowa i publikacja obrazu środowiska budowania.
+#
+# Obraz waży kilka gigabajtów, bo ma w środku komplet toolchainów. Budowanie
+# go na każdej maszynie osobno to godziny pobierania, dlatego powstaje raz
+# tutaj i trafia do rejestru — serwer i stanowisko programisty tylko go
+# pobierają.
+#
+# Budowany dwuarchitekturowo: amd64 dla typowego serwera, arm64 dla Maca
+# z układem Apple i dla Windows 11 arm64 pod WSL. Jeden tag obsługuje obie
+# maszyny, bo Docker sam wybiera właściwy wariant.
+
+name: hydra-image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'libs/Hydra/docker/**'
+      - 'libs/Hydra/platformio.ini'
+      - '.github/workflows/hydra-image.yml'
+  workflow_dispatch:
+    inputs:
+      envs:
+        description: Środowiska do wpieczenia (oddzielone spacją)
+        default: esp32s3 esp32c3 pico pico2 stm32g4
+      platforms:
+        description: Architektury obrazu
+        default: linux/amd64,linux/arm64
+
+concurrency:
+  group: hydra-image
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ${{ github.repository_owner }}/hydra-build
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Pobranie kilku gigabajtów toolchainów dla dwóch architektur trwa.
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zwolnienie miejsca na dysku
+        run: |
+          # Runner ma ~14 GB wolnego, a obraz z toolchainami dla dwóch
+          # architektur potrafi to przekroczyć. Kasujemy to, czego build
+          # obrazu i tak nie użyje.
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Budowa i publikacja
+        uses: docker/build-push-action@v6
+        with:
+          context: libs/Hydra/docker
+          platforms: ${{ github.event.inputs.platforms || 'linux/amd64,linux/arm64' }}
+          build-args: |
+            PIO_ENVS=${{ github.event.inputs.envs || 'esp32s3 esp32c3 pico pico2 stm32g4' }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Sprawdzenie opublikowanego obrazu
+        run: |
+          # Obraz, który się zbudował, a nie potrafi zbudować wsadu, jest
+          # gorszy niż jego brak — wychodzi dopiero u kogoś na maszynie.
+          docker run --rm \
+            -v "${{ github.workspace }}/libs/Hydra:/workspace" -w /workspace \
+            --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }} \
+            pio ci --project-conf platformio.ini --lib . -e esp32s3 examples/blink-task

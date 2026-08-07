@@ -1,0 +1,18 @@
+# Czujnik ciśnienia i temperatury BMP280.
+#
+# Manifest jest cienki celowo: pobieraniem biblioteki producenta, wersjami
+# i pamięcią podręczną zajmuje się PlatformIO. Tutaj jest tylko to, czego
+# żaden istniejący format nie spina — adapter, komponent do schematu, schemat
+# konfiguracji dla inspektora i model do symulacji.
+
+pack: bmp280
+version: 1.2.0
+description: Ciśnienie i temperatura, I²C
+provides: [sense.driver]
+requires: [i2c]
+
+component: bmp280.hcomp
+config_schema: bmp280.schema.json
+
+defaults:
+  address: "0x76, 0x77"

@@ -1,0 +1,7 @@
+# Rezystor — element bierny. Reguły elektryczne rozpoznają po nim
+# podciągnięcia na magistrali I²C.
+pack: resistor
+version: 1.0.0
+description: Rezystor
+provides: [core.extension]
+component: resistor.hcomp

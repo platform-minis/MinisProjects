@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "title": "INA219 — prąd i napięcie",
+  "properties": {
+    "address": { "type": "string", "enum": ["0x40", "0x41", "0x44", "0x45"], "default": "0x40",
+                 "description": "Wybierany zworkami A0 i A1" },
+    "period_ms": { "type": "integer", "minimum": 10, "maximum": 10000, "default": 500, "unit": "ms" },
+    "shunt_mohm": { "type": "number", "minimum": 1, "maximum": 1000, "default": 100, "unit": "mΩ",
+                    "description": "Rezystancja bocznika — od niej zależy przelicznik prądu" },
+    "max_current_a": { "type": "number", "minimum": 0.1, "maximum": 20, "default": 3.2, "unit": "A" }
+  },
+  "required": ["address", "shunt_mohm"]
+}

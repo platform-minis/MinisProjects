@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "title": "AS5600 — enkoder magnetyczny",
+  "properties": {
+    "address": { "type": "string", "enum": ["0x36"], "default": "0x36",
+                 "description": "Adres stały — jeden układ na magistralę" },
+    "period_ms": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 100, "unit": "ms" },
+    "filter_hz": { "type": "number", "minimum": 0.1, "maximum": 500, "default": 2, "unit": "Hz",
+                   "description": "Częstotliwość graniczna filtru Butterwortha" },
+    "spike_deg": { "type": "number", "minimum": 1, "maximum": 180, "default": 90, "unit": "°",
+                   "description": "Skok większy niż ten uznajemy za usterkę, nie za obrót" }
+  },
+  "required": ["address"]
+}

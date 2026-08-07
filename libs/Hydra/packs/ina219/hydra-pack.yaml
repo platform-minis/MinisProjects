@@ -1,0 +1,12 @@
+# Pomiar prądu i napięcia INA219.
+pack: ina219
+version: 1.1.0
+description: Prąd i napięcie na boczniku, I²C
+provides: [sense.driver]
+requires: [i2c]
+
+component: ina219.hcomp
+config_schema: ina219.schema.json
+
+defaults:
+  address: "0x40, 0x41, 0x44, 0x45"

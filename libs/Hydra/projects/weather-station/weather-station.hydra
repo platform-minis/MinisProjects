@@ -1,0 +1,124 @@
+# ═══════════════════════════════════════════════════════════════════
+#  weather-station — czujniki, telemetria i dwa warianty sprzętu
+#
+#  Drugi krok po hello-blink. Dokłada wszystko, co zaczyna się dziać, gdy
+#  urządzenie ma czujniki: paczki ze sterownikami, opis układów na magistrali,
+#  wysyłkę pomiarów i drugi wariant płytki.
+#
+#  Studio czyta z tego pliku: listę układów do inspektora (formularze biorą
+#  się z config_schema paczek), zgodność komponentów z wybraną płytką oraz
+#  źródła symulacji — dzięki nim ekran i telemetrię da się rozwijać, zanim
+#  cokolwiek zostanie przylutowane.
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: weather-station
+  version: 1.1.0
+  description: "Stacja pogodowa: ciśnienie, temperatura i pobór prądu przez MQTT"
+  license: MIT
+
+# ── Paczki ─────────────────────────────────────────────────────────
+# Każda wnosi cztery rzeczy naraz: adapter nad interfejsem Hydry, komponent
+# do edytora schematów, schemat konfiguracji dla inspektora i model symulacji.
+# Prawdziwą bibliotekę producenta pobiera PlatformIO — patrz upstream w manifeście.
+dependencies:
+  bmp280: { path: ../../packs/bmp280 }
+  ina219: { path: ../../packs/ina219 }
+
+# ── Cele ───────────────────────────────────────────────────────────
+targets:
+  default: esp32s3
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+    memory:
+      psram: opi
+      flash: 8MB
+      partitions: ota_2app        # dwa obrazy — aktualizacja przez sieć
+
+  # Wariant oszczędny: ten sam kod, mniejszy układ, bez ekranu i bez OTA.
+  esp32c3:
+    mcu: esp32c3
+    platformio: { board: esp32-c3-devkitm-1 }
+    memory:
+      flash: 4MB
+      partitions: ota_2app_small
+    modules:
+      ota: off
+
+# ── Moduły ─────────────────────────────────────────────────────────
+modules:
+  core:
+    log:
+      default: info
+      per_module: { net: warn }
+      sinks: [uart0, ringbuf]
+      ringbuf_kb: 4
+    watchdog: { task_timeout_ms: 5000, hw: true }
+    shell: { transports: [usb], history: 20 }
+
+  sense:
+    hub: { max_sensors: 8, timestamp: ms }
+    calibration_store: nvs
+
+  net:
+    profile: mqtt-wifi
+    hostname: "weather-01"
+    wifi:
+      credentials: secrets            # NIGDY wprost — patrz sekcja secrets
+      fallback_ap: { ssid: "weather-01-setup", timeout_s: 300 }
+    mqtt:
+      broker: "mqtt://broker.local:1883"
+      base_topic: "dom/weather-01"
+      # Broker rozgłosi to za nas, gdy urządzenie zamilknie — samo już
+      # nie zdąży niczego powiedzieć.
+      lwt: { topic: "sys/online", payload: "0", qos: 1, retain: true }
+
+  ota:
+    channel: "https://ota.local/weather"
+    auto: false
+
+# ── Sprzęt ─────────────────────────────────────────────────────────
+hardware:
+  buses:
+    i2c0: { hz: 400000, pullups: external, recovery: true }
+
+  components:
+    baro:
+      part: BMP280 @ i2c0:0x76
+      hub: { period_ms: 2000, filter: "ema(0.3)", topic: sense/baro }
+      measure: { mode: normal, osrs_p: x16, iir: 4 }
+
+    power:
+      part: INA219 @ i2c0:0x40
+      hub: { period_ms: 500, filter: "median(5)", topic: sense/power }
+      shunt_mohm: 100
+
+# ── Symulacja ──────────────────────────────────────────────────────
+# Ten sam czas i ziarno zawsze dają tę samą wartość, więc zaobserwowany
+# błąd da się odtworzyć — bez tego symulacja nie nadaje się do szukania usterek.
+simulation:
+  engine: functional
+  timestep_us: 1000
+  sources:
+    baro: { model: atmosphere, p_hpa: 1013.2, t_c: 21, noise: 0.3 }
+    power: { model: sine, center: 0.35, amplitude: 0.05, period_s: 30 }
+  record:
+    vcd: [i2c0]
+    eventbus: true
+
+# ── Testy ──────────────────────────────────────────────────────────
+test:
+  host:
+    env: native
+    sanitizers: [address, undefined]
+  target:
+    envs: [esp32s3, esp32c3]
+
+# ── Sekrety ────────────────────────────────────────────────────────
+# Plik projektu trafia do repozytorium, więc wartości leżą poza nim.
+secrets:
+  source: .hydra-secrets.yaml
+  required: [WIFI_SSID, WIFI_PASS, MQTT_USER, MQTT_PASS]

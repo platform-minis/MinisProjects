@@ -1,0 +1,12 @@
+# Enkoder magnetyczny AS5600 — kąt absolutny 12 bitów.
+pack: as5600
+version: 1.0.0
+description: Kąt magnetyczny 12-bit, I²C
+provides: [sense.driver, motion.encoder]
+requires: [i2c]
+
+component: as5600.hcomp
+config_schema: as5600.schema.json
+
+defaults:
+  address: "0x36"

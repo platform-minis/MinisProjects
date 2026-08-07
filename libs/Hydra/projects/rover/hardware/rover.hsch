@@ -1,0 +1,61 @@
+# ═══════════════════════════════════════════════════════════════════
+#  rover — schemat połączeń
+#
+#  Źródło prawdy dla wyprowadzeń. Z tego pliku powstaje boards/rover_s3.hpp:
+#  sieć I2C0_SDA dotyka pinu IO8 mikrokontrolera, więc w nagłówku jest 8.
+#  Poprawka tutaj przenosi się do kodu przy następnym `hydra gen`.
+#
+#  Format jest listą węzłów, nie rysunkiem — położenia symboli służą wyłącznie
+#  do wyświetlania na płótnie i nie wpływają na nic, co się generuje. Dzięki
+#  temu schemat czyta się w recenzji zmian i scala jak każdy inny plik tekstowy.
+# ═══════════════════════════════════════════════════════════════════
+hsch: "0.1"
+
+sheet:
+  name: rover-s3
+  grid_mm: 2.54
+
+components:
+  U1:  { part: esp32s3-devkitc-1, at: [40, 50] }
+  U2:  { part: as5600,            at: [130, 20] }
+  U3:  { part: ina219,            at: [130, 60] }
+  U4:  { part: drv8833,           at: [130, 100] }
+  R1:  { part: resistor, value: "4.7k", at: [100, 10] }
+  R2:  { part: resistor, value: "4.7k", at: [110, 10] }
+  J1:  { part: power-input, at: [40, 120] }
+
+nets:
+  # ── Zasilanie ────────────────────────────────────────────────────
+  3V3:
+    class: power
+    nodes: [U1.3V3, U2.VCC, U3.VCC, R1.A, R2.A]
+  GND:
+    class: ground
+    nodes: [U1.GND, U2.GND, U3.GND, U4.GND, J1.GND]
+  VM:
+    class: power
+    nodes: [J1.VIN, U4.VM]
+
+  # ── Magistrala czujników ─────────────────────────────────────────
+  # Rezystory podciągające są na schemacie, bo otwarty dren nie wystawi stanu
+  # wysokiego — bez nich magistrala nigdy nie ruszy, a widać to oscyloskopem.
+  I2C0_SDA:
+    bus: i2c0
+    role: sda
+    nodes: [U1.IO8, U2.SDA, U3.SDA, R1.B]
+  I2C0_SCL:
+    bus: i2c0
+    role: scl
+    nodes: [U1.IO9, U2.SCL, U3.SCL, R2.B]
+
+  # ── Napęd ────────────────────────────────────────────────────────
+  # `pin_name` sprawia, że nagłówek płytki daje Pin::MotorLeftA1 i kod mówi
+  # nazwą, a nie liczbą.
+  MOT_L_A1: { nodes: [U1.IO15, U4.AIN1], pin_name: MotorLeftA1 }
+  MOT_L_A2: { nodes: [U1.IO16, U4.AIN2], pin_name: MotorLeftA2 }
+  MOT_R_B1: { nodes: [U1.IO17, U4.BIN1], pin_name: MotorRightB1 }
+  MOT_R_B2: { nodes: [U1.IO18, U4.BIN2], pin_name: MotorRightB2 }
+
+  # ── Sterowanie ───────────────────────────────────────────────────
+  ESTOP:      { nodes: [U1.IO4], pin_name: EStop }
+  LED_STATUS: { nodes: [U1.IO48], pin_name: StatusLed }
