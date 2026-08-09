@@ -1,0 +1,70 @@
+# ═══════════════════════════════════════════════════════════════════
+#  arduboy-game — gra na Arduboya, źródło niezmienione
+#
+#  W `src/main.cpp` nie ma ani jednego odwołania do Hydry: żadnego
+#  `#include <Hydra.h>`, żadnego `main()`, żadnego `hydra::`. Jest tylko
+#  `<Arduboy2.h>`, `setup()` i `loop()` — dokładnie to, co w źródle gry
+#  napisanej na oryginalny sprzęt.
+#
+#  Ten plik jest jedyną rzeczą, którą trzeba dopisać, żeby taka gra
+#  zbudowała się i uruchomiła. Przenosząc cudzą grę: skopiuj jej źródła
+#  do `src/`, zmień `name` niżej i tyle.
+#
+#      podglad (native)   okno SDL 128×64 w powiększeniu, klawiatura
+#      esp32s3            panel i przyciski wnosi projekt urządzenia
+#
+#  Sterowanie na PC:
+#      strzałki      kierunki
+#      A / Z / Enter przycisk A
+#      S / X / Backsp przycisk B
+#
+#  Rekordy trafiają do `eeprom.bin` obok binarki i przeżywają zamknięcie
+#  okna — tak samo, jak przeżywały odłączenie zasilania na oryginale.
+#
+#      hydra check .
+#      hydra gen   . --hydra ../..
+#      hydra build . --hydra ../.. -e podglad
+#      ./build/native-linux-x64/arduboy-game
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: arduboy-game
+  version: 1.0.0
+  description: "Jaskinia — gra na Arduboya, źródło bez zmian pod Hydrę"
+  license: MIT
+
+targets:
+  # Domyślnie PC. Gra to rzecz, którą się testuje setki razy w minutę,
+  # a nie wgrywa setki razy na urządzenie.
+  default: podglad
+
+  podglad:
+    mcu: native
+    native:
+      window:
+        # Wymiary panelu Arduboya. Skala 6 daje okno 768×384 — czytelne
+        # na monitorze i nadal całkowitoliczbowe, więc piksel pozostaje
+        # ostrym kwadratem, a nie rozmytą plamą.
+        width: 128
+        height: 64
+        format: mono1
+        scale: 6
+        title: "Jaskinia"
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+    memory:
+      flash: 8MB
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]
+
+  # Cała warstwa zgodności: rysowanie, przyciski, takt klatek, czcionka 5×7,
+  # duszki, melodie i EEPROM. Dokłada też katalog `include/compat/arduboy`
+  # do ścieżki włączeń — stamtąd bierze się `<Arduboy2.h>`.
+  arduboy: {}

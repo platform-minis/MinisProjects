@@ -24,8 +24,8 @@ const hydraPlugin = useMemo(() => createHydraStudioPlugin({
 <TextEditorWorkspace extraPlugins={[hydraPlugin]} … />
 ```
 
-Opcjonalnie: `loadPacks`, `loadSchematic`, `runBuild`, `openSerial`,
-`sendToDevice`, `onSaveVcd`, `runHilSuite`. Wtyczka nie dotyka dysku ani
+Opcjonalnie: `loadPacks`, `loadSchematic`, `runBuild`, `downloadArtifact`,
+`openSerial`, `sendToDevice`, `onSaveVcd`, `runHilSuite`. Wtyczka nie dotyka dysku ani
 Dockera sama — przeglądarka nie ma do nich dostępu, a budowa ma już własne
 wejście (`docker/hydra.sh`).
 
@@ -59,6 +59,36 @@ coś zgłaszają.
 
 **Panel dolny** — sześć zakładek: Kompilacja, Monitor, EventBus, Problemy,
 Symulacja, Farma. Zajętość Flash i RAM w pasku, czytana z wyniku budowy.
+
+## Budowa dla maszyny, na której stoi przeglądarka
+
+Cel `mcu: native` daje program dla pulpitu, a nie wsad — i tu przeglądarka musi
+wiedzieć, na czym stoi. Studio wykrywa system i architekturę, buduje dla nich
+i **pobiera gotowy plik samo**: budowa, po której trzeba jeszcze szukać wyniku
+w katalogu `build/`, nie jest skończona.
+
+Obsługiwane maszyny: `win-x64`, `win-arm64`, `mac-arm64`, `mac-x64`,
+`linux-x64`, `linux-arm64`.
+
+Wykryta maszyna stoi na pasku stanu, po prawej. Znak zapytania i pomarańczowy
+kolor oznaczają, że architektura została **zgadnięta** — poprawia się to
+poleceniem „Buduj cel native dla: …" z palety. Zgadywanie jest widoczne celowo, bo bywa
+nieuniknione:
+
+| Przeglądarka | Co podaje | Co z tym robimy |
+|---|---|---|
+| Chrome / Edge | Client Hints z architekturą | wynik pewny |
+| Windows on ARM, bez Client Hints | „Win64; x64" — celowo, dla zgodności | zgadujemy x64 |
+| Safari na Apple Silicon | „Intel Mac OS X" | nazwa GPU z WebGL („Apple M…") |
+| Firefox na macOS | „Intel Mac OS X" | zgadujemy x64 |
+
+Kierunek zgadywania nie jest przypadkowy: binarka x64 uruchomi się na ARM-ie
+przez emulację (Rosetta 2, warstwa x64 w Windows on ARM), a arm64 na maszynie
+x64 nie uruchomi się wcale. Wybieramy więc pomyłkę odwracalną.
+
+Gospodarz podpina to opcjami `runBuild` (dostaje `hostPlatform` w żądaniu)
+i opcjonalnie `downloadArtifact`, gdy chce zapisać plik po swojemu zamiast
+pobierać go przeglądarką.
 
 ## Trzy decyzje, które warto znać
 
@@ -107,8 +137,10 @@ paletę poleceń i pasek stanu. Polecenia trafiają więc tam, pod kategorią
 
 ## Stan
 
-Zweryfikowane: typy pakietu i aplikacji, 228 testów, budowa pakietu, budowa
-aplikacji z wtyczką w środku, podział na leniwe porcje.
+Zweryfikowane: typy pakietu i aplikacji, 255 testów, budowa pakietu, budowa
+aplikacji z wtyczką w środku, podział na leniwe porcje. Cel `native`
+przechodzi całą drogę end-to-end: `.hydra` → generowanie → preset CMake →
+zbudowana i uruchomiona binarka (sprawdzone na `linux-x64`).
 
 **Nie zweryfikowane: zachowanie w oknie przeglądarki.** Czy `openEditorTab`
 faktycznie pokaże panel po otwarciu `.hydra` i czy hooki działają, sprawdzi

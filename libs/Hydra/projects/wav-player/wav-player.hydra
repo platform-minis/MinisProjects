@@ -1,0 +1,82 @@
+# ═══════════════════════════════════════════════════════════════════
+#  wav-player — odtwarzacz pliku test.wav z ekranem
+#
+#  Ten sam plik, ten sam graf i ten sam interfejs na każdym celu:
+#
+#      FileSource("test.wav") → Gain → <ujście zależne od celu>
+#
+#  Różni je wyłącznie ujście i nośnik:
+#
+#      podglad (native)  karta dźwiękowa hosta; plik w katalogu uruchomienia
+#      esp32s3           wzmacniacz I2S;        plik z nośnika projektu
+#      pico2             wzmacniacz I2S;        plik z nośnika projektu
+#
+#  Uwaga o stanie sprzętu: backend I2S istnieje dziś tylko dla ESP32.
+#  Na RP2350 `I2sSink` zgłosi `NotSupported` przy starcie, ekran zadziała
+#  i pokaże, czego brakuje. Cel jest tu po to, żeby to było widać w budowie,
+#  a nie po wgraniu wsadu.
+#
+#      hydra check .
+#      hydra gen   . --hydra ../..
+#      hydra build . --hydra ../.. -e podglad
+#      cp jakis-plik.wav build/native-linux-x64/test.wav
+#      ./build/native-linux-x64/wav-player
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: wav-player
+  version: 1.0.0
+  description: "Odtwarzacz test.wav z ekranem i przyciskiem — ten sam kod wszędzie"
+  license: MIT
+
+targets:
+  default: podglad
+
+  podglad:
+    mcu: native
+    native:
+      window:
+        # Rozmiar powierzchni odpowiada panelowi, który ma to zastąpić,
+        # a nie rozdzielczości monitora.
+        width: 240
+        height: 135
+        format: rgb565
+        scale: 4
+        title: "wav-player"
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+    memory:
+      psram: opi
+      flash: 8MB
+
+  pico2:
+    mcu: rp2350
+    # Bez FPU — cały potok liczy na całkowitych i dlatego ten cel w ogóle
+    # ma sens. Filtr na `float` emulowanym programowo zjadłby rdzeń.
+    platformio: { board: rpipico2 }
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]
+
+  media:
+    audio:
+      # Wartości orientacyjne: prawdziwy format bierze się z nagłówka pliku,
+      # bo plik 44,1 kHz odtworzony jako 16 kHz brzmi jak nagranie zwolnione.
+      # Tu opisujemy tylko budżet pamięci.
+      sample_rate: 44100
+      format: s16
+      channels: 2
+      frames_per_block: 512
+    pools:
+      # 512 ramek × 2 kanały × 2 bajty = 2048 B na blok. Osiem bloków to
+      # zapas na nośnik i na chwilowe zajęcie procesora przez rysowanie.
+      - { block_bytes: 2048, count: 8, memory: internal }
+    domains:
+      - { name: audio, period_ms: 4,  priority: high }
+      - { name: ui,    period_ms: 33, priority: low }

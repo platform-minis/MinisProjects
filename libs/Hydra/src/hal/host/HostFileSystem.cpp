@@ -1,21 +1,34 @@
 /**
  * Hydra — implementacja systemu plików na katalogu hosta.
  *
- * Zwykłe POSIX-owe stdio. Jedyna nieoczywista część to `resolve()`, które
- * pilnuje, żeby ścieżka nie wyszła poza korzeń — test operujący na katalogu
- * tymczasowym nie może przez pomyłkę sięgnąć obok.
+ * Katalogi i metadane przez `std::filesystem`, zawartość plików przez stdio.
+ * Jeden kod dla Linuksa, macOS i Windows: `dirent.d_type`, `DT_DIR` i
+ * dwuargumentowy `mkdir` nie istnieją w mingw, a rozgałęzienia `#ifdef _WIN32`
+ * dałyby dwie ścieżki do utrzymania i przetestowania zamiast jednej.
+ *
+ * Wszędzie warianty z `std::error_code`, nigdy rzucające: ten sam nagłówek
+ * bywa kompilowany bez obsługi wyjątków, a błąd systemu plików jest tu
+ * zwyczajną wartością zwracaną (`Err::NotFound`), nie sytuacją wyjątkową.
+ *
+ * Jedyna nieoczywista część to `resolve()`, które pilnuje, żeby ścieżka nie
+ * wyszła poza korzeń — test operujący na katalogu tymczasowym nie może przez
+ * pomyłkę sięgnąć obok.
  */
 
 #include "hydra/hal/HostFileSystem.hpp"
 
-#include <dirent.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
+
+#include <filesystem>
+#include <string>
+#include <system_error>
+#include <vector>
 
 namespace hydra {
 namespace hal {
+
+namespace fs = std::filesystem;
 
 namespace {
 
@@ -82,31 +95,73 @@ struct HostFileSystem::Slot : IFile {
 };
 
 struct HostFileSystem::DirSlot : IDirectory {
-    DIR* handle = nullptr;
+    /*
+     * Iterator zamiast `DIR*`.
+     *
+     * `directory_iterator` sam pomija „." i „..", więc odpada filtrowanie ich
+     * po nazwie. Rodzaj wpisu bierzemy z `is_directory()`, a nie z `d_type`:
+     * tamto pole jest rozszerzeniem, którego mingw nie ma, a część systemów
+     * plików i tak zwraca w nim `DT_UNKNOWN`.
+     */
+    fs::directory_iterator it{};
+    bool open = false;
 
     bool next(DirEntry& out) override {
-        if (!handle) return false;
-        for (;;) {
-            const dirent* entry = readdir(handle);
-            if (!entry) return false;
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+        if (!open) return false;
+        const fs::directory_iterator end{};
 
-            const size_t len = strlen(entry->d_name);
-            if (len > kPathMax) continue;   // nazwa nie mieści się w API — pomijamy
-            memcpy(out.name, entry->d_name, len + 1);
-            out.isDirectory = entry->d_type == DT_DIR;
-            out.size        = 0;
+        while (it != end) {
+            const fs::directory_entry entry = *it;
+            std::error_code ec;
+            it.increment(ec);
+            if (ec) { close(); return false; }
+
+            const std::string name = entry.path().filename().string();
+            if (name.size() > kPathMax) continue;   // nazwa nie mieści się w API — pomijamy
+
+            memcpy(out.name, name.c_str(), name.size() + 1);
+            out.isDirectory = entry.is_directory(ec) && !ec;
+
+            // Rozmiar odczytujemy naprawdę. Wcześniej stało tu zero i każdy
+            // wpis wyglądał na pusty plik — a to jest jedyna liczba, po której
+            // widać, czy zapis w ogóle coś zapisał. Katalogi zostają na zerze,
+            // bo `file_size()` nie jest dla nich określone.
+            if (out.isDirectory) {
+                out.size = 0;
+            } else {
+                std::error_code sizeEc;
+                const auto bytes = entry.file_size(sizeEc);
+                out.size = sizeEc ? 0 : static_cast<size_t>(bytes);
+            }
             return true;
         }
+        return false;
     }
 
     void close() override {
-        if (handle) closedir(handle);
-        handle = nullptr;
+        it = fs::directory_iterator{};
+        open = false;
     }
 };
 
 // ---------------------------------------------------------------------------
+
+IFileSystem& hostWorkingDirectory() {
+    // Bufor statyczny, bo HostFileSystem trzyma korzeń wskaźnikiem i wymaga,
+    // żeby przeżył obiekt. Ścieżka jest ustalana raz — patrz nagłówek.
+    static char root[512] = {};
+    static HostFileSystem instance{root};
+
+    if (root[0] == '\0') {
+        std::error_code ec;
+        const auto cwd = fs::current_path(ec);
+        const std::string text = ec ? std::string(".") : cwd.string();
+        const size_t n = text.size() < sizeof(root) - 1 ? text.size() : sizeof(root) - 1;
+        memcpy(root, text.c_str(), n);
+        root[n] = '\0';
+    }
+    return instance;
+}
 
 HostFileSystem::HostFileSystem(const char* root) : root_(root) {}
 
@@ -120,9 +175,9 @@ Status HostFileSystem::mount() {
     files_ = new Slot[kHostMaxOpenFiles];
     dirs_  = new DirSlot[kHostMaxOpenDirs];
 
-    ::mkdir(root_, 0755);   // istniejący katalog to nie błąd
-    struct stat info{};
-    if (stat(root_, &info) != 0 || !S_ISDIR(info.st_mode)) {
+    std::error_code ec;
+    fs::create_directories(root_, ec);   // istniejący katalog to nie błąd
+    if (!fs::is_directory(root_, ec)) {
         unmount();
         return fail(Err::IoError);
     }
@@ -147,15 +202,19 @@ void HostFileSystem::unmount() {
 Status HostFileSystem::format() {
     if (!mounted_) return fail(Err::NotInitialized);
 
-    DIR* dir = opendir(root_);
-    if (!dir) return fail(Err::IoError);
-    while (const dirent* entry = readdir(dir)) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
-        char full[kFullPathMax];
-        if (!resolve(entry->d_name, full, sizeof(full))) continue;
-        ::remove(full);
+    std::error_code ec;
+    fs::directory_iterator it(root_, ec);
+    if (ec) return fail(Err::IoError);
+
+    // Najpierw lista, potem usuwanie: modyfikowanie katalogu w trakcie
+    // chodzenia po nim iteratorem jest zachowaniem nieokreślonym.
+    std::vector<fs::path> entries;
+    for (const fs::directory_entry& entry : it) entries.push_back(entry.path());
+
+    for (const fs::path& entry : entries) {
+        std::error_code removeEc;
+        fs::remove_all(entry, removeEc);
     }
-    closedir(dir);
     return ok();
 }
 
@@ -202,20 +261,22 @@ Result<IDirectory*> HostFileSystem::openDir(const char* path) {
 
     DirSlot* slot = nullptr;
     for (size_t i = 0; i < kHostMaxOpenDirs; ++i) {
-        if (!dirs_[i].handle) { slot = &dirs_[i]; break; }
+        if (!dirs_[i].open) { slot = &dirs_[i]; break; }
     }
     if (!slot) return unexpected(Err::OutOfMemory);
 
-    slot->handle = opendir(full);
-    if (!slot->handle) return unexpected(Err::NotFound);
+    std::error_code ec;
+    slot->it = fs::directory_iterator(full, ec);
+    if (ec) return unexpected(Err::NotFound);
+    slot->open = true;
     return static_cast<IDirectory*>(slot);
 }
 
 bool HostFileSystem::exists(const char* path) {
     char full[kFullPathMax];
     if (!mounted_ || !resolve(path, full, sizeof(full))) return false;
-    struct stat info{};
-    return stat(full, &info) == 0;
+    std::error_code ec;
+    return fs::exists(full, ec) && !ec;
 }
 
 Status HostFileSystem::remove(const char* path) {
@@ -239,7 +300,10 @@ Status HostFileSystem::mkdir(const char* path) {
     char full[kFullPathMax];
     if (!mounted_) return fail(Err::NotInitialized);
     if (!resolve(path, full, sizeof(full))) return fail(Err::BadArgument);
-    if (::mkdir(full, 0755) != 0) return fail(Err::AlreadyExists);
+    std::error_code ec;
+    // `false` bez błędu znaczy „katalog już był" — to samo, co dotąd zgłaszał
+    // niezerowy kod `mkdir` z EEXIST.
+    if (!fs::create_directory(full, ec) || ec) return fail(Err::AlreadyExists);
     return ok();
 }
 
@@ -247,9 +311,10 @@ Result<size_t> HostFileSystem::fileSize(const char* path) {
     char full[kFullPathMax];
     if (!mounted_) return unexpected(Err::NotInitialized);
     if (!resolve(path, full, sizeof(full))) return unexpected(Err::BadArgument);
-    struct stat info{};
-    if (stat(full, &info) != 0) return unexpected(Err::NotFound);
-    return static_cast<size_t>(info.st_size);
+    std::error_code ec;
+    const auto size = fs::file_size(full, ec);
+    if (ec) return unexpected(Err::NotFound);
+    return static_cast<size_t>(size);
 }
 
 Result<u64> HostFileSystem::totalBytes() const {
@@ -261,20 +326,21 @@ Result<u64> HostFileSystem::totalBytes() const {
 Result<u64> HostFileSystem::usedBytes() const {
     if (!mounted_) return unexpected(Err::NotInitialized);
 
-    DIR* dir = opendir(root_);
-    if (!dir) return unexpected(Err::IoError);
+    std::error_code ec;
+    fs::directory_iterator it(root_, ec);
+    if (ec) return unexpected(Err::IoError);
 
     u64 total = 0;
-    while (const dirent* entry = readdir(dir)) {
-        if (entry->d_name[0] == '.') continue;
-        char full[kFullPathMax];
-        if (!resolve(entry->d_name, full, sizeof(full))) continue;
-        struct stat info{};
-        if (stat(full, &info) == 0 && S_ISREG(info.st_mode)) {
-            total += static_cast<u64>(info.st_size);
-        }
+    for (const fs::directory_entry& entry : it) {
+        // Pliki ukryte pomijamy tak jak dotąd — katalog roboczy hosta bywa
+        // dzielony z narzędziami, które trzymają w nim własne `.coś`.
+        if (entry.path().filename().string()[0] == '.') continue;
+
+        std::error_code entryEc;
+        if (!entry.is_regular_file(entryEc) || entryEc) continue;
+        const auto size = entry.file_size(entryEc);
+        if (!entryEc) total += static_cast<u64>(size);
     }
-    closedir(dir);
     return total;
 }
 

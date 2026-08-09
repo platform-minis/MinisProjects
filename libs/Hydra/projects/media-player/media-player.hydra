@@ -1,0 +1,72 @@
+# ═══════════════════════════════════════════════════════════════════
+#  media-player — odtwarzacz z ekranem, na PC i na układzie
+#
+#  Jeden graf potoku, dwa źródła i dwa ujścia — wybierane celem, nie
+#  przełącznikiem w kodzie:
+#
+#      podglad (native)   wejście karty dźwiękowej hosta → głośniki hosta
+#      esp32s3            plik WAV z karty → wzmacniacz I2S
+#
+#  Interfejs jest ten sam po obu stronach: tytuł i dwa przyciski rysowane
+#  przez `gfx`, na PC w oknie SDL, na układzie na panelu.
+#
+#      hydra check .
+#      hydra gen   . --hydra ../..
+#      hydra build . --hydra ../.. -e podglad     # okno i dźwięk na PC
+#      hydra build . --hydra ../.. -e esp32s3     # wsad na układ
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: media-player
+  version: 1.0.0
+  description: "Odtwarzacz z ekranem — ten sam potok na PC i na ESP32"
+  license: MIT
+
+targets:
+  # Domyślnie okno: przy pracy nad interfejsem sięga się po nie
+  # kilkadziesiąt razy dziennie, a po wsad — kilka razy.
+  default: podglad
+
+  podglad:
+    mcu: native
+    native:
+      window:
+        # Rozmiar powierzchni odpowiada panelowi, który ma to zastąpić.
+        width: 240
+        height: 135
+        format: rgb565
+        scale: 4
+        title: "media-player"
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+    memory:
+      psram: opi
+      flash: 8MB
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]
+
+  media:
+    audio:
+      sample_rate: 44100
+      format: s16
+      channels: 2
+      # 512 ramek to ~12 ms. Krócej oznacza więcej przerw przy obciążeniu
+      # systemu ogólnego przeznaczenia, dłużej — wolniejszą reakcję na pauzę.
+      frames_per_block: 512
+    pools:
+      # Jedna pula: wejście i wyjście mają ten sam format, więc `poolAtLeast()`
+      # i tak wskazałby ją oba razy. Osiem bloków to zapas na kartę i na
+      # chwilowe zajęcie procesora przez rysowanie.
+      - { block_bytes: 2048, count: 8, memory: internal }
+    domains:
+      # Dźwięk osobno od ekranu: rysowanie 240×135 trwa dłużej niż jeden blok
+      # audio, więc wspólny task oznaczałby przerwę przy każdej klatce.
+      - { name: audio, period_ms: 4,  priority: high }
+      - { name: ui,    period_ms: 33, priority: low }

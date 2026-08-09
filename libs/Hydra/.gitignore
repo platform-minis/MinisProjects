@@ -10,4 +10,5 @@ build-tsan/
 # Pliki generowane z .hydra — odtwarza je `hydra gen`.
 projects/*/platformio.ini
 projects/*/CMakeLists.txt
+projects/*/CMakePresets.json
 projects/*/boards/

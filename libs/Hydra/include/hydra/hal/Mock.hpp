@@ -280,6 +280,149 @@ private:
 
 // ---------------------------------------------------------------------------
 
+/**
+ * Atrapa kamery generująca wzorzec testowy.
+ *
+ * Oddaje pionowe pasy o rosnącej jasności, przesuwane o jeden piksel na klatkę.
+ * Ruch jest tu istotny: obraz nieruchomy przechodzi przez skalowanie i konwersję
+ * tak samo, jak przechodziłby zamrożony bufor, więc nie odróżniłby działającego
+ * potoku od zaciętego.
+ *
+ * Pilnuje też umowy o własności: `capture()` bez wcześniejszego `release()`
+ * kończy się `Busy` po wyczerpaniu buforów — tak samo jak na sprzęcie,
+ * gdzie zatrzymana klatka zatrzymuje strumień.
+ */
+class MockCamera : public ICamera {
+public:
+    static constexpr u8     kMaxBuffers = 3;
+    static constexpr size_t kMaxFrameBytes = 320 * 240 * 2;
+
+    Status begin(const CameraConfig& cfg) override;
+    void   end() override;
+    bool   running() const override { return running_; }
+
+    Result<CameraFrame> capture() override;
+    void   release(CameraFrame& frame) override;
+    CameraConfig config() const override { return cfg_; }
+    u32    dropped() const override { return dropped_; }
+
+    /** Ile klatek wydano od `clear()`. */
+    u32  produced() const { return produced_; }
+    /** Ile klatek jest w tej chwili pożyczonych. */
+    u8   borrowed() const;
+    void clear();
+
+private:
+    void paint(u8* buffer, u16 width, u16 height, u8 phase);
+
+    struct Slot {
+        u8   data[kMaxFrameBytes] = {};
+        bool lent = false;
+    };
+
+    CameraConfig cfg_{};
+    bool  running_ = false;
+    u32   produced_ = 0;
+    u32   dropped_ = 0;
+    u8    phase_ = 0;
+    Slot  slots_[kMaxBuffers];
+};
+
+// ---------------------------------------------------------------------------
+
+/** Atrapa DAC: zapamiętuje ostatnią wartość i liczy zapisy. */
+class MockDac : public IDac {
+public:
+    static constexpr u8 kChannels = 2;
+
+    Status enable(u8 channel) override;
+    void   disable(u8 channel) override;
+    Status write(u8 channel, u16 value) override;
+    u8     resolutionBits() const override { return 8; }
+    u8     channelCount() const override { return kChannels; }
+
+    u16  value(u8 channel) const { return channel < kChannels ? value_[channel] : 0; }
+    u32  writes(u8 channel) const { return channel < kChannels ? writes_[channel] : 0; }
+    bool enabled(u8 channel) const { return channel < kChannels && on_[channel]; }
+    void clear();
+
+private:
+    u16  value_[kChannels] = {};
+    u32  writes_[kChannels] = {};
+    bool on_[kChannels] = {};
+};
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Atrapa I2S z pętlą zwrotną.
+ *
+ * Bufory nadane przez `Tx` trafiają do dziennika i **jednocześnie** do
+ * strumienia, z którego czyta `Rx`. Dzięki temu cały łańcuch — źródło,
+ * filtry, ujście, z powrotem na wejście — da się przepuścić na hoście
+ * i porównać próbki co do bitu. Bez tego elementy I2S sprawdzałoby się
+ * dopiero na płytce, czyli za późno.
+ *
+ * Bufory oddaje natychmiast, tak jak backend kopiujący (ESP-IDF). Opóźnienie
+ * zwrotu da się wymusić przez `setLatency()` — po to, żeby test mógł sprawdzić
+ * zachowanie elementu, który czeka na bufor.
+ */
+class MockI2s : public II2s {
+public:
+    static constexpr u8   kMaxQueued  = 8;
+    static constexpr size_t kLogBytes = 8192;
+
+    Status begin(const I2sConfig& cfg) override;
+    void   end() override;
+    bool   running() const override { return running_; }
+
+    Status submit(ByteSpan buffer) override;
+    bool   reclaim(ByteSpan& buffer, u32& bytes) override;
+    u8     queueDepth() const override { return kMaxQueued; }
+    u32    xruns() const override { return xruns_; }
+    u32    actualSampleRate() const override { return cfg_.sampleRate; }
+
+    // --- sterowanie z testu --------------------------------------------------
+
+    /** Ile wywołań `reclaim()` musi minąć, zanim bufor wróci. 0 = natychmiast. */
+    void setLatency(u8 calls) { latency_ = calls; }
+
+    /** Dane, które dostanie strona odbiorcza. Zastępuje pętlę zwrotną. */
+    void feed(CByteSpan data);
+
+    /** Wszystko, co zostało nadane od `clear()`. */
+    CByteSpan captured() const { return CByteSpan{log_, logLen_}; }
+
+    const I2sConfig& config() const { return cfg_; }
+    void clear();
+
+private:
+    struct Slot {
+        ByteSpan buffer{};
+        u32      bytes = 0;
+        u8       age   = 0;
+        bool     used  = false;
+    };
+
+    I2sConfig cfg_{};
+    bool      running_ = false;
+    u8        latency_ = 0;
+    u32       xruns_ = 0;
+
+    Slot slots_[kMaxQueued];
+
+    /** Dziennik nadanych bajtów. */
+    u8     log_[kLogBytes] = {};
+    size_t logLen_ = 0;
+
+    /** Strumień dla strony odbiorczej — pętla zwrotna albo `feed()`. */
+    u8     rx_[kLogBytes] = {};
+    size_t rxLen_ = 0;
+    size_t rxRead_ = 0;
+};
+
+// ---------------------------------------------------------------------------
+
 /** Komplet atrap. Test sięga po nie, żeby wstrzyknąć stan i sprawdzić efekty. */
 struct Backend {
     MockGpio    gpio;
@@ -288,6 +431,9 @@ struct Backend {
     MockUart    uart;
     MockPwm     pwm;
     MockAdc     adc;
+    MockI2s     i2s;
+    MockDac     dac;
+    MockCamera  camera;
     MockStorage storage;
     MockTime    time;
 

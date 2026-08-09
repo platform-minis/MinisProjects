@@ -117,6 +117,106 @@ frameworka, partycji ani portu wgrywania. Przepchnięcie tego przez niego
 oznaczałoby zapisanie danych z `.hydra` w zmiennych CMake wyłącznie po to, by
 zaraz je stamtąd wyjąć.
 
+## Cel `native` — okno na PC zamiast wsadu
+
+`mcu: native` to pełnoprawny cel budowy, nie tryb podglądu. Chodzi ten sam
+rdzeń, te same taski i ta sama magistrala; wymienione są wyłącznie backendy:
+atrapy HAL zamiast Arduino, scheduler na pthreadach zamiast FreeRTOS-a, okno
+SDL zamiast panelu na SPI.
+
+```yaml
+targets:
+  podglad:
+    mcu: native
+    native:
+      window: { width: 128, height: 64, scale: 6, format: mono1, title: "OLED" }
+```
+
+Rysowanie idzie przez to samo `gfx::ISurface`, co na sprzęcie:
+
+```cpp
+static u8 vram[hydra::gfx::SdlDisplay::bytesNeeded(320, 240,
+                                                   hydra::gfx::PixelFormat::Rgb565)];
+hydra::gfx::SdlDisplay display;
+hydra::gfx::SdlDisplay::Cfg cfg;
+cfg.width = 320; cfg.height = 240; cfg.scale = 3;
+HYDRA_CHECK(display.begin(hydra::ByteSpan{vram, sizeof(vram)}, cfg));
+
+while (display.pump()) {
+    draw(display.surface());
+    display.surface().flush();
+}
+```
+
+Przykład: `examples/native-gfx/`.
+
+### Ten cel nie idzie przez kontener
+
+Kontener istnieje po to, żeby wynik **nie** zależał od maszyny. Cel `native`
+jest odwrotnością: wynik ma zależeć od maszyny, bo to program dla tego systemu
+i tej architektury, zlinkowany z tutejszym SDL. Dlatego buduje go CMake
+lokalnie, presetem wybranym po systemie:
+
+```bash
+hydra build . --host win-arm64      # albo mac-arm64, win-x64, linux-x64…
+cmake --preset native-linux-x64 -D HYDRA_TARGET=podglad
+cmake --build --preset native-linux-x64
+```
+
+Presety wypisuje generator do `CMakePresets.json`, po jednym na maszynę.
+Katalog budowy jest osobny dla każdej (`build/native-win-arm64`), bo jedno
+drzewo źródeł bywa widziane naraz przez dwa systemy.
+
+### Katalog uruchomienia jest systemem plików
+
+Backend hostowy rejestruje w HAL-u `IFileSystem` zakorzeniony w katalogu,
+**z którego uruchomiono program**:
+
+```cpp
+if (hal::Hal::hasFileSystem()) {
+    auto file = hal::Hal::fileSystem().open("notatka.txt", hal::OpenMode::Write);
+}
+```
+
+Pliki powstają obok binarki i otwiera się je zwykłym edytorem — to jest cała
+różnica między debugowaniem zapisu na PC a wyjmowaniem karty z urządzenia.
+Wyjście poza korzeń (`..`) jest odrzucane, więc program nie skasuje niczego
+obok.
+
+Ścieżkę odczytujemy raz. Późniejsze `chdir()` nie przesuwa korzenia: aplikacja
+zapisuje tam, gdzie ją uruchomiono, a nie tam, gdzie zawędrowała.
+
+To **jedyny** system plików, który HAL wystawia sam. Na układzie wyboru nie ma
+— karta czy flash to decyzja urządzenia — i tam `Hal::hasFileSystem()` zwraca
+`false`, dopóki projekt nie zarejestruje własnej implementacji.
+
+Projekt: [`projects/file-journal`](../projects/file-journal/) — dziennik
+z odczytem przy starcie i rotacją pliku.
+
+### SDL jest opcjonalny
+
+Brak SDL2 nie zatrzymuje konfiguracji — powstaje build bez okna, a
+`SdlDisplay::begin()` zwraca `Err::NotSupported`. Tak wygląda ta sama budowa
+w CI i przez ssh. Instalacja: `apt install libsdl2-dev`, `brew install sdl2`,
+`vcpkg install sdl2`.
+
+Nagłówki SDL wolno włączać wyłącznie w `src/gfx/sdl/` — reguła pilnowana przez
+`tools/check_includes.sh`, ta sama co dla Arduino i LVGL.
+
+### Budowa ze Studia
+
+Studio wykrywa system i architekturę przeglądarki i buduje dla nich, a gotowy
+plik pobiera się sam. Dwie rzeczy warto o tym wiedzieć:
+
+* **Wykrywanie architektury bywa niemożliwe.** Windows on ARM podaje w nagłówku
+  User-Agent „Win64; x64", a Safari na Apple Silicon — „Intel Mac OS X". Studio
+  pyta wtedy o Client Hints, a na macOS sięga po nazwę układu graficznego
+  z WebGL. Gdy pewności nie ma, wybiera **x64** — bo ta pomyłka jest odwracalna
+  (emulacja), a odwrotna daje plik, który nie uruchomi się w ogóle. Wykryta
+  maszyna jest widoczna na pasku stanu i da się ją zmienić.
+* **Na Windows pobiera się archiwum**, nie samo `.exe`: SDL2.dll leży
+  w katalogu pakietu, a nie przy pliku wykonywalnym.
+
 ## Publikacja obrazu
 
 Workflow `hydra-image` buduje i publikuje obraz dwuarchitekturowo do ghcr przy

@@ -16,6 +16,20 @@
 namespace hydra {
 namespace hal {
 
+/**
+ * System plików zakorzeniony w katalogu, **z którego uruchomiono program**.
+ *
+ * Ścieżkę odczytujemy raz, przy pierwszym wywołaniu, i zapamiętujemy. Późniejsze
+ * `chdir()` nie przesuwa więc korzenia: aplikacja, która w połowie pracy zmienia
+ * katalog roboczy, dalej zapisuje tam, gdzie użytkownik ją uruchomił — a nie
+ * tam, gdzie akurat zawędrowała.
+ *
+ * To jedyny system plików, który HAL wystawia sam. Na układzie takiego wyboru
+ * nie ma (karta czy flash to decyzja urządzenia), ale na hoście odpowiedź jest
+ * jedna i nie ma powodu, żeby każda aplikacja pisała ją od nowa.
+ */
+IFileSystem& hostWorkingDirectory();
+
 /** Liczba jednocześnie otwartych plików. Pula stała — rozdz. 11. */
 constexpr size_t kHostMaxOpenFiles = 4;
 constexpr size_t kHostMaxOpenDirs  = 2;

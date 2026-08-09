@@ -31,6 +31,8 @@ co już raz kogoś kosztowało wieczór.
 | Dokument | Zawartość |
 |---|---|
 | [project-file.md](project-file.md) | Format `.hydra` — pełne odniesienie |
+| [media.md](media.md) | Potok multimedialny: audio, obraz, filtry, domeny czasowe |
+| [minis.md](minis.md) | Moduł IoT MyCastle: encje, łącza (MQTT/WS/RS-485), bramki |
 | [packs.md](packs.md) | Paczki: co wnoszą i czego celowo nie robią |
 | [schematic.md](schematic.md) | Schemat `.hsch`, reguły elektryczne, generowanie nagłówka płytki |
 | [studio.md](studio.md) | Hydra Studio: wtyczka edytora, panele, obieg pracy |

@@ -11,6 +11,16 @@
 namespace hydra {
 namespace sense {
 
+/*
+ * Własna stała zamiast `M_PI`.
+ *
+ * `M_PI` jest rozszerzeniem POSIX, a nie częścią standardu C: na Windows
+ * (mingw, MSVC) `<math.h>` nie definiuje go bez `_USE_MATH_DEFINES`, więc
+ * ta sama kompilacja przechodziła na Linuksie i przewracała się na Windows.
+ * Stała w kodzie działa wszędzie i nie zależy od kolejności dołączeń.
+ */
+constexpr float kPi = 3.14159265358979323846f;
+
 Status ChannelFilter::configure(const FilterCfg& cfg) {
     cfg_ = cfg;
 
@@ -31,7 +41,7 @@ Status ChannelFilter::configure(const FilterCfg& cfg) {
 
         // Biquad dolnoprzepustowy 2. rzędu, Q = 1/sqrt(2) (charakterystyka
         // Butterwortha — maksymalnie płaska w paśmie przepustowym).
-        const float w0    = 2.0f * static_cast<float>(M_PI) * cfg_.cutoffHz / cfg_.sampleHz;
+        const float w0    = 2.0f * kPi * cfg_.cutoffHz / cfg_.sampleHz;
         const float cosw  = cosf(w0);
         const float sinw  = sinf(w0);
         const float alpha = sinw / 1.41421356f;

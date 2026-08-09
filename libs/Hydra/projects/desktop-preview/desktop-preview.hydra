@@ -1,0 +1,71 @@
+# ═══════════════════════════════════════════════════════════════════
+#  desktop-preview — ten sam ekran w oknie na PC i na OLED-zie
+#
+#  Projekt ma dwa cele i jeden kod rysujący. Na `podglad` powstaje
+#  program na tę maszynę, z oknem SDL; na `esp32s3` — wsad z panelem
+#  na I²C. Funkcja rysująca jest ta sama i nie wie, gdzie trafia.
+#
+#      hydra check .
+#      hydra gen   . --hydra ../..
+#      hydra build . --hydra ../.. -e podglad          # okno na PC
+#      hydra build . --hydra ../.. -e esp32s3          # wsad na układ
+#
+#  Cel natywny buduje się CMake'em lokalnie, a nie w kontenerze:
+#  jego wynik ma zależeć od maszyny, bo to program dla tego systemu
+#  i tej architektury. Maszynę wskazuje `--host`, a domyślnie jest nią
+#  ta, na której stoimy:
+#
+#      hydra build . --hydra ../.. -e podglad --host mac-arm64
+#
+#  W Studiu maszyna wykrywa się sama, a gotowy plik pobiera się
+#  po zakończeniu budowy.
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: desktop-preview
+  version: 1.0.0
+  description: "Ekran statusu projektowany w oknie, uruchamiany na OLED-zie"
+  license: MIT
+
+targets:
+  # Domyślnie okno: przy pracy nad interfejsem sięga się po nie
+  # kilkadziesiąt razy dziennie, a po wsad — kilka razy.
+  default: podglad
+
+  podglad:
+    mcu: native
+    native:
+      window:
+        # Rozmiar powierzchni odpowiada panelowi, który ma to zastąpić —
+        # nie rozdzielczości monitora. Inaczej ekran zaprojektowany
+        # w oknie nie zmieściłby się na sprzęcie.
+        width: 128
+        height: 64
+        format: mono1
+        # Panel 128×64 w skali 1:1 jest na monitorze 4K znaczkiem
+        # pocztowym. Skalowanie jest całkowitoliczbowe i bez wygładzania,
+        # więc piksel bufora zostaje widocznym kwadratem.
+        scale: 6
+        title: "desktop-preview — OLED 128×64"
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]
+
+  sense:
+    hub: { max_sensors: 4, timestamp: us }
+
+# Na celu natywnym magistrale są atrapami zasilanymi stąd — dzięki temu
+# ekran ma co pokazywać, zanim cokolwiek zostanie przylutowane.
+simulation:
+  engine: functional
+  timestep_us: 50000
+  sources:
+    baro: { model: atmosphere, p_hpa: 1013.2, noise: 0.1 }

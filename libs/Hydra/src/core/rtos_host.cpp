@@ -34,6 +34,17 @@ namespace {
 
 constexpr u32 kForever = 0xFFFFFFFFu;
 
+/*
+ * Dolna granica stosu wątku.
+ *
+ * `PTHREAD_STACK_MIN` to rozszerzenie POSIX — winpthreads (mingw) go nie
+ * definiuje, a na Linuksie bywa makrem wołającym `sysconf`, więc nie nadaje
+ * się na wyrażenie stałe. Bierzemy wartość z widełek, w których i tak mieści
+ * się każda z platform (glibc: 16 kB na aarch64), bo chodzi wyłącznie o to,
+ * żeby zbyt mała wartość z konfiguracji taska nie przeszła do systemu.
+ */
+constexpr size_t kMinStackBytes = 16u * 1024u;
+
 struct HostTask {
     pthread_t   thread;
     TaskEntry   entry;
@@ -156,7 +167,8 @@ Result<TaskHandle> spawn(const TaskCfg& cfg, TaskEntry entry, void* arg) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     // Stos podajemy w bajtach; na FreeRTOS stackWords to słowa maszynowe.
     const size_t bytes = static_cast<size_t>(cfg.stackWords) * sizeof(void*);
-    pthread_attr_setstacksize(&attr, bytes < PTHREAD_STACK_MIN * 2 ? PTHREAD_STACK_MIN * 2 : bytes);
+    const size_t floor = kMinStackBytes * 2;
+    pthread_attr_setstacksize(&attr, bytes < floor ? floor : bytes);
 
     pthread_mutex_lock(&gCountMutex);
     ++gTaskCount;

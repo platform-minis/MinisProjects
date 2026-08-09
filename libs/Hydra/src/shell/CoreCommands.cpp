@@ -152,6 +152,69 @@ Status cmdVersion(int argc, char** argv, Output& out) {
     return ok();
 }
 
+/**
+ * Moduł po nazwie.
+ *
+ * Nazwa, a nie indeks: numer w rejestrze zależy od kolejności rejestracji
+ * w aplikacji, więc to samo polecenie znaczyłoby co innego w dwóch wsadach.
+ */
+IModule* findModule(const char* name) {
+    for (u8 i = 0; i < App::moduleCount(); ++i) {
+        IModule* module = App::module(i);
+        if (module && strcmp(module->name(), name) == 0) return module;
+    }
+    return nullptr;
+}
+
+/**
+ * Sterowanie modułami: `module [stop|start|restart <nazwa>]`.
+ *
+ * `IModule` obiecuje miękki restart pojedynczego podsystemu — restart sieci
+ * bez restartu robota. Dotąd tę obietnicę dało się spełnić wyłącznie z kodu;
+ * tutaj staje się poleceniem, więc sięga po nią też ktoś na drugim końcu
+ * portu szeregowego i scenariusz testowy.
+ */
+Status cmdModule(int argc, char** argv, Output& out) {
+    if (argc == 1) {
+        out.field("modules", static_cast<u32>(App::moduleCount()));
+        for (u8 i = 0; i < App::moduleCount(); ++i) {
+            IModule* module = App::module(i);
+            if (module) out.printf("  %-10s %s\r\n", module->name(), toString(module->state()));
+        }
+        return ok();
+    }
+
+    // Nazwa modułu jest wymagana przy każdym działaniu: „module stop" bez
+    // wskazania, co zatrzymać, jest pomyłką, a nie poleceniem na wszystko.
+    if (argc < 3) return fail(Err::BadArgument);
+
+    const char* action = argv[1];
+    IModule*    module = findModule(argv[2]);
+    // Literówka w nazwie nie może wyglądać jak wykonane polecenie — to jedyny
+    // sygnał, jaki dostaje sterujący urządzeniem zdalnie.
+    if (!module) return fail(Err::NotFound);
+
+    if (strcmp(action, "stop") == 0) {
+        module->stop();
+        out.field("module", module->name());
+        out.field("state", toString(module->state()));
+        return ok();
+    }
+
+    if (strcmp(action, "start") == 0 || strcmp(action, "restart") == 0) {
+        // Restart to zatrzymanie i start, a nie osobna ścieżka: moduł ma jeden
+        // kontrakt cyklu życia i to on decyduje, co znaczy ponowne wejście.
+        if (strcmp(action, "restart") == 0) module->stop();
+
+        const Status result = module->start();
+        out.field("module", module->name());
+        out.field("state", toString(module->state()));
+        return result;
+    }
+
+    return fail(Err::BadArgument);
+}
+
 Status cmdReboot(int argc, char** argv, Output& out) {
     u8 delaySec = 0;
     if (argc > 1) {
@@ -180,6 +243,7 @@ Status registerCoreCommands(Shell& shell) {
     HYDRA_CHECK(shell.add("log", "zrzut logów; log level <poziom>", &cmdLog));
     HYDRA_CHECK(shell.add("uptime", "czas pracy", &cmdUptime));
     HYDRA_CHECK(shell.add("version", "wersja i stan modułów", &cmdVersion));
+    HYDRA_CHECK(shell.add("module", "moduły; module [stop|start|restart <nazwa>]", &cmdModule));
     HYDRA_CHECK(shell.add("reboot", "restart; reboot [sekundy]", &cmdReboot));
     return ok();
 }

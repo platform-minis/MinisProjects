@@ -618,3 +618,105 @@ TEST("Awaria: ogon logu przenosi się przez restart") {
     // Interesuje nas to, co działo się tuż przed awarią.
     CHECK(strstr(tail, "limit pradu") != nullptr);
 }
+
+// ---------------------------------------------------------------------------
+// Sterowanie modułami
+//
+// `IModule` obiecuje „miękki restart pojedynczego podsystemu — np. restart
+// sieci bez restartu robota". Dotąd tę obietnicę dało się spełnić wyłącznie
+// z kodu: shell pokazywał nazwę i stan modułu, ale nie potrafił go dotknąć.
+// ---------------------------------------------------------------------------
+
+namespace {
+
+/** Moduł do sterowania z shella; liczy wywołania, żeby dało się je sprawdzić. */
+class ShellFakeModule : public ModuleBase {
+public:
+    explicit ShellFakeModule(const char* name) : ModuleBase(name) {}
+
+    int starts = 0, stops = 0;
+
+protected:
+    Status onInit() override { return ok(); }
+    Status onStart() override { ++starts; return ok(); }
+    void   onStop() override { ++stops; }
+};
+
+/** Shell z komendami rdzenia i dwoma modułami w App — wspólny wstęp testów niżej. */
+struct ModuleFixture {
+    Shell           shell;
+    Capture         out;
+    ShellFakeModule net{"net"};
+    ShellFakeModule sense{"sense"};
+
+    ModuleFixture() {
+        resetShell();
+        shell.setOutput(out.sink());
+        registerCoreCommands(shell);
+        App::config().name("t").housekeepingMs(20).heartbeat(false).logLevel(LogLevel::Off);
+        App::config().add(net).add(sense);
+        App::begin();
+    }
+
+    ~ModuleFixture() { App::reset(); }
+};
+
+}  // namespace
+
+TEST("Moduły: lista pokazuje nazwy i stany") {
+    ModuleFixture f;
+
+    REQUIRE(f.shell.execute("module").has_value());
+    CHECK(f.out.contains("net"));
+    CHECK(f.out.contains("sense"));
+    CHECK(f.out.contains("running"));
+}
+
+TEST("Moduły: stop zatrzymuje wskazany moduł i tylko jego") {
+    ModuleFixture f;
+
+    REQUIRE(f.shell.execute("module stop net").has_value());
+    CHECK_EQ(f.net.stops, 1);
+    CHECK(f.net.state() == ModuleState::Stopped);
+    // Sedno miękkiego restartu: reszta urządzenia pracuje dalej.
+    CHECK(f.sense.state() == ModuleState::Running);
+    CHECK_EQ(f.sense.stops, 0);
+}
+
+TEST("Moduły: start wznawia zatrzymany moduł") {
+    ModuleFixture f;
+    REQUIRE(f.shell.execute("module stop net").has_value());
+
+    REQUIRE(f.shell.execute("module start net").has_value());
+    CHECK(f.net.state() == ModuleState::Running);
+    CHECK_EQ(f.net.starts, 2);   // raz przy App::begin(), raz z shella
+}
+
+TEST("Moduły: restart przechodzi przez zatrzymanie") {
+    ModuleFixture f;
+
+    REQUIRE(f.shell.execute("module restart net").has_value());
+    CHECK_EQ(f.net.stops, 1);
+    CHECK_EQ(f.net.starts, 2);
+    CHECK(f.net.state() == ModuleState::Running);
+}
+
+TEST("Moduły: nieznana nazwa jest błędem, nie ciszą") {
+    ModuleFixture f;
+
+    // Literówka w nazwie modułu nie może wyglądać jak wykonane polecenie —
+    // to jedyny sygnał, jaki dostaje ktoś sterujący urządzeniem po szeregowym.
+    CHECK(!f.shell.execute("module stop nie-ma-takiego").has_value());
+}
+
+TEST("Moduły: nieznane działanie jest błędem") {
+    ModuleFixture f;
+
+    CHECK(!f.shell.execute("module wywroc net").has_value());
+}
+
+TEST("Moduły: działanie bez nazwy modułu jest błędem") {
+    ModuleFixture f;
+
+    CHECK(!f.shell.execute("module stop").has_value());
+}

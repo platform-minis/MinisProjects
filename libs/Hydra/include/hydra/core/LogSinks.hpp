@@ -27,4 +27,25 @@ private:
     u8 index_;
 };
 
+#if HYDRA_PLAT_HOST
+/**
+ * Konsola procesu — log dla celu `native`.
+ *
+ * Na hoście `UartLogSink` pisze do atrapy portu, czyli donikąd: dla testów
+ * jednostkowych to właściwe zachowanie (log nie zaśmieca wyniku), ale dla
+ * aplikacji uruchamianej w oknie oznaczało program, który milczy także wtedy,
+ * gdy start się nie powiódł. To jest ten sam błąd, przed którym broni
+ * publikowanie spóźnień taska jako zdarzeń: cisza nie jest informacją.
+ *
+ * Piszemy na wyjście diagnostyczne, nie na standardowe. Dwa powody: strumień
+ * diagnostyczny nie jest buforowany, więc ostatnie wiersze przetrwają
+ * przerwanie programu, a standardowe wyjście zostaje wolne dla tego, co
+ * aplikacja ma naprawdę do powiedzenia.
+ */
+class StdoutLogSink : public ILogSink {
+public:
+    void write(LogLevel level, const char* line, size_t len) override;
+};
+#endif
+
 }  // namespace hydra

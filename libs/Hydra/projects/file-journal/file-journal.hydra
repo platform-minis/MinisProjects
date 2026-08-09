@@ -1,0 +1,50 @@
+# ═══════════════════════════════════════════════════════════════════
+#  file-journal — dziennik zdarzeń na plikach
+#
+#  Urządzenie, które zapisuje kolejne wpisy do pliku, przy starcie czyta
+#  poprzedni przebieg i przerzuca dziennik na kopię, gdy urośnie. Czyli
+#  to, co robi każdy rejestrator: nie samo „zapisz plik", tylko cały cykl
+#  życia danych na nośniku.
+#
+#      podglad (native)   dziennik w katalogu, z którego uruchomiono program
+#      esp32s3            dziennik na nośniku dostarczonym przez projekt
+#
+#  Na PC pliki powstają obok binarki i otwiera się je edytorem — to jest
+#  cała różnica między debugowaniem zapisu na PC a wyjmowaniem karty
+#  z urządzenia.
+#
+#      hydra check .
+#      hydra gen   . --hydra ../..
+#      hydra build . --hydra ../.. -e podglad
+#      ./build/native-linux-x64/file-journal
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: file-journal
+  version: 1.0.0
+  description: "Dziennik zdarzeń: zapis, odczyt przy starcie i rotacja pliku"
+  license: MIT
+
+targets:
+  # Domyślnie PC: przy pracy nad formatem zapisu zagląda się do pliku
+  # kilkadziesiąt razy, a na urządzenie wgrywa kilka.
+  default: podglad
+
+  podglad:
+    mcu: native
+    # Bez sekcji `native` — ten projekt nie ma okna. Cel natywny nie jest
+    # trybem podglądu interfejsu, tylko pełnoprawnym celem budowy.
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+    memory:
+      flash: 8MB
+      partitions: ota_2app
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]

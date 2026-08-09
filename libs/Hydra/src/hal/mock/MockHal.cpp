@@ -2,6 +2,7 @@
  * Hydra — implementacja atrapowego backendu HAL (build hostowy).
  */
 
+#include "hydra/hal/HostFileSystem.hpp"
 #include "hydra/hal/Mock.hpp"
 
 #if HYDRA_PLAT_HOST
@@ -513,6 +514,9 @@ void Backend::clear() {
     uart.clear();
     pwm.clear();
     adc.clear();
+    i2s.clear();
+    dac.clear();
+    camera.clear();
     storage.clear();
     time.clear();
 }
@@ -530,9 +534,23 @@ Status install(ResetReason reason) {
     d.i2c[0]      = &b.i2c;
     d.spi[0]      = &b.spi;
     d.uart[0]     = &b.uart;
+    d.i2s         = &b.i2s;
+    d.dac         = &b.dac;
+    d.camera      = &b.camera;
     d.pwm         = &b.pwm;
     d.adc         = &b.adc;
     d.storage     = &b.storage;
+
+    // Katalog, z którego uruchomiono program, widziany jako system plików.
+    // Rejestrujemy dopiero po udanym montowaniu: `hasFileSystem()` ma mówić
+    // prawdę, a nie „jest, ale nie działa".
+    //
+    // Sprawdzenie `mounted()` przed montowaniem nie jest ostrożnością na
+    // zapas: instancja jest jedna na proces, a `install()` woła się przy
+    // każdym `Hal::reset()`. Drugie `mount()` zwraca `AlreadyExists` i bez
+    // tego warunku system plików znikałby po pierwszym ponownym starcie HAL-u.
+    IFileSystem& hostFs = hostWorkingDirectory();
+    if (hostFs.mounted() || hostFs.mount()) d.fs = &hostFs;
     d.time        = &b.time;
     d.resetReason = reason;
     d.name        = "mock";

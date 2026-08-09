@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "hydra/hal/HostFileSystem.hpp"
+#include "hydra/hal/Mock.hpp"
 #include "hydra_test.hpp"
 
 using namespace hydra;
@@ -210,4 +211,67 @@ TEST("FileSystem: usedBytes rośnie wraz z danymi") {
     auto total = f.fs.totalBytes();
     CHECK(static_cast<bool>(total));
     CHECK(*total > *used);
+}
+
+// ---------------------------------------------------------------------------
+// Katalog uruchomienia jako system plików
+// ---------------------------------------------------------------------------
+
+TEST("host: wpis katalogu niesie prawdziwy rozmiar pliku") {
+    // Wcześniej stało tu zero i każdy wpis wyglądał na pusty plik — a to
+    // jedyna liczba, po której widać, czy zapis w ogóle coś zapisał.
+    HostFileSystem fs{kRoot};
+    REQUIRE(fs.mount().has_value());
+    fs.remove("rozmiar.bin");
+
+    const u8 payload[37] = {};
+    REQUIRE(fs.writeFile("rozmiar.bin", CByteSpan{payload, sizeof(payload)}).has_value());
+
+    auto dir = fs.openDir("");
+    REQUIRE(dir.has_value());
+
+    bool found = false;
+    DirEntry entry;
+    while ((*dir)->next(entry)) {
+        if (strcmp(entry.name, "rozmiar.bin") != 0) continue;
+        found = true;
+        CHECK_EQ(static_cast<int>(entry.size), 37);
+        CHECK(!entry.isDirectory);
+    }
+    (*dir)->close();
+    CHECK(found);
+
+    fs.remove("rozmiar.bin");
+}
+
+TEST("host: backend rejestruje katalog uruchomienia w HAL") {
+    // Na celu `native` odpowiedź na pytanie „gdzie zapisać plik" jest jedna
+    // i nie ma powodu, żeby każda aplikacja pisała ją od nowa.
+    Hal::reset();
+    mock::backend().clear();
+    REQUIRE(mock::install().has_value());
+
+    CHECK(Hal::hasFileSystem());
+    CHECK(Hal::fileSystem().mounted());
+
+    // Zapis trafia do katalogu procesu — plik musi być widoczny zwykłą drogą.
+    IFileSystem& fs = Hal::fileSystem();
+    fs.remove("hydra-test-cwd.tmp");
+    const u8 mark[4] = {'H', 'y', 'd', 'r'};
+    REQUIRE(fs.writeFile("hydra-test-cwd.tmp", CByteSpan{mark, sizeof(mark)}).has_value());
+    CHECK(fs.exists("hydra-test-cwd.tmp"));
+
+    u8 back[8] = {};
+    auto got = fs.readFile("hydra-test-cwd.tmp", ByteSpan{back, sizeof(back)});
+    REQUIRE(got.has_value());
+    CHECK_EQ(static_cast<int>(*got), 4);
+    CHECK_EQ(memcmp(back, mark, 4), 0);
+
+    REQUIRE(fs.remove("hydra-test-cwd.tmp").has_value());
+}
+
+TEST("host: ten sam obiekt przy każdym wywołaniu — korzeń nie wędruje") {
+    // Ścieżka jest ustalana raz. Późniejsze chdir() nie przesuwa korzenia:
+    // aplikacja zapisuje tam, gdzie ją uruchomiono, a nie tam, gdzie zawędrowała.
+    CHECK(&hostWorkingDirectory() == &hostWorkingDirectory());
 }

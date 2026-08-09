@@ -37,12 +37,18 @@ ARDUINO_HEADERS='Arduino\.h|Wire\.h|SPI\.h|EEPROM\.h|Preferences\.h|HardwareSeri
 #  - src/*/arduino/       — właściwe miejsce backendu;
 #  - test/arduino_stub/   — atrapy tych nagłówków, a nie ich użycie;
 #  - examples/, templates/ — kod użytkownika, któremu wolno sięgać po Arduino
-#    wprost. Reguła pilnuje warstw Hydry, a nie tego, co pisze się na niej.
+#    wprost. Reguła pilnuje warstw Hydry, a nie tego, co pisze się na niej;
+#  - include/compat/     — powierzchnia zgodności z cudzym API (dziś Arduboy2).
+#    Jej zadaniem jest właśnie stanie okrakiem na Arduino: na układzie oddaje
+#    sprawę prawdziwemu `Arduino.h`, na hoście podstawia atrapę. Katalog jest
+#    osobnym korzeniem włączeń, dodawanym do ścieżki tylko dla projektów, które
+#    o dany moduł poprosiły — kod przenośny nie ma jak stamtąd niczego złapać.
 hits=$(grep -rnE "^[[:space:]]*#[[:space:]]*include[[:space:]]*[<\"]($ARDUINO_HEADERS)[>\"]" \
         include src examples templates test 2>/dev/null \
     | grep -vE '^src/[a-z]+/arduino/' \
     | grep -vE '^(examples|templates)/' \
-    | grep -v '^test/arduino_stub/' || true)
+    | grep -v '^test/arduino_stub/' \
+    | grep -v '^include/compat/' || true)
 
 if [ -n "$hits" ]; then
     report "nagłówki Arduino poza katalogami backendów (src/*/arduino/)" "$hits"
@@ -88,6 +94,64 @@ if [ -n "$hits" ]; then
     report "nagłówki LVGL poza plikiem wiążącym (LvglApi.hpp)" "$hits"
 else
     printf '%s✓%s LVGL widoczne tylko w LvglApi.hpp\n' "$GREEN" "$OFF"
+fi
+
+# --- SDL tylko w backendzie okna -------------------------------------------
+
+# SDL jest dla celu `native` tym, czym Arduino dla ESP32: biblioteką backendu.
+# Ma więc tę samą regułę — nagłówki publiczne operują na void*, a SDL.h wchodzi
+# tylko w katalogach backendów. Bez tego cel `native` zacząłby przeciekać do API
+# i przestałby być wymienny z celami sprzętowymi.
+#
+# Katalogi są dwa i lista ma się nie wydłużać: okno (src/gfx/sdl/) oraz
+# dźwięk i podgląd potoku (src/media/sdl/). Trzeci oznaczałby, że SDL rozlewa
+# się po bibliotece zamiast siedzieć za interfejsem.
+hits=$(grep -rnE "^[[:space:]]*#[[:space:]]*include[[:space:]]*[<\"]SDL[0-9]*(_[a-z]+)?\.h[>\"]" \
+        include src examples templates test 2>/dev/null \
+    | grep -vE '^src/(gfx|media)/sdl/' || true)
+
+if [ -n "$hits" ]; then
+    report "nagłówki SDL poza katalogami backendów (src/gfx/sdl/, src/media/sdl/)" "$hits"
+else
+    printf '%s✓%s SDL widoczne tylko w src/gfx/sdl/ i src/media/sdl/\n' "$GREEN" "$OFF"
+fi
+
+# --- Osadzone Lua tylko przez plik wiążący ---------------------------------
+
+# Ta sama reguła co dla LVGL i z tego samego powodu: Lua jest biblioteką w C
+# z globalnym API, a jej nagłówki wciągają luaconf.h, który ustala reprezentację
+# liczb i układ struktur. Gdyby wchodziły w wielu miejscach, podniesienie wersji
+# interpretera albo zmiana profilu pamięci oznaczałyby przeczesywanie drzewa.
+#
+# Wyjątki: src/lua/ to same osadzone źródła, które włączają się nawzajem,
+# a src/script/LuaInternal.hpp jest jedynym plikiem wiążącym po stronie C++.
+hits=$(grep -rnE "^[[:space:]]*#[[:space:]]*include[[:space:]]*[<\"].*(lua|lauxlib|lualib)\.h[>\"]" \
+        include src examples templates test 2>/dev/null \
+    | grep -vE '^src/lua/' \
+    | grep -v '^src/script/LuaInternal\.hpp' || true)
+
+if [ -n "$hits" ]; then
+    report "nagłówki Lua poza plikiem wiążącym (src/script/LuaInternal.hpp)" "$hits"
+else
+    printf '%s✓%s Lua widoczne tylko w LuaInternal.hpp\n' "$GREEN" "$OFF"
+fi
+
+# Kod aplikacji nie ma prawa zobaczyć typu lua_State — API skryptów wystawia
+# `Interp` i `Ctx`, żeby zmiana interpretera nie przechodziła przez nagłówki.
+#
+# Komentarze są z tego wyłączone: nagłówek ma prawo wyjaśnić, co trzyma pod
+# `void*`, i właśnie to robi. Sprawdzenie dotyczy kodu, więc przed dopasowaniem
+# wygaszamy komentarze wierszowe, jednowierszowe blokowe i wiersze ciągu bloku.
+# Wygaszamy, a nie usuwamy — inaczej rozjechałaby się numeracja w raporcie.
+hits=$(for f in $(grep -rl 'lua_State' include examples templates 2>/dev/null || true); do
+    sed -e 's|//.*||' -e 's|/\*.*\*/||' -e 's|^[[:space:]]*\*.*||' "$f" \
+        | grep -n 'lua_State' | sed "s|^|$f:|"
+done)
+
+if [ -n "$hits" ]; then
+    report "typ lua_State wyciekł do API albo do kodu użytkownika" "$hits"
+else
+    printf '%s✓%s lua_State nie wycieka poza src/\n' "$GREEN" "$OFF"
 fi
 
 # --- Prywatne nagłówki backendu nie wyciekają do API -----------------------

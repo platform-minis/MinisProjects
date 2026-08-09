@@ -112,6 +112,51 @@
 #ifndef HYDRA_ENABLE_MOTION
 #  define HYDRA_ENABLE_MOTION 0
 #endif
+/**
+ * Moduł skryptowy z osadzonym interpreterem Lua.
+ *
+ * Wyłączony nie kosztuje nic: bez tej flagi nie powstaje ani `ScriptModule`,
+ * ani komendy shella, a nieużywane jednostki osadzonego Lua usuwa konsolidator
+ * przez --gc-sections. Sam `script::Interp` da się użyć bez tej flagi — wtedy
+ * płaci się za interpreter dokładnie wtedy, gdy się go woła.
+ */
+#ifndef HYDRA_ENABLE_SCRIPT
+#  define HYDRA_ENABLE_SCRIPT 0
+#endif
+
+/**
+ * Moduł IoT platformy MyCastle.
+ *
+ * Niezależny od HYDRA_ENABLE_NET, choć zwykle chodzą razem: węzeł na końcu
+ * magistrali RS-485 nie ma stosu TCP/IP i nie ma powodu, żeby go kompilować.
+ * Odwrotnie też — bramka bez encji własnych używa sieci bez tego modułu.
+ */
+#ifndef HYDRA_ENABLE_MINIS
+#  define HYDRA_ENABLE_MINIS 0
+#endif
+
+/**
+ * Potok multimedialny: audio i pojedyncze klatki obrazu.
+ *
+ * Wyłączony nie kosztuje nic — a włączony kosztuje tyle, ile pule buforów,
+ * które sam zadeklarujesz. Framework nie ma tu żadnej pamięci własnej.
+ */
+#ifndef HYDRA_ENABLE_MEDIA
+#  define HYDRA_ENABLE_MEDIA 0
+#endif
+
+/**
+ * Warstwa zgodności z Arduboy2 — gry na Arduboya bez zmian w źródle.
+ *
+ * Kosztuje dwa kilobajty pamięci na bufory obrazu (stronicowy gry i wierszowy
+ * dla `gfx`) plus pół kilobajta na czcionkę. Włączenie dokłada też osobny
+ * korzeń włączeń `include/compat/arduboy`, skąd biorą się nazwy globalne
+ * `Arduboy2`, `WIDTH`, `A_BUTTON` i reszta — bez włączonego modułu nie widzi
+ * ich nikt.
+ */
+#ifndef HYDRA_ENABLE_ARDUBOY
+#  define HYDRA_ENABLE_ARDUBOY 0
+#endif
 
 // ---------------------------------------------------------------------------
 // Rozmiary statyczne (rozdz. 11: brak alokacji po App::begin())

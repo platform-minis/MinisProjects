@@ -339,6 +339,13 @@ Status installDefaultBackend() {
     d.adc  = &b.adc;
     d.time = &b.time;
 
+#if HYDRA_PLAT_ESP32
+    // I2S rejestrujemy, ale nie uruchamiamy: piny i częstotliwość zależą od
+    // przetwornika, którego HAL nie zna. Otwiera go `media::I2sSink` przy
+    // starcie potoku, na podstawie tego, co uzgodniły elementy.
+    d.i2s = &arduino::i2sBackend();
+#endif
+
 #if HYDRA_BOARD_I2C0_ENABLE
     if (b.i2cBus0.begin(0, HYDRA_BOARD_I2C0_SDA, HYDRA_BOARD_I2C0_SCL, HYDRA_BOARD_I2C0_HZ)) {
         d.i2c[0] = &b.i2cBus0;

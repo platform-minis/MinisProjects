@@ -13,6 +13,7 @@
 # z różnymi flagami kończy się błędem linkowania albo, gorzej, cichą korupcją.
 
 CXX      ?= c++
+CC       ?= cc
 # Katalog budowy rozdzielony po systemie i architekturze. Drzewo źródeł bywa
 # montowane do kontenera, więc ten sam `build/` widzą naraz macOS i Linux —
 # bez rozdzielenia kontener uznawał binarkę Mach-O za aktualną i próbował ją
@@ -31,7 +32,7 @@ INCLUDES  = -I../include -I.
 # a reszta zostaje ze starym układem obiektu — objawem jest losowy SIGABRT,
 # nie błąd kompilacji.
 CXXFLAGS  = -std=c++17 -O1 -g -Wall -Wextra -Wshadow -Wno-unused-parameter \
-            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 \
+            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 \
             -MMD -MP $(INCLUDES) $(EXTRA)
 LDFLAGS   = -lpthread $(EXTRA)
 
@@ -40,19 +41,47 @@ HAL_SRC   = $(wildcard ../src/hal/*.cpp) $(wildcard ../src/hal/mock/*.cpp) \
             $(wildcard ../src/hal/host/*.cpp)
 SENSE_SRC = $(wildcard ../src/sense/*.cpp) $(wildcard ../src/drivers/sense/*.cpp)
 NET_SRC   = $(wildcard ../src/net/*.cpp) $(wildcard ../src/net/mock/*.cpp)
-GFX_SRC   = $(wildcard ../src/gfx/*.cpp)
+# gfx/sdl wchodzi do testów w wariancie bez SDL — ten sam, który powstaje
+# w CI i na maszynie bez serwera X. Dzięki temu kompiluje się przy każdej
+# zmianie, a nie dopiero u kogoś, kto ma zainstalowane libsdl2-dev.
+GFX_SRC   = $(wildcard ../src/gfx/*.cpp) $(wildcard ../src/gfx/sdl/*.cpp)
 MOTION_SRC = $(wildcard ../src/motion/*.cpp)
 SHELL_SRC = $(wildcard ../src/shell/*.cpp) $(wildcard ../src/diag/*.cpp)
 UTIL_SRC  = $(wildcard ../src/util/*.cpp) $(wildcard ../src/ota/*.cpp)
 UI_SRC    = $(wildcard ../src/ui/*.cpp) $(wildcard ../src/ui/mock/*.cpp) \
             $(wildcard ../src/ui/lvgl/*.cpp)
+SCRIPT_SRC = $(wildcard ../src/script/*.cpp)
+# Moduł minis: rdzeń, łącza i JSON. Łącze MQTT wchodzi razem z modułem
+# sieciowym, szeregowe — z atrapą UART-u z backendu hostowego.
+MINIS_SRC = $(wildcard ../src/minis/*.cpp) $(wildcard ../src/minis/links/*.cpp)
+# Potok multimedialny: rdzeń i elementy programowe. Elementy sprzętowe
+# (I2S, PWM, ADC) i natywne (SDL) dochodzą w kolejnych etapach.
+MEDIA_SRC = $(wildcard ../src/media/*.cpp) $(wildcard ../src/media/elements/*.cpp) \
+            $(wildcard ../src/media/sdl/*.cpp)
+# Bodziec: warstwa wywołująca zjawiska w świecie wokół urządzenia. Wyłącznie
+# hostowa — implementacja na atrapach, obok której stanie kiedyś stanowisko.
+# Zgodność z Arduboy2. `Runtime.cpp` jest wyłączony świadomie: na hoście
+# definiuje `main()` dla niezmienionych gier, a tu `main()` należy do
+# frameworka testowego. Odwołuje się też do `setup()` i `loop()`, których
+# w testach nikt nie dostarcza.
+ARDUBOY_SRC = $(filter-out ../src/arduboy/Runtime.cpp,$(wildcard ../src/arduboy/*.cpp))
+STIM_SRC  = $(wildcard ../src/stim/*.cpp)
 TEST_SRC  = $(wildcard test_*.cpp)
-SRC       = $(CORE_SRC) $(HAL_SRC) $(SENSE_SRC) $(NET_SRC) $(GFX_SRC) $(UI_SRC) $(MOTION_SRC) $(SHELL_SRC) $(UTIL_SRC) $(TEST_SRC)
+SRC       = $(CORE_SRC) $(HAL_SRC) $(SENSE_SRC) $(NET_SRC) $(GFX_SRC) $(UI_SRC) $(MOTION_SRC) $(SHELL_SRC) $(UTIL_SRC) $(SCRIPT_SRC) $(MINIS_SRC) $(MEDIA_SRC) $(ARDUBOY_SRC) $(STIM_SRC) $(TEST_SRC)
 OBJ       = $(patsubst %.cpp,$(BUILD)/%.o,$(notdir $(SRC)))
-DEP       = $(OBJ:.o=.d)
+
+# Osadzone źródła Lua kompilują się jako C, nie jako C++. Kompilacja ich jako
+# C++ zmieniłaby obsługę błędów interpretera z setjmp/longjmp na wyjątki, które
+# w Hydrze są wyłączone — czyli wywróciłaby cały mechanizm pcall.
+LUA_SRC   = $(wildcard ../src/lua/*.c)
+LUA_OBJ   = $(patsubst %.c,$(BUILD)/%.o,$(notdir $(LUA_SRC)))
+CFLAGS    = -std=c99 -O1 -g -Wall -Wextra -MMD -MP $(INCLUDES) $(EXTRA)
+
+DEP       = $(OBJ:.o=.d) $(LUA_OBJ:.o=.d)
 
 VPATH     = ../src/core:../src/hal:../src/hal/mock:../src/hal/host:../src/sense:../src/drivers/sense:\
-            ../src/net:../src/net/mock:../src/gfx:../src/ui:../src/ui/mock:../src/ui/lvgl:../src/motion:../src/shell:../src/diag:../src/util:../src/ota:.
+            ../src/net:../src/net/mock:../src/gfx:../src/gfx/sdl:../src/ui:../src/ui/mock:../src/ui/lvgl:../src/motion:../src/shell:../src/diag:../src/util:../src/ota:\
+            ../src/script:../src/minis:../src/minis/links:../src/media:../src/media/elements:../src/media/sdl:../src/arduboy:../src/stim:../src/lua:.
 
 .PHONY: docs all run asan tsan examples stub clean
 
@@ -64,8 +93,11 @@ $(BUILD):
 $(BUILD)/%.o: %.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(BIN): $(OBJ)
-	$(CXX) $(OBJ) $(LDFLAGS) -o $@
+$(BUILD)/%.o: %.c | $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BIN): $(OBJ) $(LUA_OBJ)
+	$(CXX) $(OBJ) $(LUA_OBJ) $(LDFLAGS) -o $@
 
 run: $(BIN)
 	@./$(BIN) $(FILTER)
@@ -93,8 +125,9 @@ SYNTAX_FLAGS = $(filter-out -MMD -MP,$(CXXFLAGS))
 examples:
 	@for f in $(EXAMPLES); do \
 		case "$$f" in \
-			*rover*) board=rover_s3 ;; \
-			*)       board=esp32s3_pico ;; \
+			*rover*)  board=rover_s3 ;; \
+			*native*) board=native ;; \
+			*)        board=esp32s3_pico ;; \
 		esac; \
 		printf '  %-40s (%s)\n' "$$f" "$$board"; \
 		$(CXX) $(SYNTAX_FLAGS) -fsyntax-only \
@@ -142,7 +175,7 @@ docs:
 	@echo "  SPRAWDZAM  docs/api.md"
 	@$(CXX) -std=c++17 -fsyntax-only -fno-exceptions -fno-rtti -Wall -Wextra \
 	  -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 \
-	  -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 \
+	  -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 \
 	  -DHYDRA_BOARD_HEADER='"hydra/boards/esp32s3_pico.hpp"' \
 	  -I../include ../docs/snippets.cpp
 	@echo "  Fragmenty dokumentacji zgodne z API."

@@ -21,7 +21,11 @@
 #include "hydra/core/Types.hpp"
 #include "hydra/hal/IAdc.hpp"
 #include "hydra/hal/IBus.hpp"
+#include "hydra/hal/IFileSystem.hpp"
 #include "hydra/hal/IGpio.hpp"
+#include "hydra/hal/ICamera.hpp"
+#include "hydra/hal/IDac.hpp"
+#include "hydra/hal/II2s.hpp"
 #include "hydra/hal/IPwm.hpp"
 #include "hydra/hal/IStorage.hpp"
 #include "hydra/hal/ITime.hpp"
@@ -35,9 +39,14 @@ struct Drivers {
     II2cBus*  i2c[2]  = {};
     ISpiBus*  spi[2]  = {};
     IUart*    uart[3] = {};
+    II2s*     i2s     = nullptr;
     IPwm*     pwm     = nullptr;
+    IDac*     dac     = nullptr;
+    ICamera*  camera  = nullptr;
     IAdc*     adc     = nullptr;
     IStorage* storage = nullptr;
+    /** System plików; na układzie dostarcza go projekt, na hoście — backend. */
+    IFileSystem* fs = nullptr;
     ITime*    time    = nullptr;
 
     ResetReason resetReason = ResetReason::Unknown;
@@ -60,9 +69,13 @@ public:
     static II2cBus&  i2c(u8 index = 0);
     static ISpiBus&  spi(u8 index = 0);
     static IUart&    uart(u8 index = 0);
+    static II2s&     i2s();
     static IPwm&     pwm();
+    static IDac&     dac();
+    static ICamera&  camera();
     static IAdc&     adc();
     static IStorage& storage();
+    static IFileSystem& fileSystem();
     static ITime&    time();
 
     // Czy backend dostarczył realny sterownik, czy akcesor zwróci zaślepkę.
@@ -70,9 +83,13 @@ public:
     static bool hasI2c(u8 index = 0);
     static bool hasSpi(u8 index = 0);
     static bool hasUart(u8 index = 0);
+    static bool hasI2s();
     static bool hasPwm();
+    static bool hasDac();
+    static bool hasCamera();
     static bool hasAdc();
     static bool hasStorage();
+    static bool hasFileSystem();
     static bool hasTime();
 
     /** Usuwa rejestrację. Wyłącznie do testów jednostkowych. */

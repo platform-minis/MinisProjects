@@ -44,6 +44,17 @@ namespace hydra {
 namespace hal {
 namespace arduino {
 
+#if HYDRA_PLAT_ESP32
+/**
+ * Kontroler I2S ESP32.
+ *
+ * Zwracany jako interfejs, nie jako typ konkretny: definicja siedzi
+ * w ArduinoI2s.cpp razem z nagłówkami ESP-IDF, a te nie mają prawa wejść
+ * do reszty backendu (reguła 2 z check_includes.sh).
+ */
+II2s& i2sBackend();
+#endif
+
 // ---------------------------------------------------------------------------
 
 class ArduinoGpio : public IGpio {
