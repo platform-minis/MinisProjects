@@ -50,6 +50,26 @@ public:
         Running,    ///< wywłaszczony po wyczerpaniu budżetu, czeka na wznowienie
         Done,       ///< funkcja wróciła normalnie
         Failed,     ///< błąd wykonania — treść w `error()`
+
+        /**
+         * Budżet wyczerpany, a wykonania **nie da się wznowić** — zostało
+         * przerwane i kolejne `jobBegin()` zacznie funkcję od początku.
+         *
+         * Ten stan istnieje, bo nie każda maszyna wirtualna umie zapisać
+         * wykonanie w połowie. Lua umie: `Job` trzyma wątek `lua_State`
+         * zakotwiczony w rejestrze i wznawia go dokładnie tam, gdzie stanął.
+         * WebAssembly w wasm3 nie umie — stos C jest spleciony z wywołaniami
+         * ogonowymi interpretera i nie ma czego zapisać.
+         *
+         * Obietnica frameworka zostaje dotrzymana w części, która naprawdę się
+         * liczy: **skrypt nie zawiesza urządzenia**. Traci się ciągłość
+         * przebiegu, nie panowanie nad czasem. `ScriptModule` liczy to jako
+         * wywłaszczenie, a nie błąd — bo błędem nie jest.
+         *
+         * Silnik Lua nigdy nie zwraca tego stanu; silnik WASM nigdy nie zwraca
+         * `Running`.
+         */
+        Exhausted,
     };
 
     virtual ~IScriptEngine() = default;

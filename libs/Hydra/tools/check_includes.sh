@@ -164,6 +164,38 @@ else
     printf '%s✓%s prywatne nagłówki backendu nie wyciekają do API\n' "$GREEN" "$OFF"
 fi
 
+# Ta sama reguła co dla Lua i z tego samego powodu: wasm3 jest biblioteką w C,
+# a `m3_config.h` ustala rozmiary stron kodu i tryb alokacji. Gdyby jej nagłówki
+# wchodziły w wielu miejscach, podniesienie wersji runtime'u albo zmiana profilu
+# pamięci oznaczałyby przeczesywanie drzewa.
+#
+# Wyjątki: src/wasm3/ to osadzone źródła włączające się nawzajem, a
+# src/script/WasmEngine.cpp jest jedynym plikiem wiążącym po stronie C++.
+hits=$(grep -rnE "^[[:space:]]*#[[:space:]]*include[[:space:]]*[<\"](wasm3|m3_)[^>\"]*\.h[>\"]" \
+        include src examples templates test 2>/dev/null \
+    | grep -vE '^src/wasm3/' \
+    | grep -v '^src/script/WasmEngine\.cpp' || true)
+
+if [ -n "$hits" ]; then
+    report "nagłówki wasm3 poza plikiem wiążącym (src/script/WasmEngine.cpp)" "$hits"
+else
+    printf '%s✓%s wasm3 widoczne tylko w WasmEngine.cpp\n' "$GREEN" "$OFF"
+fi
+
+# Kod aplikacji nie ma prawa zobaczyć typów wasm3 — API skryptów wystawia
+# `IScriptEngine`, żeby zmiana runtime'u nie przechodziła przez nagłówki.
+# Komentarze wygaszamy z tego samego powodu, co przy lua_State.
+hits=$(for f in $(grep -rlE 'IM3Runtime|IM3Module|IM3Function' include examples templates 2>/dev/null || true); do
+    sed -e 's|//.*||' -e 's|/\*.*\*/||' -e 's|^[[:space:]]*\*.*||' "$f" \
+        | grep -nE 'IM3Runtime|IM3Module|IM3Function' | sed "s|^|$f:|"
+done)
+
+if [ -n "$hits" ]; then
+    report "typy wasm3 wyciekły do API albo do kodu użytkownika" "$hits"
+else
+    printf '%s✓%s typy wasm3 nie wyciekają poza src/\n' "$GREEN" "$OFF"
+fi
+
 # --- Podsumowanie ----------------------------------------------------------
 
 echo

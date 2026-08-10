@@ -58,6 +58,8 @@ IScriptEngine::JobState LuaEngine::translate(Job::State state) {
         case Job::State::Done:    return JobState::Done;
         case Job::State::Failed:  return JobState::Failed;
     }
+    // `JobState::Exhausted` nie ma tu odpowiednika i mieć nie będzie: korutyna
+    // Lua zawsze daje się wznowić, więc wyczerpany budżet to `Running`.
     return JobState::Idle;
 }
 

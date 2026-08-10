@@ -173,6 +173,15 @@ void ScriptModule::step() {
             ++stats_.loopPreemptions;
             break;
 
+        case JobState::Exhausted:
+            // To samo, co wyżej, z jedną różnicą: silnik nie umiał zapisać
+            // wykonania, więc kolejny przebieg zacznie `loop()` od początku
+            // zamiast wznowić. Liczymy tak samo, bo z punktu widzenia modułu
+            // stało się to samo — skrypt oddał procesor, nie zawiódł.
+            ++stats_.loopPreemptions;
+            consecutiveErrors_ = 0;
+            break;
+
         case JobState::Done:
             ++stats_.loopRuns;
             consecutiveErrors_ = 0;

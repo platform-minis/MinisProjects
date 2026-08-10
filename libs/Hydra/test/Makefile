@@ -23,7 +23,7 @@ BUILD    ?= build/$(HOST_TAG)
 EXTRA    ?=
 BIN       = $(BUILD)/hydra_tests
 
-INCLUDES  = -I../include -I.
+INCLUDES  = -I../include -I../src/wasm3 -I.
 # Wyjątki i RTTI wyłączone tak samo jak w buildzie na MCU (rozdz. 11) —
 # inaczej testy nie sprawdzałyby tego samego kodu, co urządzenie.
 #
@@ -32,7 +32,7 @@ INCLUDES  = -I../include -I.
 # a reszta zostaje ze starym układem obiektu — objawem jest losowy SIGABRT,
 # nie błąd kompilacji.
 CXXFLAGS  = -std=c++17 -O1 -g -Wall -Wextra -Wshadow -Wno-unused-parameter \
-            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 \
+            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_SCRIPT_ENGINE_WASM=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 \
             -MMD -MP $(INCLUDES) $(EXTRA)
 LDFLAGS   = -lpthread $(EXTRA)
 
@@ -75,13 +75,22 @@ OBJ       = $(patsubst %.cpp,$(BUILD)/%.o,$(notdir $(SRC)))
 # w Hydrze są wyłączone — czyli wywróciłaby cały mechanizm pcall.
 LUA_SRC   = $(wildcard ../src/lua/*.c)
 LUA_OBJ   = $(patsubst %.c,$(BUILD)/%.o,$(notdir $(LUA_SRC)))
-CFLAGS    = -std=c99 -O1 -g -Wall -Wextra -MMD -MP $(INCLUDES) $(EXTRA)
 
-DEP       = $(OBJ:.o=.d) $(LUA_OBJ:.o=.d)
+# wasm3 też jest w C. `d_m3HydraHeap` przekierowuje jego alokacje na script::Heap
+# — bez tego wasm3 wołałby calloc przy każdym `reload()`, czyli w czasie pracy
+# urządzenia. -I../src/wasm3 jest potrzebne, bo jego pliki włączają się nawzajem
+# po samej nazwie.
+WASM3_SRC = $(wildcard ../src/wasm3/*.c)
+WASM3_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(notdir $(WASM3_SRC)))
+
+CFLAGS    = -std=c99 -O1 -g -Wall -Wextra -MMD -MP $(INCLUDES) -I../src/wasm3 \
+            -Dd_m3HydraHeap=1 $(EXTRA)
+
+DEP       = $(OBJ:.o=.d) $(LUA_OBJ:.o=.d) $(WASM3_OBJ:.o=.d)
 
 VPATH     = ../src/core:../src/hal:../src/hal/mock:../src/hal/host:../src/sense:../src/drivers/sense:\
             ../src/net:../src/net/mock:../src/gfx:../src/gfx/sdl:../src/ui:../src/ui/mock:../src/ui/lvgl:../src/motion:../src/shell:../src/diag:../src/util:../src/ota:\
-            ../src/script:../src/minis:../src/minis/links:../src/media:../src/media/elements:../src/media/sdl:../src/arduboy:../src/stim:../src/lua:.
+            ../src/script:../src/minis:../src/minis/links:../src/media:../src/media/elements:../src/media/sdl:../src/arduboy:../src/stim:../src/lua:../src/wasm3:.
 
 .PHONY: docs all run asan tsan examples stub clean
 
@@ -96,8 +105,8 @@ $(BUILD)/%.o: %.cpp | $(BUILD)
 $(BUILD)/%.o: %.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BIN): $(OBJ) $(LUA_OBJ)
-	$(CXX) $(OBJ) $(LUA_OBJ) $(LDFLAGS) -o $@
+$(BIN): $(OBJ) $(LUA_OBJ) $(WASM3_OBJ)
+	$(CXX) $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(LDFLAGS) -o $@
 
 run: $(BIN)
 	@./$(BIN) $(FILTER)

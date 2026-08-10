@@ -27,7 +27,7 @@ Zweryfikowane w kodzie, nie z pamięci:
 | Profil pamięciowy per platforma | ✅ jest | `Profile.hpp` (`HYDRA_SCRIPT_LARGE_PROFILE`) |
 | **Interfejs silnika** | ✅ **zrobione (faza 0)** | `IScriptEngine.hpp`, `LuaEngine`, `ScriptModule` trzyma `IScriptEngine*` |
 | **Dostarczanie skryptu przez sieć** | ✅ **zrobione (faza 1)** | `ScriptDelivery` — rozszerzenie `ext/script`, `ImageStore`, okres próbny |
-| **Cokolwiek WASM** | ❌ **brak** | grep `wamr\|wasm3\|iwasm` — pusto |
+| **Cokolwiek WASM** | ✅ **zrobione (faza 2)** | `src/wasm3/` v0.5.0 + `WasmEngine`, budżet wykonania, 18 testów |
 
 Dwie rzeczy warto powiedzieć wprost, bo zmieniają zakres pracy:
 
@@ -242,7 +242,7 @@ Trzy decyzje podjęte w trakcie:
 
 ---
 
-## Faza 2 — wasm3 jako pierwszy backend WASM
+## Faza 2 — wasm3 jako pierwszy backend WASM ✅ ZROBIONE
 
 wasm3 przed WAMR-em, bo jest mniejszy i prostszy do domknięcia — a domknięcie
 pierwszego backendu jest tym, co weryfikuje `IScriptEngine`. Reguła kciuka
