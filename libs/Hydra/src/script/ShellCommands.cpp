@@ -1,5 +1,5 @@
 /**
- * Hydra — komenda `lua` shella diagnostycznego.
+ * Hydra — komenda `script` shella diagnostycznego (alias: `lua`).
  */
 
 #include "hydra/core/Config.hpp"
@@ -17,12 +17,12 @@ namespace script {
 namespace {
 
 /**
- * Cel komendy. Moduł jest opcjonalny: `lua mem` i wykonywanie fragmentów mają
- * sens także wtedy, gdy interpreter został otwarty ręcznie, bez modułu.
+ * Cel komendy. Moduł jest opcjonalny: `script mem` i wykonywanie fragmentów
+ * mają sens także wtedy, gdy silnik został otwarty ręcznie, bez modułu.
  */
 struct Target {
-    Interp*       interp = nullptr;
-    ScriptModule* module = nullptr;
+    IScriptEngine* engine = nullptr;
+    ScriptModule*  module = nullptr;
 };
 
 Target gTarget{};
@@ -49,8 +49,8 @@ void joinArgv(int argc, char** argv, int from, char* out, size_t cap) {
     }
 }
 
-void printMemory(const Interp& interp, shell::Output& out) {
-    const auto m = interp.memory();
+void printMemory(const IScriptEngine& engine, shell::Output& out) {
+    const auto m = engine.memory();
     out.field("used", m.used);
     out.field("peak", m.peak);
     out.field("capacity", m.capacity);
@@ -64,6 +64,7 @@ void printMemory(const Interp& interp, shell::Output& out) {
 
 void printStats(const ScriptModule& module, shell::Output& out) {
     const auto s = module.stats();
+    if (module.engine() != nullptr) out.field("engine", module.engine()->name());
     out.field("cycles", s.cycles);
     out.field("loop-runs", s.loopRuns);
     out.field("loop-preemptions", s.loopPreemptions);
@@ -76,40 +77,46 @@ void printStats(const ScriptModule& module, shell::Output& out) {
 }
 
 /** Wykonuje fragment, kierując wyjście skryptu do shella. */
-Status runChunk(Interp& interp, const char* source, shell::Output& out) {
+Status runChunk(IScriptEngine& engine, const char* source, shell::Output& out) {
     setOutput([&out](const char* text, size_t len) {
         (void)len;
         out.writeLine(text);
     });
 
-    auto result = interp.doString(source, "=shell");
+    auto result = engine.eval(source, "=shell");
     flushOutput();
     resetOutput();
 
-    if (!result) out.writeLine(interp.error());
+    if (!result) {
+        // Silnik binarny odmawia z zasady, a nie z powodu błędu w kodzie —
+        // komunikat o „błędzie" wprowadzałby w błąd.
+        out.writeLine(result.error() == Err::NotSupported
+                          ? "silnik nie wykonuje fragmentow zrodlowych"
+                          : engine.error());
+    }
     return result;
 }
 
-Status cmdLua(int argc, char** argv, shell::Output& out) {
-    Interp* interp = gTarget.interp;
-    if (interp == nullptr || !interp->ready()) {
-        out.writeLine("interpreter nie jest otwarty");
+Status cmdScript(int argc, char** argv, shell::Output& out) {
+    IScriptEngine* engine = gTarget.engine;
+    if (engine == nullptr || !engine->ready()) {
+        out.writeLine("silnik skryptowy nie jest otwarty");
         return fail(Err::NotInitialized);
     }
 
     if (argc < 2) {
-        out.writeLine("uzycie: lua <kod> | lua mem | lua stat | lua gc | lua reload");
+        out.writeLine("uzycie: script <kod> | script mem | script stat | script gc | script reload");
         return ok();
     }
 
     if (strcmp(argv[1], "mem") == 0) {
-        printMemory(*interp, out);
+        printMemory(*engine, out);
         return ok();
     }
 
     if (strcmp(argv[1], "gc") == 0) {
-        const u32 before = interp->memory().used;
-        const u32 after  = interp->collect();
+        const u32 before = engine->memory().used;
+        const u32 after  = engine->collect();
         out.field("before", before);
         out.field("after", after);
         out.field("freed", before > after ? before - after : 0u);
@@ -131,18 +138,19 @@ Status cmdLua(int argc, char** argv, shell::Output& out) {
             return fail(Err::NotSupported);
         }
         auto result = gTarget.module->reload();
-        // Po przeładowaniu interpreter jest nowym obiektem stanu — wskaźnik
-        // w celu komendy dotyczy tego samego `Interp`, więc pozostaje ważny.
+        // Po przeładowaniu silnik jest tym samym obiektem z nowym stanem
+        // wewnętrznym, więc wskaźnik w celu komendy pozostaje ważny.
         if (!result) {
-            out.writeLine(gTarget.module->interp().error());
+            out.writeLine(engine->error());
             return result;
         }
         out.writeLine("skrypt wczytany od nowa");
         return ok();
     }
 
-    // Wszystko inne jest kodem Lua. Wiersz zaczynający się od `=` to skrót na
-    // wypisanie wartości wyrażenia — konwencja znana z samodzielnego `lua`.
+    // Wszystko inne jest kodem źródłowym. Wiersz zaczynający się od `=` to
+    // skrót na wypisanie wartości wyrażenia — konwencja znana z samodzielnego
+    // `lua` i dlatego zapisana przez `print(...)`.
     char source[HYDRA_SHELL_LINE_MAX + 16];
     if (argv[1][0] == '=') {
         char expr[HYDRA_SHELL_LINE_MAX];
@@ -151,23 +159,29 @@ Status cmdLua(int argc, char** argv, shell::Output& out) {
     } else {
         joinArgv(argc, argv, 1, source, sizeof(source));
     }
-    return runChunk(*interp, source, out);
+    return runChunk(*engine, source, out);
 }
 
 constexpr const char* kHelp =
-    "wykonaj kod Lua; podpolecenia: mem, stat, gc, reload";
+    "wykonaj kod skryptu; podpolecenia: mem, stat, gc, reload";
+
+/** `lua` zostaje aliasem — komenda jest starsza niż podział na silniki. */
+Status addCommands(shell::Shell& shell) {
+    HYDRA_CHECK(shell.add("script", kHelp, cmdScript));
+    return shell.add("lua", kHelp, cmdScript);
+}
 
 }  // namespace
 
-Status registerScriptCommands(shell::Shell& shell, Interp& interp) {
-    gTarget.interp = &interp;
+Status registerScriptCommands(shell::Shell& shell, IScriptEngine& engine) {
+    gTarget.engine = &engine;
     gTarget.module = nullptr;
-    return shell.add("lua", kHelp, cmdLua);
+    return addCommands(shell);
 }
 
 Status registerScriptCommands(shell::Shell& shell, ScriptModule& module) {
-    auto status    = shell.add("lua", kHelp, cmdLua);
-    gTarget.interp = &module.interp();
+    auto status    = addCommands(shell);
+    gTarget.engine = module.engine();
     gTarget.module = &module;
     return status;
 }

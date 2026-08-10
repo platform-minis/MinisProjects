@@ -2,20 +2,25 @@
 /**
  * Hydra — komendy shella dla podsystemu skryptów.
  *
- * Rejestruje jedną komendę `lua` z podpoleceniami. Wartość jest w tym, że
- * pozwala dotknąć działającego urządzenia bez debuggera i bez przekompilowania:
+ * Rejestruje komendę `script` z podpoleceniami. Wartość jest w tym, że pozwala
+ * dotknąć działającego urządzenia bez debuggera i bez przekompilowania:
  * sprawdzić stan zmiennej, wywołać funkcję, zobaczyć zużycie pamięci, wgrać
  * poprawkę.
  *
- *     lua print(counter)      -- wykonaj fragment w bieżącym stanie
- *     lua = 2 + 2             -- skrót: wypisz wartość wyrażenia
- *     lua mem                 -- zajętość puli i fragmentacja
- *     lua stat                -- statystyki modułu
- *     lua gc                  -- wymuś odśmiecanie
- *     lua reload              -- wczytaj skrypt od nowa
+ *     script print(counter)   -- wykonaj fragment w bieżącym stanie
+ *     script = 2 + 2          -- skrót: wypisz wartość wyrażenia
+ *     script mem              -- zajętość puli i fragmentacja
+ *     script stat             -- statystyki modułu
+ *     script gc               -- wymuś odśmiecanie
+ *     script reload           -- wczytaj skrypt od nowa
+ *
+ * `lua` zostaje aliasem: komenda jest starsza niż podział na silniki, a wpisany
+ * z palca skrót nie ma powodu przestać działać. Wykonywanie fragmentów wymaga
+ * silnika, który potrafi `eval()` — dla modułu binarnego kończy się odmową,
+ * a `mem`, `stat`, `gc` i `reload` działają niezależnie od silnika.
  *
  * Wyjście `print()` idzie na czas wykonania komendy do shella, a nie do logu —
- * bo kto pisze `lua print(x)`, chce zobaczyć wynik tam, gdzie pisał.
+ * bo kto pisze `script print(x)`, chce zobaczyć wynik tam, gdzie pisał.
  */
 
 #include "hydra/core/Expected.hpp"
@@ -28,13 +33,13 @@ namespace hydra {
 namespace script {
 
 /**
- * Rejestruje komendę `lua`. Moduł musi żyć dłużej niż shell.
- * Bez modułu (sam `Interp`) użyj wariantu niżej.
+ * Rejestruje komendę `script` (z aliasem `lua`). Moduł musi żyć dłużej niż
+ * shell i mieć zawołane `configure()` — stamtąd bierze się silnik.
  */
 Status registerScriptCommands(shell::Shell& shell, ScriptModule& module);
 
-/** Wariant bez modułu — dostępne są `mem`, `gc` i wykonywanie fragmentów. */
-Status registerScriptCommands(shell::Shell& shell, Interp& interp);
+/** Wariant bez modułu — bez `stat` i `reload`, reszta działa. */
+Status registerScriptCommands(shell::Shell& shell, IScriptEngine& engine);
 
 }  // namespace script
 }  // namespace hydra

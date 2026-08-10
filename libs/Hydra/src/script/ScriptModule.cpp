@@ -12,6 +12,8 @@
 
 #include "hydra/script/ScriptModule.hpp"
 
+#include <string.h>
+
 #include "hydra/core/EventBus.hpp"
 #include "hydra/core/Events.hpp"
 #include "hydra/core/Log.hpp"
@@ -24,6 +26,9 @@ namespace script {
 Status ScriptModule::configure(const Config& cfg) {
     if (state() == ModuleState::Running) return fail(Err::Busy);
     cfg_ = cfg;
+    // Silnik zapamiętany już tutaj, a nie dopiero w `onInit()`: komendy shella
+    // rejestruje się zwykle przed startem aplikacji i muszą mieć w co celować.
+    engine_ = cfg.engine;
     return ok();
 }
 
@@ -32,68 +37,84 @@ Status ScriptModule::configure(const Config& cfg) {
 // ---------------------------------------------------------------------------
 
 Status ScriptModule::onInit() {
-    Interp::Config icfg{};
-    icfg.libs      = cfg_.libs;
-    icfg.pool      = cfg_.pool;
-    icfg.poolBytes = cfg_.poolBytes;
-    HYDRA_CHECK(interp_.open(icfg));
-    HYDRA_CHECK(installBindings(interp_, cfg_.bindings));
+    if (engine_ == nullptr) {
+        HYDRA_LOGE("brak silnika skryptowego w konfiguracji");
+        return fail(Err::BadArgument);
+    }
+
+    HYDRA_CHECK(engine_->open(cfg_.pool, cfg_.poolBytes));
+    HYDRA_CHECK(engine_->installBindings(cfg_.bindings));
 
     if (cfg_.source != nullptr) {
-        auto loaded = loadSource(cfg_.source, cfg_.chunkName);
+        auto loaded = loadImage(cfg_.source, cfg_.sourceBytes, cfg_.chunkName);
         if (!loaded) {
             // Błąd w skrypcie nie ma prawa zablokować startu urządzenia.
-            // Moduł wstaje bez skryptu, log mówi dlaczego, a `lua reload`
+            // Moduł wstaje bez skryptu, log mówi dlaczego, a `script reload`
             // w shellu pozwala poprawić rzecz bez przekompilowania wsadu.
-            HYDRA_LOGE("skrypt nie wczytany: %s", interp_.error());
+            HYDRA_LOGE("skrypt nie wczytany: %s", engine_->error());
         }
     }
 
-    const auto mem = interp_.memory();
-    HYDRA_LOGI("interpreter gotowy, pamiec %u/%u B", mem.used, mem.capacity);
+    const auto mem = engine_->memory();
+    HYDRA_LOGI("silnik %s gotowy, pamiec %u/%u B", engine_->name(), mem.used, mem.capacity);
     return ok();
 }
 
-Status ScriptModule::loadSource(const char* source, const char* chunkName) {
+Status ScriptModule::loadImage(const void* image, size_t bytes, const char* name) {
     loaded_            = false;
     consecutiveErrors_ = 0;
     loopStopped_       = false;
 
-    HYDRA_CHECK(interp_.doString(source, chunkName));
+    HYDRA_CHECK(engine_->load(image, bytes, name));
     loaded_ = true;
 
-    if (cfg_.callSetup && interp_.hasFunction("setup")) {
-        auto r = interp_.callGlobal("setup");
+    if (cfg_.callSetup && engine_->hasFunction("setup")) {
+        auto r = engine_->call("setup");
         if (!r) {
-            HYDRA_LOGE("setup(): %s", interp_.error());
+            HYDRA_LOGE("setup(): %s", engine_->error());
             return r;
         }
     }
     return ok();
 }
 
+CByteSpan ScriptModule::image() const {
+    if (cfg_.source == nullptr) return CByteSpan{};
+    if (cfg_.sourceBytes > 0) {
+        return CByteSpan{static_cast<const u8*>(cfg_.source), cfg_.sourceBytes};
+    }
+    // Tekst: długość razem z zerem kończącym, żeby wynik dało się podać wprost
+    // do `reload()` — silnik tekstowy wymaga terminatora i sprawdza go.
+    const char* text = static_cast<const char*>(cfg_.source);
+    return CByteSpan{cfg_.source ? static_cast<const u8*>(cfg_.source) : nullptr,
+                     strlen(text) + 1};
+}
+
 Status ScriptModule::reload() {
     if (cfg_.source == nullptr) return fail(Err::NotFound);
-    return reload(cfg_.source, cfg_.chunkName);
+    return reload(cfg_.source, cfg_.sourceBytes, cfg_.chunkName);
 }
 
 Status ScriptModule::reload(const char* source, const char* chunkName) {
-    if (source == nullptr) return fail(Err::BadArgument);
-    job_.cancel();
-    removeBindings(interp_);
-    interp_.close();
+    return reload(static_cast<const void*>(source), 0, chunkName);
+}
 
-    Interp::Config icfg{};
-    icfg.libs      = cfg_.libs;
-    icfg.pool      = cfg_.pool;
-    icfg.poolBytes = cfg_.poolBytes;
-    HYDRA_CHECK(interp_.open(icfg));
-    HYDRA_CHECK(installBindings(interp_, cfg_.bindings));
+Status ScriptModule::reload(const void* image, size_t bytes, const char* name) {
+    if (image == nullptr) return fail(Err::BadArgument);
+    if (engine_ == nullptr) return fail(Err::NotInitialized);
 
-    cfg_.source    = source;
-    cfg_.chunkName = chunkName;
-    stats_         = Stats{};
-    return loadSource(source, chunkName);
+    engine_->jobCancel();
+    engine_->removeBindings();
+    engine_->close();
+
+    HYDRA_CHECK(engine_->open(cfg_.pool, cfg_.poolBytes));
+    HYDRA_CHECK(engine_->installBindings(cfg_.bindings));
+
+    cfg_.source      = image;
+    cfg_.sourceBytes = bytes;
+    cfg_.chunkName   = name;
+    stats_           = Stats{};
+    return loadImage(image, bytes, name);
 }
 
 Status ScriptModule::onStart() {
@@ -108,9 +129,11 @@ Status ScriptModule::onStart() {
 
 void ScriptModule::onStop() {
     task_.stopAndWait();
-    job_.cancel();
-    removeBindings(interp_);
-    interp_.close();
+    if (engine_ != nullptr) {
+        engine_->jobCancel();
+        engine_->removeBindings();
+        engine_->close();
+    }
     loaded_ = false;
 }
 
@@ -119,43 +142,45 @@ void ScriptModule::onStop() {
 // ---------------------------------------------------------------------------
 
 void ScriptModule::step() {
-    if (!interp_.ready()) return;
+    if (engine_ == nullptr || !engine_->ready()) return;
     ++stats_.cycles;
 
     // Najpierw zdarzenia: skrypt reagujący na sygnał ma to zrobić w tym samym
     // przebiegu, w którym sygnał dotarł, a nie po zakończeniu bieżącej porcji
     // `loop()`, która może zająć jeszcze kilka przebiegów.
     if (cfg_.bindings.event && cfg_.signalsPerCycle > 0) {
-        stats_.signalsHandled += dispatchSignals(interp_, cfg_.signalsPerCycle);
+        stats_.signalsHandled += engine_->dispatchSignals(cfg_.signalsPerCycle);
     }
 
     if (!loaded_ || !cfg_.callLoop || loopStopped_) return;
 
-    if (job_.state() != Job::State::Running) {
-        if (!interp_.hasFunction("loop")) return;
-        auto started = job_.start(interp_, "loop");
+    using JobState = IScriptEngine::JobState;
+
+    if (engine_->jobState() != JobState::Running) {
+        if (!engine_->hasFunction("loop")) return;
+        auto started = engine_->jobBegin("loop");
         if (!started) return;
     }
 
-    const auto before = job_.steps();
-    const auto result = job_.resume(cfg_.budget);
-    stats_.instructions += job_.steps() - before;
+    const auto before = engine_->jobSteps();
+    const auto result = engine_->jobStep(cfg_.budget);
+    stats_.instructions += engine_->jobSteps() - before;
 
     switch (result) {
-        case Job::State::Running:
+        case JobState::Running:
             // Budżet wyczerpany w środku `loop()`. To nie jest błąd — to jest
             // dokładnie ten mechanizm, dla którego budżet istnieje.
             ++stats_.loopPreemptions;
             break;
 
-        case Job::State::Done:
+        case JobState::Done:
             ++stats_.loopRuns;
             consecutiveErrors_ = 0;
             break;
 
-        case Job::State::Failed:
+        case JobState::Failed:
             ++stats_.loopErrors;
-            HYDRA_LOGE("loop(): %s", interp_.error());
+            HYDRA_LOGE("loop(): %s", engine_->error());
             if (cfg_.maxConsecutiveErrors > 0 &&
                 ++consecutiveErrors_ >= cfg_.maxConsecutiveErrors) {
                 loopStopped_ = true;
@@ -164,7 +189,7 @@ void ScriptModule::step() {
             }
             break;
 
-        case Job::State::Idle:
+        case JobState::Idle:
             break;
     }
 }

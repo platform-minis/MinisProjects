@@ -125,6 +125,24 @@
 #endif
 
 /**
+ * Silniki skryptowe, spośród których wybiera `ScriptModule`.
+ *
+ * Moduł nie zna żadnego z nich — dostaje `IScriptEngine*` w konfiguracji.
+ * Flagi decydują wyłącznie o tym, czyj kod w ogóle trafia do wsadu: budowa
+ * z samym WebAssembly nie ma powodu ciągnąć źródeł Lua i odwrotnie.
+ *
+ * Lua domyślnie włączona, bo była pierwsza i większość projektów jej używa.
+ * Nic nie stoi na przeszkodzie, żeby oba silniki istniały naraz — kosztuje to
+ * tyle, ile oba runtime'y.
+ */
+#ifndef HYDRA_SCRIPT_ENGINE_LUA
+#  define HYDRA_SCRIPT_ENGINE_LUA 1
+#endif
+#ifndef HYDRA_SCRIPT_ENGINE_WASM
+#  define HYDRA_SCRIPT_ENGINE_WASM 0
+#endif
+
+/**
  * Moduł IoT platformy MyCastle.
  *
  * Niezależny od HYDRA_ENABLE_NET, choć zwykle chodzą razem: węzeł na końcu

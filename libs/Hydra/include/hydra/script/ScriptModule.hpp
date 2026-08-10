@@ -28,17 +28,17 @@
 #include "hydra/core/IModule.hpp"
 #include "hydra/core/Task.hpp"
 #include "hydra/script/Bindings.hpp"
-#include "hydra/script/Script.hpp"
+#include "hydra/script/IScriptEngine.hpp"
 
 #if HYDRA_ENABLE_SCRIPT
 
 /**
  * Stos taska skryptu w słowach.
  *
- * Wyraźnie więcej niż HYDRA_DEFAULT_STACK, bo maszyna wirtualna Lua schodzi
- * w rekurencję stosu C przy metametodach i funkcjach natywnych. Górną granicę
- * tej rekurencji ustala LUAI_MAXCCALLS w `src/lua/hydra_lua_conf.h` i te dwie
- * liczby trzeba zmieniać razem.
+ * Wyraźnie więcej niż HYDRA_DEFAULT_STACK, bo maszyna wirtualna schodzi
+ * w rekurencję stosu C — Lua przy metametodach i funkcjach natywnych. Górną
+ * granicę tej rekurencji ustala LUAI_MAXCCALLS w `src/lua/hydra_lua_conf.h`
+ * i te dwie liczby trzeba zmieniać razem.
  */
 #ifndef HYDRA_SCRIPT_STACK_WORDS
 #  if HYDRA_SCRIPT_LARGE_PROFILE
@@ -66,19 +66,36 @@ public:
          */
         u32 budget = 20000;
 
-        Interp::Libs libs{};
-        BindingSet   bindings{};
+        /**
+         * Silnik wykonujący skrypt. Wymagany — moduł nie ma silnika domyślnego
+         * i nie tworzy żadnego sam, bo to oznaczałoby alokację i wybór za
+         * użytkownika. Musi przeżyć moduł.
+         *
+         *     script::LuaEngine engine;
+         *     cfg.engine = &engine;
+         */
+        IScriptEngine* engine = nullptr;
+
+        BindingSet bindings{};
 
         /**
          * Własna pula pamięci skryptu. Pusta oznacza pulę domyślną
          * (HYDRA_SCRIPT_HEAP_BYTES) — wystarczającą wszędzie tam, gdzie
-         * interpreter jest jeden, czyli praktycznie zawsze.
+         * silnik jest jeden, czyli praktycznie zawsze.
          */
         void*  pool      = nullptr;
         size_t poolBytes = 0;
 
-        /** Źródło skryptu. Musi przeżyć moduł — zwykle stała w pamięci programu. */
-        const char* source = nullptr;
+        /**
+         * Jednostka wykonywalna: źródło skryptu albo moduł binarny. Musi
+         * przeżyć moduł — zwykle stała w pamięci programu.
+         */
+        const void* source = nullptr;
+        /**
+         * Długość obrazu. Zero oznacza tekst zakończony zerem — tak przychodzi
+         * skrypt z pamięci programu i dlatego jest wartością domyślną.
+         */
+        size_t sourceBytes = 0;
         /** Nazwa fragmentu w komunikatach błędów. */
         const char* chunkName = "=main";
 
@@ -108,17 +125,34 @@ public:
     Status configure(const Config& cfg);
 
     /**
-     * Podmienia skrypt bez restartu urządzenia: zamyka interpreter, otwiera
-     * nowy i wczytuje podane źródło. Stan poprzedniego skryptu przepada —
-     * to jest podmiana, a nie doładowanie.
+     * Podmienia skrypt bez restartu urządzenia: zamyka silnik, otwiera nowy
+     * i wczytuje podane źródło. Stan poprzedniego skryptu przepada — to jest
+     * podmiana, a nie doładowanie.
      */
     Status reload(const char* source, const char* chunkName = "=main");
 
-    /** Wczytuje od nowa źródło podane w konfiguracji. */
+    /** Wariant dla obrazu binarnego, gdzie długości nie da się wyliczyć. */
+    Status reload(const void* image, size_t bytes, const char* name);
+
+    /** Wczytuje od nowa obraz podany w konfiguracji. */
     Status reload();
 
-    Interp&       interp() { return interp_; }
-    const Interp& interp() const { return interp_; }
+    /**
+     * Silnik podany w konfiguracji. Ważny od `configure()`, nie dopiero od
+     * `init()` — komendy shella rejestruje się zwykle wcześniej.
+     * Null, dopóki `configure()` nie zostało zawołane.
+     */
+    IScriptEngine*       engine() { return engine_; }
+    const IScriptEngine* engine() const { return engine_; }
+
+    /**
+     * Obraz obecnie wczytany — ten z konfiguracji albo ten, który podmienił
+     * `reload()`. Dla tekstu długość obejmuje zero kończące, więc wynik nadaje
+     * się wprost na argument `reload()`.
+     *
+     * Pusty span, dopóki nic nie wczytano.
+     */
+    CByteSpan image() const;
 
     /** Jeden przebieg pętli. Wystawiony publicznie do testów. */
     void step();
@@ -133,13 +167,12 @@ protected:
     void   onStop() override;
 
 private:
-    Status loadSource(const char* source, const char* chunkName);
+    Status loadImage(const void* image, size_t bytes, const char* name);
 
-    Interp interp_{};
-    Job    job_{};
-    Task   task_{};
-    Config cfg_{};
-    Stats  stats_{};
+    IScriptEngine* engine_ = nullptr;
+    Task           task_{};
+    Config         cfg_{};
+    Stats          stats_{};
     u8     consecutiveErrors_ = 0;
     bool   loopStopped_       = false;
     bool   loaded_            = false;

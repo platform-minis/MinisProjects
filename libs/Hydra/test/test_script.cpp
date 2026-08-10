@@ -20,6 +20,7 @@
 #include "hydra/hal/Mock.hpp"
 #include "hydra/script/Bindings.hpp"
 #include "hydra/script/Heap.hpp"
+#include "hydra/script/LuaEngine.hpp"
 #include "hydra/script/ScriptModule.hpp"
 
 using namespace hydra;
@@ -503,8 +504,10 @@ TEST("Script: modul wola setup raz i loop w kazdym przebiegu") {
         "function setup() setups = setups + 1 end\n"
         "function loop() loops = loops + 1 end\n";
 
+    LuaEngine    engine;
     ScriptModule module;
     ScriptModule::Config cfg{};
+    cfg.engine    = &engine;
     cfg.source    = kSource;
     cfg.pool      = nullptr;
     REQUIRE(module.configure(cfg).has_value());
@@ -513,7 +516,7 @@ TEST("Script: modul wola setup raz i loop w kazdym przebiegu") {
     for (int i = 0; i < 5; ++i) module.step();
 
     captureOutput();
-    CHECK(module.interp().doString("print(setups, loops)").has_value());
+    CHECK(engine.interp().doString("print(setups, loops)").has_value());
     CHECK_STR(gCaptured, "1\t5");
     resetOutput();
 
@@ -532,8 +535,10 @@ TEST("Script: modul wylacza loop po serii bledow zamiast zalewac log") {
 
     static const char* kSource = "function loop() error('ciagle to samo') end\n";
 
+    LuaEngine            engine;
     ScriptModule         module;
     ScriptModule::Config cfg{};
+    cfg.engine               = &engine;
     cfg.source               = kSource;
     cfg.maxConsecutiveErrors = 3;
     REQUIRE(module.configure(cfg).has_value());
@@ -557,21 +562,23 @@ TEST("Script: modul podmienia skrypt bez restartu") {
     static const char* kFirst  = "wersja = 1\nfunction loop() end\n";
     static const char* kSecond = "wersja = 2\nfunction loop() end\n";
 
+    LuaEngine            engine;
     ScriptModule         module;
     ScriptModule::Config cfg{};
+    cfg.engine = &engine;
     cfg.source = kFirst;
     REQUIRE(module.configure(cfg).has_value());
     REQUIRE(module.init().has_value());
 
     captureOutput();
-    CHECK(module.interp().doString("print(wersja)").has_value());
+    CHECK(engine.interp().doString("print(wersja)").has_value());
     CHECK_STR(gCaptured, "1");
     resetOutput();
 
     REQUIRE(module.reload(kSecond).has_value());
 
     captureOutput();
-    CHECK(module.interp().doString("print(wersja)").has_value());
+    CHECK(engine.interp().doString("print(wersja)").has_value());
     CHECK_STR(gCaptured, "2");
     resetOutput();
 
@@ -586,15 +593,17 @@ TEST("Script: modul wstaje mimo bledu w skrypcie") {
 
     static const char* kBroken = "function loop( -- brak domkniecia\n";
 
+    LuaEngine            engine;
     ScriptModule         module;
     ScriptModule::Config cfg{};
+    cfg.engine = &engine;
     cfg.source = kBroken;
     REQUIRE(module.configure(cfg).has_value());
 
     // Uszkodzony skrypt nie ma prawa zablokować startu urządzenia — moduł
-    // wstaje, a poprawkę da się wgrać przez `lua reload` w shellu.
+    // wstaje, a poprawkę da się wgrać przez `script reload` w shellu.
     CHECK(module.init().has_value());
-    CHECK(module.interp().ready());
+    CHECK(engine.interp().ready());
 
     module.step();
     CHECK_EQ(static_cast<int>(module.stats().loopRuns), 0);

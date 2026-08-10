@@ -37,6 +37,7 @@
 
 #include "hydra/core/LogSinks.hpp"
 #include "hydra/hal/Board.hpp"
+#include "hydra/script/LuaEngine.hpp"
 #include "hydra/script/ScriptModule.hpp"
 
 HYDRA_LOG_MODULE("demo");
@@ -140,13 +141,18 @@ const script::Reg kBoardApi[] = {
  * Moduł skryptowy z dołożoną własną biblioteką `board`.
  *
  * Dziedziczenie po `ScriptModule` jest tu po to, żeby wpiąć się między
- * otwarcie interpretera a wczytanie skryptu — funkcje natywne muszą istnieć,
+ * otwarcie silnika a wczytanie skryptu — funkcje natywne muszą istnieć,
  * zanim skrypt je zawoła.
+ *
+ * Silnik jest polem modułu, a nie obiektem globalnym: ten moduł działa
+ * wyłącznie na Lua, bo `registerLib()` jest funkcją interpretera Lua, a nie
+ * częścią umowy `IScriptEngine`. Trzymanie go obok jest tego uczciwym zapisem.
  */
 class DemoScript : public script::ScriptModule {
 public:
     DemoScript() {
         Config cfg;
+        cfg.engine   = &engine_;
         cfg.source   = kScript;
         cfg.periodMs = 250;
         // Budżet instrukcji na przebieg. Ten skrypt zużywa ich kilkaset,
@@ -163,9 +169,12 @@ protected:
         // Uwaga na kolejność: `ScriptModule::onInit()` wczytuje skrypt i woła
         // `setup()`, więc biblioteka `board` musi trafić do interpretera
         // wcześniej. Rejestrujemy ją przed wczytaniem, przeładowując skrypt.
-        HYDRA_CHECK(interp().registerLib("board", kBoardApi));
+        HYDRA_CHECK(engine_.interp().registerLib("board", kBoardApi));
         return reload();
     }
+
+private:
+    script::LuaEngine engine_;
 };
 
 DemoScript  gScript;
