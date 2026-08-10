@@ -55,6 +55,8 @@
 
 #if HYDRA_SCRIPT_ENGINE_WASM
 
+#include <string.h>
+
 #include "hydra/script/IScriptEngine.hpp"
 
 /**
@@ -109,6 +111,16 @@ public:
     u32    dispatchSignals(u32 maxSignals) override;
 
     Status load(const void* image, size_t bytes, const char* name) override;
+
+    /**
+     * Przenośny bajtkod tak, kod AOT nie — ten wariant wymaga runtime'u
+     * z kompilacją z wyprzedzeniem, a wasm3 go nie ma. Odmowa jest tu
+     * właściwa: obraz AOT dla obcego celu nie jest „gorszy", tylko
+     * niewykonywalny.
+     */
+    bool acceptsVariant(const char* variant) const override {
+        return IScriptEngine::acceptsVariant(variant) || strcmp(variant, "wasm") == 0;
+    }
     bool   hasFunction(const char* fn) const override;
     Status call(const char* fn) override;
 

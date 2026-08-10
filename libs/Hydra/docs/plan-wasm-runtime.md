@@ -295,7 +295,7 @@ urządzenia** — czyli ta sama gwarancja, którą dziś daje Lua.
 
 ---
 
-## Faza 3 — WAMR + AOT dla platform z zapasem
+## Faza 3 — WAMR + AOT dla platform z zapasem ⚠️ CZĘŚCIOWO
 
 ### Zadania
 
@@ -321,11 +321,69 @@ urządzenia** — czyli ta sama gwarancja, którą dziś daje Lua.
    (interpretowany `.wasm` vs AOT dla konkretnego celu) — pole w metadanych
    ramki, dodane od razu, żeby nie łamać formatu później.
 
-### Kryterium ukończenia
+### Zrobione
+
+| Rzecz | Gdzie |
+|---|---|
+| Wybór silnika przez profil | `Profile.hpp` — `HYDRA_SCRIPT_WASM_ENGINE`, wasm3/WAMR |
+| Pula WASM w profilu, nie w pliku silnika | `Profile.hpp` — `HYDRA_WASM_HEAP_BYTES` |
+| **Wariant obrazu w kanale dostarczania** | `IScriptEngine::acceptsVariant()`, `ScriptDelivery` |
+| Silnik ogłaszany w `status` | serwer wie, czy przysłać źródło, bajtkod czy AOT |
+
+Wariant sprawdzany jest **przed** transferem: serwer nie wie, co stoi po drugiej
+stronie, a kod AOT zbudowany dla Xtensy nie jest na Cortex-M „gorszy" — jest
+niewykonywalny. To była zapowiedziana konsekwencja fazy 3 dla formatu ramki
+i lepiej ją mieć teraz niż łamać protokół później.
+
+### Czego nie zrobiono i dlaczego — WAMR nie mieści się w tym modelu osadzania
+
+Zmierzone, nie oszacowane:
+
+| | wasm3 | WAMR (minimalny interpreter) |
+|---|---|---|
+| Wiersze `.c` | ~14 500 | ~80 000 (+15 000 na AOT) |
+| Pliki | 32 | 391 w `core/` |
+| Warstwa platformy | brak — czyste C99 | osobny katalog na system, wybierany **przez CMake** |
+| Konfiguracja | `#ifndef` w jednym nagłówku | `wamr.cmake` + kilkadziesiąt opcji |
+
+Trzy przeszkody, każda osobno wystarczająca:
+
+1. **PlatformIO kompiluje całe `src/`.** 80–95 tysięcy wierszy WAMR trafiałoby
+   do budowy każdego projektu, także tego bez skryptów, a usuwał je dopiero
+   konsolidator. Lua (~30 k) i wasm3 (~14,5 k) już tam są i to jest granica
+   rozsądku.
+2. **Warstwę platformy WAMR wybiera CMake, nie preprocesor.** Hydra celuje
+   w ESP32 (shim `esp-idf`), RP2040/RP2350 i STM32 (żaden z dostarczonych
+   shimów nie pasuje do budowy pod frameworkiem Arduino) oraz host
+   (`darwin`/`linux`). wasm3 nie potrzebował żadnego, bo jest przenośnym C99.
+3. **`vendor_lua.sh` zakłada płaską listę plików.** Przy WAMR to nie jest
+   „dłuższa lista", tylko inny sposób budowania.
+
+Dobra wiadomość: `WASM_ENABLE_INSTRUCTION_METERING` w WAMR **istnieje**, więc
+łatka licznika — najtrudniejsza część fazy 2 — przy WAMR w ogóle nie byłaby
+potrzebna.
+
+### Trzy drogi do wyboru
+
+1. **WAMR jako biblioteka PlatformIO obok Hydry**, nie w `src/`. Wtedy CMake
+   WAMR-a robi swoje, Hydra tylko linkuje i dokłada `WasmEngineWamr`.
+   Koszt: druga zależność w `library.json`, ale zero wpływu na projekty,
+   które WAMR-a nie chcą.
+2. **AOT bez WAMR-a na urządzeniu** — `wamrc` w kontenerze budującym produkuje
+   obraz, ale wykonuje go... nic, bo wasm3 AOT nie umie. Ta droga wymaga (1).
+3. **Zostać przy wasm3.** Reguła kciuka mówi „poniżej 256 kB wasm3", a ESP32-S3
+   z PSRAM to jedyna płytka w `modules.json`, która przekracza próg. Pytanie
+   brzmi, czy zysk na szybkości uzasadnia drugi runtime w drzewie.
+
+Rekomendacja: **(1), ale dopiero po fazie 4**. AssemblyScript w Studio daje
+realną zmianę doświadczenia użytkownika; WAMR daje szybsze wykonanie tego
+samego, a wąskim gardłem dziś nie jest szybkość interpretera.
+
+### Kryterium ukończenia — otwarte
 
 Ten sam moduł `.wasm` uruchomiony na wasm3 (RP2350) i WAMR (ESP32-S3), bez
-zmiany ani jednego bajtu modułu. To jest test tego, czy powierzchnia importów
-jest naprawdę wspólna.
+zmiany ani jednego bajtu modułu. Nieosiągalne, dopóki nie zapadnie decyzja
+o sposobie osadzenia WAMR.
 
 ---
 

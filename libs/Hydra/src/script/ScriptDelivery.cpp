@@ -138,6 +138,18 @@ void ScriptDelivery::opBegin(const char* id, json::JsonView params) {
         return respondErr(id, "bad_request", "skrot nie jest szesnastkowy");
     }
 
+    // Wariant obrazu sprawdzamy **przed** transferem, a nie po. Serwer nie wie,
+    // co stoi po drugiej stronie, a kod skompilowany z wyprzedzeniem dla obcego
+    // celu nie jest gorszy — jest niewykonywalny. Lepiej odmówić teraz niż
+    // przesłać kilkadziesiąt kilobajtów i wywalić się na `commit`.
+    char variant[24] = {};
+    if (!params.get("variant").asString(variant, sizeof(variant))) variant[0] = '\0';
+
+    auto* engine = cfg_.script->engine();
+    if (engine == nullptr || !engine->acceptsVariant(variant)) {
+        return respondErr(id, "variant", "silnik nie wykona obrazu w tym wariancie");
+    }
+
     // Nazwa jest wygodą diagnostyczną: pojawia się w komunikatach o błędach
     // skryptu, więc „=v7" mówi tam więcej niż „=remote".
     if (!params.get("name").asString(imageName_, sizeof(imageName_))) {
@@ -223,6 +235,10 @@ void ScriptDelivery::opStatus(const char* id) {
     util::Sha256::toHex(cfg_.store->active().sha, hex, sizeof(hex));
 
     out.beginObject();
+    // Nazwa silnika mówi serwerowi, co ma przysłać: „lua" chce źródła,
+    // „wasm3" przenośnego bajtkodu. Bez tego nadawca musiałby zgadywać.
+    out.key("engine").value(cfg_.script->engine() != nullptr
+                                ? cfg_.script->engine()->name() : "none");
     out.key("receiving").value(cfg_.store->receiving());
     out.key("received").value(static_cast<i32>(cfg_.store->received()));
     out.key("expected").value(static_cast<i32>(cfg_.store->expected()));

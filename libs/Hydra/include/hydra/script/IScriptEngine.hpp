@@ -110,6 +110,27 @@ public:
      */
     virtual Status load(const void* image, size_t bytes, const char* name) = 0;
 
+    /**
+     * Czy silnik wykona obraz w podanym wariancie.
+     *
+     * Wariant opisuje **postać obrazu**, a nie jego treść:
+     *
+     *   - `"src"`    — tekst źródłowy; wykonuje go interpreter języka,
+     *   - `"wasm"`   — przenośny bajtkod WebAssembly, ten sam dla każdej płytki,
+     *   - `"aot:<cel>"` — kod skompilowany z wyprzedzeniem dla konkretnego celu.
+     *
+     * Pytanie ma sens dopiero wtedy, gdy obraz przychodzi z sieci: serwer nie
+     * wie, co stoi po drugiej stronie, a wgranie kodu AOT zbudowanego dla
+     * Xtensy na rdzeń Cortex-M kończy się urządzeniem, które nie wstaje.
+     * Odmowa przed transferem jest tu jedyną sensowną odpowiedzią.
+     *
+     * Pusty wariant albo `nullptr` znaczy „nadawca nie powiedział" i jest
+     * przyjmowany — tak wygląda obraz podany wprost z pamięci programu.
+     */
+    virtual bool acceptsVariant(const char* variant) const {
+        return variant == nullptr || variant[0] == '\0';
+    }
+
     virtual bool   hasFunction(const char* fn) const = 0;
 
     /**

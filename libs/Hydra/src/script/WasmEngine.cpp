@@ -12,6 +12,11 @@
 
 #include "hydra/script/WasmEngine.hpp"
 
+#if HYDRA_SCRIPT_WASM_ENGINE != HYDRA_WASM_ENGINE_WASM3
+#  error "HYDRA_SCRIPT_WASM_ENGINE: zaimplementowany jest wylacznie wasm3. \
+WAMR wymaga innej drogi osadzenia niz vendor_wasm3.sh — patrz docs/plan-wasm-runtime.md, faza 3."
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
@@ -36,20 +41,7 @@ extern Heap* gWasmHeap;
 
 namespace {
 
-/**
- * Pula domyślna silnika WASM.
- *
- * Osobna od puli Lua i o własnym rozmiarze: wasm3 trzyma w niej skompilowany
- * kod modułu i pamięć liniową, więc apetyt ma inny niż interpreter źródła.
- */
-#ifndef HYDRA_WASM_HEAP_BYTES
-#  if HYDRA_SCRIPT_LARGE_PROFILE
-#    define HYDRA_WASM_HEAP_BYTES (128 * 1024)
-#  else
-#    define HYDRA_WASM_HEAP_BYTES (48 * 1024)
-#  endif
-#endif
-
+/** Pula domyślna silnika WASM. Rozmiar ustala `Profile.hpp`. */
 alignas(8) u8 gDefaultWasmPool[HYDRA_WASM_HEAP_BYTES];
 bool gDefaultWasmPoolTaken = false;
 

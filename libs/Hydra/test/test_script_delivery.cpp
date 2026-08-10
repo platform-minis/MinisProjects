@@ -506,3 +506,54 @@ TEST("Dostarczanie: nieznana operacja dostaje odpowiedz z bledem") {
     CHECK(has(rig.link.text, "\"ok\":false"));
     CHECK(has(rig.link.text, "\"code\":\"unsupported\""));
 }
+
+// ---------------------------------------------------------------------------
+// Wariant obrazu — przygotowanie pod kompilację z wyprzedzeniem
+// ---------------------------------------------------------------------------
+
+TEST("Dostarczanie: obraz w obcym wariancie jest odrzucany przed transferem") {
+    static const char* kBuiltin = "wersja = 1\nfunction loop() end\n";
+
+    Rig rig{kBuiltin};
+    REQUIRE(rig.bringUp().has_value());
+
+    // Kod skompilowany z wyprzedzeniem dla Xtensy nie jest „gorszy" dla
+    // interpretera Lua — jest niewykonywalny. Odmowa musi paść przed
+    // przesłaniem kilkudziesięciu kilobajtów, a nie na `commit`.
+    rig.request("begin",
+                "{\"size\":32,\"variant\":\"aot:xtensa-esp32s3\","
+                "\"sha256\":\"0000000000000000000000000000000000000000000000000000000000000000\"}");
+
+    CHECK(has(rig.link.text, "\"ok\":false"));
+    CHECK(has(rig.link.text, "\"code\":\"variant\""));
+    CHECK(!rig.store.receiving());
+}
+
+TEST("Dostarczanie: wariant zrodlowy przechodzi u silnika Lua") {
+    static const char* kBuiltin = "wersja = 1\nfunction loop() end\n";
+    static const char* kNowy    = "wersja = 2\nfunction loop() end\n";
+
+    Rig rig{kBuiltin};
+    REQUIRE(rig.bringUp().has_value());
+
+    char hex[2 * util::kSha256Size + 1];
+    shaHexOf(kNowy, hex, sizeof(hex));
+
+    char params[256];
+    snprintf(params, sizeof(params), "{\"size\":%u,\"variant\":\"src\",\"sha256\":\"%s\"}",
+             static_cast<unsigned>(strlen(kNowy) + 1), hex);
+    rig.request("begin", params);
+
+    CHECK(has(rig.link.text, "\"ok\":true"));
+    CHECK(rig.store.receiving());
+}
+
+TEST("Dostarczanie: status podaje silnik, zeby serwer wiedzial co przyslac") {
+    static const char* kBuiltin = "wersja = 1\nfunction loop() end\n";
+
+    Rig rig{kBuiltin};
+    REQUIRE(rig.bringUp().has_value());
+
+    rig.request("status");
+    CHECK(has(rig.link.text, "\"engine\":\"lua\""));
+}

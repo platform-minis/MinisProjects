@@ -23,6 +23,8 @@
 
 #if HYDRA_SCRIPT_ENGINE_LUA
 
+#include <string.h>
+
 #include "hydra/script/IScriptEngine.hpp"
 #include "hydra/script/Script.hpp"
 
@@ -59,6 +61,12 @@ public:
     u32    dispatchSignals(u32 maxSignals) override;
 
     Status load(const void* image, size_t bytes, const char* name) override;
+
+    /** Lua wykonuje tekst źródłowy — i tylko jego. */
+    bool acceptsVariant(const char* variant) const override {
+        return IScriptEngine::acceptsVariant(variant) || strcmp(variant, "src") == 0;
+    }
+
     bool   hasFunction(const char* fn) const override { return interp_.hasFunction(fn); }
     Status call(const char* fn) override { return interp_.callGlobal(fn); }
 
