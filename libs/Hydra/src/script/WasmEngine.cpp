@@ -202,34 +202,7 @@ struct Import {
     M3RawCall        fn;
 };
 
-const Import kCoreImports[] = {
-    {"millis", "i()",  wasmMillis},
-    {"micros", "i()",  wasmMicros},
-    {"delay",  "v(i)", wasmDelay},
-};
-
-const Import kLogImports[] = {
-    {"log", "v(iii)", wasmLog},
-};
-
-const Import kGpioImports[] = {
-    {"gpio_mode",   "i(ii)", wasmGpioMode},
-    {"gpio_write",  "i(ii)", wasmGpioWrite},
-    {"gpio_read",   "i(i)",  wasmGpioRead},
-    {"gpio_toggle", "i(i)",  wasmGpioToggle},
-};
-
-const Import kAdcImports[] = {
-    {"adc_raw", "i(i)", wasmAdcRaw},
-    {"adc_mv",  "i(i)", wasmAdcMv},
-};
-
-const Import kPwmImports[] = {
-    {"pwm_setup",   "i(ii)", wasmPwmSetup},
-    {"pwm_duty",    "i(ii)", wasmPwmDuty},
-    {"pwm_us",      "i(ii)", wasmPwmUs},
-    {"pwm_release", "i(i)",  wasmPwmRelease},
-};
+#include "wasm_imports.inc"
 
 /**
  * Wiąże grupę z modułem.
@@ -328,11 +301,11 @@ Status WasmEngine::linkBindings() {
     auto* module = static_cast<IM3Module>(module_);
     if (module == nullptr) return fail(Err::NotInitialized);
 
-    if (bindings_.core) HYDRA_CHECK(linkGroup(module, kCoreImports, 3));
-    if (bindings_.log)  HYDRA_CHECK(linkGroup(module, kLogImports, 1));
-    if (bindings_.gpio) HYDRA_CHECK(linkGroup(module, kGpioImports, 4));
-    if (bindings_.adc)  HYDRA_CHECK(linkGroup(module, kAdcImports, 2));
-    if (bindings_.pwm)  HYDRA_CHECK(linkGroup(module, kPwmImports, 4));
+    // Pętla po wygenerowanej tablicy zamiast wiersza na grupę: dołożenie grupy
+    // do `wasm_bindings.def` nie może wymagać pamiętania o dopisaniu jej tutaj.
+    for (const ImportGroup& g : kImportGroups) {
+        if (bindings_.*(g.flag)) HYDRA_CHECK(linkGroup(module, g.imports, g.count));
+    }
 
     return ok();
 }

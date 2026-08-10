@@ -188,6 +188,8 @@ docs:
 	  -DHYDRA_BOARD_HEADER='"hydra/boards/esp32s3_pico.hpp"' \
 	  -I../include ../docs/snippets.cpp
 	@echo "  Fragmenty dokumentacji zgodne z API."
+	@echo "  SPRAWDZAM  powierzchnia importow WASM"
+	@python3 ../tools/gen_bindings.py --check
 
 clean:
 	@rm -rf build build-asan build-tsan

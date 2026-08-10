@@ -1,0 +1,23 @@
+{
+  "targets": {
+    "release": {
+      "outFile": "build/module.wasm",
+      "optimizeLevel": 3,
+      "shrinkLevel": 2,
+      "converge": true,
+      "noAssert": true
+    },
+    "debug": {
+      "outFile": "build/module.wasm",
+      "debug": true
+    }
+  },
+  "options": {
+    "bindings": [],
+    "exportRuntime": false,
+    "runtime": "stub",
+    "initialMemory": 1,
+    "maximumMemory": 2,
+    "use": ["abort="]
+  }
+}

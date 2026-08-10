@@ -1,0 +1,48 @@
+# Hydra — powierzchnia importów widziana przez moduł WebAssembly.
+#
+# JEDNO ŹRÓDŁO PRAWDY. Z tego pliku powstają:
+#
+#   src/script/wasm_imports.inc          — tablice rejestracyjne dla WasmEngine.cpp
+#   templates/assemblyscript/assembly/hydra.ts  — deklaracje dla AssemblyScript
+#   docs/wasm-imports.md                 — tabela do dokumentacji
+#
+# Powód istnienia: bez tego lista funkcji żyłaby w trzech miejscach, w dwóch
+# językach i w dwóch repozytoriach. Rozjazd nie objawiłby się błędem kompilacji,
+# tylko modułem, który linkuje się i wywraca przy pierwszym wywołaniu — czyli
+# najgorszym rodzajem usterki, jaki da się wyprodukować.
+#
+# Typy AssemblyScript są **wyprowadzane z sygnatury wasm3**, a nie zapisywane
+# osobno. Dzięki temu nie mogą się rozjechać nawet w obrębie tego pliku.
+#
+# Regeneracja:  tools/gen_bindings.py
+# Sprawdzenie:  tools/gen_bindings.py --check   (dla CI)
+#
+# ---------------------------------------------------------------------------
+# Format: grupa | nazwa | sygnatura | funkcja C++ | nazwy argumentów | opis
+# ---------------------------------------------------------------------------
+#
+# Sygnatura w notacji wasm3: znak wyniku, potem argumenty w nawiasie.
+#   v — void, i — i32, I — i64, f — f32, F — f64
+#
+# Napisy przekazuje się parą (offset w pamięci liniowej, długość) — pamięć
+# modułu jest jego własną przestrzenią adresową i wskaźnik hosta nic by tam
+# nie znaczył.
+
+core | millis | i()   | wasmMillis | | Czas od startu urządzenia w milisekundach.
+core | micros | i()   | wasmMicros | | Czas od startu urządzenia w mikrosekundach.
+core | delay  | v(i)  | wasmDelay  | ms | Usypia task skryptu. Nie zatrzymuje reszty systemu.
+
+log  | log | v(iii) | wasmLog | level, ptr, len | Wpis do logu. Poziom 0–4 jak `LogLevel`; tekst jako (offset, długość).
+
+gpio | gpio_mode   | i(ii) | wasmGpioMode   | pin, mode | Tryb pinu wg `hal::PinMode`: 0 in, 1 in_pullup, 2 in_pulldown, 3 out, 4 out_od, 5 analog. Zwraca 1 przy powodzeniu.
+gpio | gpio_write  | i(ii) | wasmGpioWrite  | pin, value | Ustawia stan wyjścia. Zwraca 1 przy powodzeniu.
+gpio | gpio_read   | i(i)  | wasmGpioRead   | pin | Stan pinu: 0, 1 albo -1 przy błędzie.
+gpio | gpio_toggle | i(i)  | wasmGpioToggle | pin | Zmienia stan wyjścia na przeciwny. Zwraca 1 przy powodzeniu.
+
+adc  | adc_raw | i(i) | wasmAdcRaw | pin | Surowy odczyt przetwornika; -1 przy błędzie.
+adc  | adc_mv  | i(i) | wasmAdcMv  | pin | Odczyt w miliwoltach po kalibracji; -1 przy błędzie.
+
+pwm  | pwm_setup   | i(ii) | wasmPwmSetup   | pin, freqHz | Konfiguruje kanał PWM. Zwraca 1 przy powodzeniu.
+pwm  | pwm_duty    | i(ii) | wasmPwmDuty    | pin, permille | Wypełnienie w promilach (0–1000).
+pwm  | pwm_us      | i(ii) | wasmPwmUs      | pin, us | Szerokość impulsu w mikrosekundach — sterowanie serwem.
+pwm  | pwm_release | i(i)  | wasmPwmRelease | pin | Zwalnia kanał PWM.

@@ -387,7 +387,7 @@ o sposobie osadzenia WAMR.
 
 ---
 
-## Faza 4 — AssemblyScript w Hydra Studio
+## Faza 4 — AssemblyScript w Hydra Studio ⚠️ CZĘŚCIOWO (strona Hydry gotowa)
 
 Tu jest cała dźwignia: `asc` to czysty JS/WASM, więc kompiluje się
 **w przeglądarce**. Użytkownik nie instaluje nic — a dziś budowanie idzie przez
@@ -412,6 +412,38 @@ Tu jest cała dźwignia: `asc` to czysty JS/WASM, więc kompiluje się
 
 4. **`docs/studio.md`** — nowa sekcja obok „Budowa dla maszyny, na której stoi
    przeglądarka".
+
+### Zrobione — strona Hydry
+
+| Rzecz | Gdzie |
+|---|---|
+| **Jedno źródło prawdy dla powierzchni importów** | `tools/wasm_bindings.def` |
+| Generator trzech artefaktów | `tools/gen_bindings.py` |
+| Tablice rejestracyjne C++ | `src/script/wasm_imports.inc` (generowane) |
+| Deklaracje AssemblyScript | `templates/assemblyscript/assembly/hydra.ts` (generowane) |
+| Tabela do dokumentacji | `docs/wasm-imports.md` (generowane) |
+| Szablon modułu + `asconfig.json` + README | `templates/assemblyscript/` |
+| Strażnik rozjazdu w bramce `make docs` | `gen_bindings.py --check` |
+
+To jest ten element, o którym plan mówił, że **na pewno zgnije**, jeśli zrobić
+go ręcznie — i który miał powstać już w fazie 2. Powstał teraz. Typy
+AssemblyScript są **wyprowadzane z sygnatury wasm3**, a nie zapisywane osobno,
+więc nie mogą się rozjechać nawet w obrębie pliku definicji.
+
+Strażnik jest sprawdzony w obie strony: zmiana `.def` bez regeneracji zatrzymuje
+`make docs` z listą nieaktualnych plików i kodem wyjścia 1.
+
+`WasmEngine::linkBindings()` chodzi teraz pętlą po wygenerowanej tablicy grup,
+zamiast mieć wiersz na grupę — dołożenie grupy do `.def` nie wymaga pamiętania
+o dopisaniu jej w silniku.
+
+### Zostało — strona MyCastle
+
+Kompilacja w przeglądarce i wpięcie w interfejs. Wymaga pracy w drugim
+repozytorium: `asc` w bundlu `packages/hydra-studio`, kompilacja w Web Workerze,
+wynik prosto do kanału `ext/script` z fazy 1, log z urządzenia z powrotem
+do Studia. Fundament po stronie Hydry jest gotowy — deklaracje, szablon
+i protokół są na miejscu i opisane w `templates/assemblyscript/README.md`.
 
 ---
 
