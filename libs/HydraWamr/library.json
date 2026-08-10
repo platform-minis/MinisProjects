@@ -1,0 +1,55 @@
+{
+  "name": "HydraWamr",
+  "version": "2.4.5",
+  "description": "WebAssembly Micro Runtime (WAMR) w konfiguracji dla Hydry: wyłącznie interpreter klasyczny, z licznikiem instrukcji, bez AOT/JIT/GC/WASI/wątków. Osobna biblioteka, żeby nie trafiać do budowy projektów, które WebAssembly nie używają.",
+  "keywords": ["wasm", "webassembly", "wamr", "iwasm", "hydra"],
+  "license": "Apache-2.0",
+  "frameworks": ["arduino"],
+  "platforms": ["espressif32"],
+  "headers": ["wasm_export.h"],
+  "build": {
+    "srcDir": "src",
+    "includeDir": "src",
+    "libArchive": true,
+    "flags": [
+      "-Isrc/core",
+      "-Isrc/core/iwasm/include",
+      "-Isrc/core/iwasm/common",
+      "-Isrc/core/iwasm/interpreter",
+      "-Isrc/core/shared/platform/include",
+      "-Isrc/core/shared/platform/esp-idf",
+      "-Isrc/core/shared/mem-alloc",
+      "-Isrc/core/shared/utils",
+
+      "-DBH_PLATFORM_ESP_IDF",
+      "-DBUILD_TARGET_XTENSA",
+
+      "-DWASM_ENABLE_INTERP=1",
+      "-DWASM_ENABLE_FAST_INTERP=0",
+      "-DWASM_ENABLE_AOT=0",
+      "-DWASM_ENABLE_JIT=0",
+      "-DWASM_ENABLE_GC=0",
+      "-DWASM_ENABLE_LIBC_BUILTIN=0",
+      "-DWASM_ENABLE_LIBC_WASI=0",
+      "-DWASM_ENABLE_MULTI_MODULE=0",
+      "-DWASM_ENABLE_SHARED_MEMORY=0",
+      "-DWASM_ENABLE_THREAD_MGR=0",
+
+      "-DWASM_ENABLE_INSTRUCTION_METERING=1",
+
+      "-DBH_MALLOC=wasm_runtime_malloc",
+      "-DBH_FREE=wasm_runtime_free"
+    ],
+    "srcFilter": [
+      "+<core/iwasm/common/*.c>",
+      "+<core/iwasm/common/arch/*.c>",
+      "+<core/iwasm/interpreter/*.c>",
+      "+<core/shared/mem-alloc/*.c>",
+      "+<core/shared/mem-alloc/ems/*.c>",
+      "+<core/shared/utils/*.c>",
+      "+<core/shared/platform/esp-idf/*.c>",
+      "-<core/shared/platform/darwin/*>",
+      "-<core/shared/platform/common/*>"
+    ]
+  }
+}
