@@ -302,7 +302,7 @@ urządzenia** — czyli ta sama gwarancja, którą dziś daje Lua.
 
 ---
 
-## Faza 3 — WAMR + AOT dla platform z zapasem ⚠️ CZĘŚCIOWO
+## Faza 3 — WAMR + AOT dla platform z zapasem ✅ WAMR ZROBIONY (AOT nie)
 
 ### Zadania
 
@@ -370,7 +370,54 @@ Dobra wiadomość: `WASM_ENABLE_INSTRUCTION_METERING` w WAMR **istnieje**, więc
 łatka licznika — najtrudniejsza część fazy 2 — przy WAMR w ogóle nie byłaby
 potrzebna.
 
-### Trzy drogi do wyboru
+### Wybrana droga: WAMR jako osobna biblioteka ✅
+
+`libs/HydraWamr` — osobny pakiet PlatformIO, `libs/Hydra/tools/vendor_wamr.sh`
+odtwarza osadzone drzewo. `WasmEngineWamr` implementuje `IScriptEngine`;
+`test_script_wamr.cpp` uruchamia **te same moduły `.wasm`**, co testy wasm3.
+
+**697 przypadków, 3910 asercji, 0 błędów pod ASAN i TSAN.**
+
+Sześć rzeczy, które wyszły dopiero przy budowie i uruchomieniu — żadnej nie
+dało się przewidzieć z dokumentacji:
+
+1. **`BH_MALLOC`/`BH_FREE` muszą wskazywać na alokator WAMR-a.** Runtime
+   sprawdza to makrem i przerywa komunikatem, który nie mówi, czego brakuje.
+2. **Nagłówki AOT i `compilation` są potrzebne mimo wyłączonego AOT** —
+   `wasm_memory.c` włącza `aot_runtime.h` bezwarunkowo. Klon z pełnym
+   repozytorium tego nie pokazuje; wyszło przy budowie z drzewa osadzonego.
+3. **Tablica importów nie może być `const`** — WAMR sortuje ją w miejscu
+   (`qsort` w `wasm_native.c`). Stałe dane to natychmiastowa wywrotka.
+4. **Sprzętowa kontrola granic musi być wyłączona** (`WASM_DISABLE_HW_BOUND_CHECK`).
+   Używa sygnałów i alternatywnego stosu; przy drugim otwarciu runtime'u kładła
+   się na „Failed to init signal alternate stack". Na MCU i tak nie ma MMU.
+5. **`invokeNative_general.c` nie przenosi poprawnie argumentów f32** —
+   `event_emit` wywracał się na arm64. Trzeba wariantu w assemblerze, a na
+   macOS wariantu Mach-O (`invokeNative_osx_universal.s`) z definicją
+   `BH_PLATFORM_DARWIN`, bo pliki ELF-owe mają dyrektywy, których tamtejszy
+   asembler nie zna.
+6. **WAMR toleruje nierozwiązany import** — ostrzega przy tworzeniu instancji
+   i wywraca się dopiero przy wywołaniu, podczas gdy wasm3 odmawia od razu.
+   Różnicę domknęliśmy jawnie: `load()` przechodzi po `wasm_runtime_get_import_type`
+   i odrzuca moduł z niepodpiętym importem. Zachowanie ma być takie samo na obu
+   silnikach, a nie „prawie takie samo".
+
+Przy okazji powstał `src/script/WasmApi.hpp`: treść importów wspólna dla obu
+runtime'ów. wasm3 i WAMR podają argumenty zupełnie inaczej, więc bez tego
+byłyby dwie implementacje `gpio_write` i dwie okazje do rozjazdu — a rozjazd
+tutaj oznacza moduł, który przy tym samym bajtkodzie robi co innego na dwóch
+płytkach.
+
+### Czego nadal nie ma
+
+- **AOT.** Wymaga `wamrc` w kontenerze budującym i `WASM_ENABLE_AOT=1`
+  w bibliotece. Protokół jest przygotowany — `variant: "aot:<cel>"` przechodzi
+  przez kanał dostarczania i jest odrzucany przez silniki, które go nie wykonają.
+- **Warstwa ESP-IDF jest nieprzetestowana.** Pliki są osadzone, konfiguracja
+  napisana, ale bez toolchaina Espressifa nie dało się jej sprawdzić. Pierwsze
+  `pio run` dla ESP32 należy traktować jako część pracy.
+
+### Trzy drogi rozważane wcześniej
 
 1. **WAMR jako biblioteka PlatformIO obok Hydry**, nie w `src/`. Wtedy CMake
    WAMR-a robi swoje, Hydra tylko linkuje i dokłada `WasmEngineWamr`.

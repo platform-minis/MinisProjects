@@ -141,6 +141,13 @@
 #ifndef HYDRA_SCRIPT_ENGINE_WASM
 #  define HYDRA_SCRIPT_ENGINE_WASM 0
 #endif
+/**
+ * Silnik WebAssembly na WAMR. Wymaga osobnej biblioteki `HydraWamr`
+ * w `lib_deps` — jej źródła świadomie nie leżą w Hydrze.
+ */
+#ifndef HYDRA_SCRIPT_ENGINE_WAMR
+#  define HYDRA_SCRIPT_ENGINE_WAMR 0
+#endif
 
 /**
  * Moduł IoT platformy MyCastle.

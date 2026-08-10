@@ -41,16 +41,23 @@
  * zabrać pamięci pętli sterowania, więc na małej płytce dostaje mniejszy
  * runtime, a nie mniejszy budżet czasu.
  *
- * **Dziś zaimplementowany jest wyłącznie wasm3.** Stała istnieje, bo wybór
- * silnika ma być zmianą konfiguracji, a nie zmianą kodu — a próba wybrania
- * WAMR ma skończyć się błędem kompilacji z wyjaśnieniem, nie cichym
- * podstawieniem czegoś innego.
+ * Stała **ustawia domyślnie** odpowiednią flagę `HYDRA_SCRIPT_ENGINE_WASM`
+ * albo `HYDRA_SCRIPT_ENGINE_WAMR`. Nie jest wyborem wyłącznym: obie flagi da
+ * się włączyć naraz i wtedy oba silniki są dostępne jako typy. Na urządzeniu
+ * nie ma to sensu — płaci się dwa razy — ale w testach pozwala sprawdzić ten
+ * sam moduł na obu maszynach w jednej binarce, a to jest jedyny sposób, żeby
+ * zauważyć, że zaczęły się różnić.
  */
 #define HYDRA_WASM_ENGINE_WASM3 1
 #define HYDRA_WASM_ENGINE_WAMR  2
 
 #ifndef HYDRA_SCRIPT_WASM_ENGINE
 #  define HYDRA_SCRIPT_WASM_ENGINE HYDRA_WASM_ENGINE_WASM3
+#endif
+
+#if HYDRA_SCRIPT_WASM_ENGINE == HYDRA_WASM_ENGINE_WAMR
+#  undef HYDRA_SCRIPT_ENGINE_WAMR
+#  define HYDRA_SCRIPT_ENGINE_WAMR 1
 #endif
 
 /**

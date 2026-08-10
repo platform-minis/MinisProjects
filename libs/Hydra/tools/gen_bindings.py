@@ -4,7 +4,8 @@
 Czyta `tools/wasm_bindings.def` i wytwarza z niego trzy pliki, które inaczej
 musiałyby być pisane ręcznie w dwóch językach i dwóch repozytoriach:
 
-    src/script/wasm_imports.inc          tablice rejestracyjne dla C++
+    src/script/wasm_imports.inc          tablice rejestracyjne dla wasm3
+    src/script/wamr_imports.inc          tablice rejestracyjne dla WAMR
     templates/assemblyscript/assembly/hydra.ts   deklaracje dla AssemblyScript
     docs/wasm-imports.md                 tabela do dokumentacji
 
@@ -27,6 +28,7 @@ DEF_FILE = ROOT / "tools" / "wasm_bindings.def"
 
 OUT_CPP = ROOT / "src" / "script" / "wasm_imports.inc"
 OUT_DTS = ROOT / "templates" / "assemblyscript" / "assembly" / "hydra.ts"
+OUT_WAMR = ROOT / "src" / "script" / "wamr_imports.inc"
 OUT_DOC = ROOT / "docs" / "wasm-imports.md"
 
 BANNER_CPP = "// Wygenerowane przez tools/gen_bindings.py z tools/wasm_bindings.def.\n// Nie edytuj ręcznie — zmiany przepadną przy regeneracji.\n"
@@ -124,6 +126,52 @@ def render_cpp(entries) -> str:
     return "".join(out)
 
 
+def wamr_signature(entry) -> str:
+    """Notacja WAMR: argumenty w nawiasie, wynik po nim — odwrotnie niż wasm3.
+
+    Rozjazd tych dwóch zapisów jest dokładnie tym rodzajem usterki, dla którego
+    ten generator istnieje: `"i(ii)"` i `"(ii)i"` wyglądają podobnie, a runtime
+    milczy i wywraca się dopiero przy wywołaniu.
+    """
+    args = "".join(entry.args)
+    result = "" if entry.result == "v" else entry.result
+    return f"({args}){result}"
+
+
+def render_wamr(entries) -> str:
+    out = [BANNER_CPP, "\n"]
+    for group, items in groups(entries).items():
+        # NIE `const`: WAMR sortuje tablicę importów w miejscu (`qsort`
+        # w wasm_native.c), więc stałe dane oznaczają natychmiastową wywrotkę.
+        out.append(f"NativeSymbol k{group.capitalize()}WamrImports[] = {{\n")
+        width = max(len(e.name) for e in items) + 4
+        fnw = max(len(e.cpp) for e in items) + 8
+        for e in items:
+            n = f'"{e.name}",'
+            fn = f"reinterpret_cast<void*>(wamr_{e.cpp}),"
+            sig = f'"{wamr_signature(e)}",'
+            out.append(f"    {{{n:<{width}}{fn:<{fnw + 26}}{sig} nullptr}},\n")
+        out.append("};\n\n")
+
+    out.append("/**\n")
+    out.append(" * Grupa importów WAMR wraz z liczebnością.\n")
+    out.append(" *\n")
+    out.append(" * Tablice celowo nie są `const`: WAMR sortuje je w miejscu przy\n")
+    out.append(" * rejestracji, a zapis do stałych danych kończy się wywrotką.\n")
+    out.append(" */\n")
+    out.append("struct WamrImportGroup {\n")
+    out.append("    NativeSymbol* imports;\n")
+    out.append("    u32           count;\n")
+    out.append("    bool BindingSet::*flag;\n")
+    out.append("};\n\n")
+    out.append("const WamrImportGroup kWamrImportGroups[] = {\n")
+    for group, items in groups(entries).items():
+        table = f"k{group.capitalize()}WamrImports"
+        out.append(f"    {{{table}, {len(items)}, &BindingSet::{group}}},\n")
+    out.append("};\n")
+    return "".join(out)
+
+
 def render_dts(entries) -> str:
     out = [BANNER_TS, "\n"]
     out.append("//\n")
@@ -178,7 +226,8 @@ def render_doc(entries) -> str:
     return "".join(out)
 
 
-TARGETS = [(OUT_CPP, render_cpp), (OUT_DTS, render_dts), (OUT_DOC, render_doc)]
+TARGETS = [(OUT_CPP, render_cpp), (OUT_WAMR, render_wamr),
+           (OUT_DTS, render_dts), (OUT_DOC, render_doc)]
 
 
 def main() -> int:
@@ -206,7 +255,7 @@ def main() -> int:
         print(f"\033[32m✓\033[0m powierzchnia importów aktualna ({len(entries)} funkcji)")
         return 0
 
-    print(f"\033[32m✓\033[0m wygenerowano {len(TARGETS)} pliki z {len(entries)} funkcji")
+    print(f"\033[32m✓\033[0m wygenerowano {len(TARGETS)} plikow z {len(entries)} funkcji")
     for path, _ in TARGETS:
         print(f"    {path.relative_to(ROOT)}")
     return 0

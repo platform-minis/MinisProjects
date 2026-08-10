@@ -12,11 +12,6 @@
 
 #include "hydra/script/WasmEngine.hpp"
 
-#if HYDRA_SCRIPT_WASM_ENGINE != HYDRA_WASM_ENGINE_WASM3
-#  error "HYDRA_SCRIPT_WASM_ENGINE: zaimplementowany jest wylacznie wasm3. \
-WAMR wymaga innej drogi osadzenia niz vendor_wasm3.sh — patrz docs/plan-wasm-runtime.md, faza 3."
-#endif
-
 #include <stdio.h>
 #include <string.h>
 

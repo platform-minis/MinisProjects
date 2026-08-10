@@ -23,7 +23,7 @@ BUILD    ?= build/$(HOST_TAG)
 EXTRA    ?=
 BIN       = $(BUILD)/hydra_tests
 
-INCLUDES  = -I../include -I../src/wasm3 -I.
+INCLUDES  = -I../include -I../src/wasm3 -I../../HydraWamr/src/core/iwasm/include -I.
 # Wyjątki i RTTI wyłączone tak samo jak w buildzie na MCU (rozdz. 11) —
 # inaczej testy nie sprawdzałyby tego samego kodu, co urządzenie.
 #
@@ -32,7 +32,7 @@ INCLUDES  = -I../include -I../src/wasm3 -I.
 # a reszta zostaje ze starym układem obiektu — objawem jest losowy SIGABRT,
 # nie błąd kompilacji.
 CXXFLAGS  = -std=c++17 -O1 -g -Wall -Wextra -Wshadow -Wno-unused-parameter \
-            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_SCRIPT_ENGINE_WASM=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 \
+            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_SCRIPT_ENGINE_WASM=1 -DHYDRA_SCRIPT_ENGINE_WAMR=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 \
             -MMD -MP $(INCLUDES) $(EXTRA)
 LDFLAGS   = -lpthread $(EXTRA)
 
@@ -83,6 +83,39 @@ LUA_OBJ   = $(patsubst %.c,$(BUILD)/%.o,$(notdir $(LUA_SRC)))
 WASM3_SRC = $(wildcard ../src/wasm3/*.c)
 WASM3_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(notdir $(WASM3_SRC)))
 
+# WAMR mieszka w osobnej bibliotece (libs/HydraWamr), nie w src/ Hydry — patrz
+# jej VENDOR.md. Testy budują go wprost ze źródeł, żeby dało się sprawdzić oba
+# runtime'y w jednej binarce; to jedyny sposób, żeby zauważyć, że zaczęły się
+# różnić na tym samym bajtkodzie.
+WAMR_ROOT = ../../HydraWamr/src
+WAMR_SRC  = $(shell find $(WAMR_ROOT) -name '*.c' -not -path '*/esp-idf/*' \
+              -not -name 'invokeNative_general.c' 2>/dev/null)
+# macOS: wariant uniwersalny (Mach-O). Linux: plik właściwy dla architektury.
+WAMR_ASM  = $(WAMR_ROOT)/core/iwasm/common/arch/invokeNative_$(if $(filter Darwin,$(shell uname -s)),osx_universal,$(if $(filter aarch64,$(shell uname -m)),aarch64,em64)).s
+WAMR_ASM_OBJ = $(BUILD)/wamr_invokeNative.o
+WAMR_OBJ  = $(patsubst %.c,$(BUILD)/wamr_%.o,$(notdir $(WAMR_SRC)))
+
+WAMR_INC  = -I$(WAMR_ROOT)/core -I$(WAMR_ROOT)/core/iwasm/include \
+            -I$(WAMR_ROOT)/core/iwasm/common -I$(WAMR_ROOT)/core/iwasm/interpreter \
+            -I$(WAMR_ROOT)/core/shared/platform/include \
+            -I$(WAMR_ROOT)/core/shared/platform/darwin \
+            -I$(WAMR_ROOT)/core/shared/mem-alloc -I$(WAMR_ROOT)/core/shared/utils
+
+# BH_MALLOC/BH_FREE muszą wskazywać na alokator WAMR-a — runtime sprawdza to
+# makrem i przerywa budowę komunikatem, który nie mówi, czego brakuje.
+# BUILD_TARGET musi zgadzać się z architekturą — od niego zależy między innymi
+# wybór ścieżki wywołania funkcji natywnej.
+WAMR_ARCH = $(if $(filter arm64 aarch64,$(shell uname -m)),AARCH64,X86_64)
+WAMR_DEF  = -DBH_PLATFORM_DARWIN -DBUILD_TARGET_$(WAMR_ARCH) \
+            -DWASM_ENABLE_INTERP=1 -DWASM_ENABLE_FAST_INTERP=0 \
+            -DWASM_ENABLE_AOT=0 -DWASM_ENABLE_JIT=0 -DWASM_ENABLE_GC=0 \
+            -DWASM_ENABLE_INSTRUCTION_METERING=1 \
+            -DWASM_ENABLE_LIBC_BUILTIN=0 -DWASM_ENABLE_LIBC_WASI=0 \
+            -DWASM_ENABLE_MULTI_MODULE=0 -DWASM_ENABLE_SHARED_MEMORY=0 \
+            -DWASM_ENABLE_THREAD_MGR=0 \
+            -DWASM_DISABLE_HW_BOUND_CHECK=1 -DWASM_DISABLE_STACK_HW_BOUND_CHECK=1 \
+            -DBH_MALLOC=wasm_runtime_malloc -DBH_FREE=wasm_runtime_free
+
 CFLAGS    = -std=c99 -O1 -g -Wall -Wextra -MMD -MP $(INCLUDES) -I../src/wasm3 \
             -Dd_m3HydraHeap=1 $(EXTRA)
 
@@ -90,7 +123,7 @@ DEP       = $(OBJ:.o=.d) $(LUA_OBJ:.o=.d) $(WASM3_OBJ:.o=.d)
 
 VPATH     = ../src/core:../src/hal:../src/hal/mock:../src/hal/host:../src/sense:../src/drivers/sense:\
             ../src/net:../src/net/mock:../src/gfx:../src/gfx/sdl:../src/ui:../src/ui/mock:../src/ui/lvgl:../src/motion:../src/shell:../src/diag:../src/util:../src/ota:\
-            ../src/script:../src/minis:../src/minis/links:../src/media:../src/media/elements:../src/media/sdl:../src/arduboy:../src/stim:../src/lua:../src/wasm3:.
+            ../src/script:../src/minis:../src/minis/links:../src/media:../src/media/elements:../src/media/sdl:../src/arduboy:../src/stim:../src/lua:../src/wasm3:$(subst $() $(),:,$(patsubst %/,%,$(sort $(dir $(WAMR_SRC))))):.
 
 .PHONY: docs all run asan tsan examples stub clean
 
@@ -102,11 +135,22 @@ $(BUILD):
 $(BUILD)/%.o: %.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# WAMR ma własne flagi i własny prefiks obiektu, żeby nazwy nie zderzyły się
+# z jednostkami Hydry ani Lua.
+$(BUILD)/wamr_%.o: %.c | $(BUILD)
+	$(CC) -std=gnu99 -O1 -g -MMD -MP $(WAMR_INC) $(WAMR_DEF) $(EXTRA) -c $< -o $@
+
 $(BUILD)/%.o: %.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BIN): $(OBJ) $(LUA_OBJ) $(WASM3_OBJ)
-	$(CXX) $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(LDFLAGS) -o $@
+# Definicje są tu konieczne, nie kosmetyczne: plik wybiera wariant symbolu
+# po BH_PLATFORM_DARWIN (macOS chce podkreślenia i nie zna dyrektyw ELF-owych),
+# a wariant uniwersalny przełącza się po architekturze.
+$(WAMR_ASM_OBJ): $(WAMR_ASM) | $(BUILD)
+	$(CC) -x assembler-with-cpp $(WAMR_DEF) -c $< -o $@
+
+$(BIN): $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(WAMR_OBJ) $(WAMR_ASM_OBJ)
+	$(CXX) $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(WAMR_OBJ) $(WAMR_ASM_OBJ) $(LDFLAGS) -o $@
 
 run: $(BIN)
 	@./$(BIN) $(FILTER)

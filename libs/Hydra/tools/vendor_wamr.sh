@@ -58,6 +58,9 @@ UNITS=(
   core/iwasm/common/wasm_exec_env.c
   core/iwasm/common/wasm_memory.c
   core/iwasm/common/wasm_loader_common.c
+  # wasm_runtime_common.c woła wasm_trap_delete bezwarunkowo — bez tej
+  # jednostki drzewo kompiluje się, ale nie linkuje.
+  core/iwasm/common/wasm_c_api.c
   core/iwasm/common/wasm_blocking_op.c
   core/iwasm/common/arch/invokeNative_general.c
   core/iwasm/interpreter/wasm_loader.c
@@ -74,7 +77,22 @@ UNITS=(
   core/shared/utils/bh_log.c
   core/shared/utils/bh_bitmap.c
   core/shared/utils/bh_vector.c
+  # Dekoder LEB128 — wołany przez wasm_loader_common.c.
+  core/shared/utils/bh_leb128.c
   core/shared/utils/runtime_timer.c
+)
+
+# Wywołanie funkcji natywnej z modułu — w assemblerze, per architektura.
+# Wariant `invokeNative_general.c` jest przenośny, ale nie przenosi poprawnie
+# argumentów zmiennoprzecinkowych: `event_emit` z argumentem f32 wywracał się
+# na arm64. Assembler jest tu jedyną drogą, którą WAMR uważa za poprawną.
+ASM_UNITS=(
+  core/iwasm/common/arch/invokeNative_aarch64.s
+  core/iwasm/common/arch/invokeNative_xtensa.s
+  core/iwasm/common/arch/invokeNative_em64.s
+  # macOS używa Mach-O, a warianty ELF-owe mają dyrektywy, których jego
+  # asembler nie zna. WAMR dostarcza na to osobny plik uniwersalny.
+  core/iwasm/common/arch/invokeNative_osx_universal.s
 )
 
 # Warstwa POSIX — host. `posix_clock.c` odpada, bo ciągnie `libc_errno.h`
@@ -84,6 +102,10 @@ POSIX_UNITS=(
   core/shared/platform/common/posix/posix_time.c
   core/shared/platform/common/posix/posix_malloc.c
   core/shared/platform/common/posix/posix_memmap.c
+  # Przenośne `os_mremap`. Potrzebne, odkąd wyłączyliśmy sprzętową kontrolę
+  # granic: `wasm_memory.c` wchodzi wtedy w ścieżkę powiększania pamięci
+  # liniowej, która go woła.
+  core/shared/platform/common/memory/mremap.c
   core/shared/platform/common/posix/posix_thread.c
   core/shared/platform/common/posix/posix_sleep.c
   core/shared/platform/common/posix/posix_blocking_op.c
@@ -179,7 +201,7 @@ rm -rf "$DEST/src" "$DEST/VENDOR.md"
 mkdir -p "$DEST/src"
 
 # Jednostki — ze strukturą katalogów, bo WAMR włącza się ścieżkami względnymi.
-for u in "${UNITS[@]}" "${POSIX_UNITS[@]}" "${ESPIDF_UNITS[@]}"; do
+for u in "${UNITS[@]}" "${ASM_UNITS[@]}" "${POSIX_UNITS[@]}" "${ESPIDF_UNITS[@]}"; do
     mkdir -p "$DEST/src/$(dirname "$u")"
     cp "$SRC/$u" "$DEST/src/$u" || die "brak $u w archiwum"
 done
