@@ -166,11 +166,15 @@ def render_doc(entries) -> str:
             out.append(f"| `{e.name}` | {sig} | {e.doc} |\n")
         out.append("\n")
 
-    out.append("## Czego tu nie ma\n\n")
-    out.append("- **`i2c`** — `scan()` i `read()` oddają tabele, a WebAssembly tabel nie\n")
-    out.append("  zna. Wymaga konwencji z buforem wyjściowym.\n")
-    out.append("- **`event`** — odbiór zdarzeń wymaga wywołania zwrotnego do modułu,\n")
-    out.append("  a kolejka sygnałów jest dziś związana z interpreterem Lua.\n")
+    out.append("## Eksporty, których host szuka w module\n\n")
+    out.append("| Eksport | Sygnatura | Kiedy wołany |\n")
+    out.append("|---|---|---|\n")
+    out.append("| `setup` | `(): void` | raz, po wczytaniu modułu |\n")
+    out.append("| `loop` | `(): void` | w każdym przebiegu taska, z budżetem |\n")
+    out.append("| `on_event` | `(nameId: i32, value: f32, data: i32): void` | dla każdego sygnału z magistrali |\n")
+    out.append("\nWszystkie trzy są opcjonalne. `on_event` zastępuje `hydra.event.on`\n")
+    out.append("z Lua: WebAssembly nie ma domknięć, które dałoby się zarejestrować\n")
+    out.append("w tabeli, więc odbiór jest eksportem, a nie wywołaniem zwrotnym.\n")
     return "".join(out)
 
 

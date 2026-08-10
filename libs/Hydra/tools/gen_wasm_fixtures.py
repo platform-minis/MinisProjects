@@ -47,6 +47,12 @@ def sleb(value: int) -> bytes:
             return bytes(out)
 
 
+def f32(value: float) -> bytes:
+    """Liczba zmiennoprzecinkowa w kodowaniu IEEE-754, little-endian."""
+    import struct
+    return struct.pack("<f", value)
+
+
 def vec(items) -> bytes:
     """Wektor: liczba elementów, potem elementy."""
     return uleb(len(items)) + b"".join(items)
@@ -72,6 +78,9 @@ OP_BLOCK, OP_LOOP, OP_BR, OP_BR_IF, OP_END = 0x02, 0x03, 0x0C, 0x0D, 0x0B
 OP_CALL = 0x10
 OP_LOCAL_GET, OP_LOCAL_SET, OP_GLOBAL_GET = 0x20, 0x21, 0x23
 OP_I32_CONST, OP_I32_ADD, OP_I32_LT_S, OP_DROP = 0x41, 0x6A, 0x48, 0x1A
+OP_F32_CONST, OP_I32_STORE = 0x43, 0x36
+F32 = 0x7D
+SEC_DATA = 11
 OP_MEMORY_GROW = 0x40
 VOID_BLOCK = 0x40
 
@@ -193,6 +202,53 @@ def mod_bounded_loop() -> bytes:
     )
 
 
+
+def mod_event_echo() -> bytes:
+    """Moduł publikujący zdarzenie i odbierający je przez eksport `on_event`.
+
+    Dowodzi, że droga zdarzeń działa w obie strony: `loop()` emituje sygnał
+    o nazwie zapisanej w pamięci liniowej, a host oddaje go przez `on_event`.
+    """
+    t_void = functype([], [])
+    t_emit = functype([I32, I32, F32, I32], [])            # event_emit
+    t_on_event = functype([I32, F32, I32], [])             # on_event
+
+    imports = [import_func("hydra", "event_emit", 1)]
+
+    # Nazwa "alarm" leży pod offsetem 16, nie 0: wasm3 traktuje offset zerowy
+    # jako wskaźnik pusty (`m3ApiIsNullPtr`) i odrzuca go jako dostęp poza
+    # zakresem. Prawdziwe toolchainy WASM zostawiają początek pamięci wolny
+    # z dokładnie tego powodu.
+    # func 0 = import; func 1 = loop; func 2 = on_event
+    loop_body = bytearray()
+    loop_body += bytes([OP_I32_CONST]) + sleb(16)     # namePtr
+    loop_body += bytes([OP_I32_CONST]) + sleb(5)      # nameLen ("alarm")
+    loop_body += bytes([OP_F32_CONST]) + f32(21.5)    # value
+    loop_body += bytes([OP_I32_CONST]) + sleb(1)      # data
+    loop_body += bytes([OP_CALL]) + uleb(0)
+    loop = code_body([], bytes(loop_body))
+
+    # on_event zapisuje nameId pod offsetem 64, żeby test mógł sprawdzić,
+    # że handler naprawdę dostał sygnał.
+    on_body = bytearray()
+    on_body += bytes([OP_I32_CONST]) + sleb(64)
+    on_body += bytes([OP_LOCAL_GET]) + uleb(0)
+    on_body += bytes([OP_I32_STORE]) + uleb(2) + uleb(0)
+    on_event = code_body([], bytes(on_body))
+
+    out = bytearray(b"\x00asm\x01\x00\x00\x00")
+    out += section(SEC_TYPE, vec([t_void, t_emit, t_on_event]))
+    out += section(SEC_IMPORT, vec(imports))
+    out += section(SEC_FUNC, vec([uleb(0), uleb(2)]))
+    out += section(SEC_MEMORY, vec([bytes([0x00]) + uleb(1)]))
+    out += section(SEC_EXPORT, vec([
+        export_func("loop", 1), export_func("on_event", 2), export_mem("memory")]))
+    out += section(SEC_CODE, vec([loop, on_event]))
+    out += section(SEC_DATA, vec([
+        bytes([0x00, OP_I32_CONST]) + sleb(16) + bytes([OP_END]) + uleb(5) + b"alarm"]))
+    return bytes(out)
+
+
 def mod_no_loop() -> bytes:
     """Moduł bez `loop()` — sam `setup()`. Odpowiednik skryptu Lua na zdarzeniach."""
     t_void = functype([], [])
@@ -237,6 +293,8 @@ FIXTURES = [
      "modul z samym setup(), bez loop()"),
     ("kWasmMissingImport", mod_missing_import,
      "modul zadajacy importu spoza wystawionej powierzchni"),
+    ("kWasmEventEcho", mod_event_echo,
+     "publikuje zdarzenie i odbiera je przez eksport on_event"),
 ]
 
 

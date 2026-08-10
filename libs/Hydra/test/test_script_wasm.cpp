@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "hydra/core/EventBus.hpp"
+#include "hydra/core/Events.hpp"
 #include "hydra/hal/Hal.hpp"
 #include "hydra/hal/Mock.hpp"
 #include "hydra/script/ScriptModule.hpp"
@@ -380,6 +381,97 @@ TEST("WASM: nieskonczona petla w module nie zatrzymuje przebiegow") {
     CHECK(!module.loopStopped());
 
     module.stop();
+    EventBus::reset();
+}
+
+// ---------------------------------------------------------------------------
+// Zdarzenia — droga w obie strony
+// ---------------------------------------------------------------------------
+
+TEST("WASM: modul publikuje zdarzenie na magistrali") {
+    freshMockHal();
+    EventBus::reset();
+    REQUIRE(EventBus::init().has_value());
+
+    u16   seenName  = 0;
+    float seenValue = 0.0f;
+    auto  sub = EventBus::subscribe<ScriptSignal>([&](const ScriptSignal& s) {
+        seenName  = s.nameId;
+        seenValue = s.value;
+    });
+    REQUIRE(sub.has_value());
+
+    WasmEngine engine;
+    REQUIRE(openEngine(engine).has_value());
+
+    BindingSet set{};
+    set.event = true;
+    REQUIRE(engine.installBindings(set).has_value());
+    REQUIRE(loadModule(engine, kWasmEventEcho).has_value());
+
+    REQUIRE(engine.jobBegin("loop").has_value());
+    CHECK_EQ(static_cast<int>(engine.jobStep(1000)),
+             static_cast<int>(IScriptEngine::JobState::Done));
+
+    // Skrót liczony w module musi zgadzać się z tym, którego używa host —
+    // inaczej sygnał dotarłby pod cudzą nazwą.
+    CHECK_EQ(static_cast<int>(seenName), static_cast<int>(nameId("alarm")));
+    CHECK(seenValue > 21.0f && seenValue < 22.0f);
+
+    engine.removeBindings();
+    engine.close();
+    EventBus::reset();
+}
+
+TEST("WASM: zdarzenie z magistrali dociera do eksportu on_event") {
+    freshMockHal();
+    EventBus::reset();
+    REQUIRE(EventBus::init().has_value());
+
+    WasmEngine engine;
+    REQUIRE(openEngine(engine).has_value());
+
+    BindingSet set{};
+    set.event = true;
+    REQUIRE(engine.installBindings(set).has_value());
+    REQUIRE(loadModule(engine, kWasmEventEcho).has_value());
+
+    EventBus::publish(ScriptSignal{nameId("kalibracja"), 3.5f, 7});
+
+    // Sygnał czeka w pierścieniu do czasu, aż zdejmie go task skryptu —
+    // callback magistrali nie ma prawa wołać modułu w kontekście nadawcy.
+    CHECK_EQ(static_cast<int>(engine.dispatchSignals(8)), 1);
+
+    engine.removeBindings();
+    engine.close();
+    EventBus::reset();
+}
+
+TEST("WASM: modul bez on_event nie zapycha pierscienia sygnalow") {
+    freshMockHal();
+    EventBus::reset();
+    REQUIRE(EventBus::init().has_value());
+
+    WasmEngine engine;
+    REQUIRE(openEngine(engine).has_value());
+
+    BindingSet set{};
+    set.event = true;
+    REQUIRE(engine.installBindings(set).has_value());
+    // kWasmCounter nie eksportuje on_event.
+    set.gpio = true;
+    REQUIRE(engine.installBindings(set).has_value());
+    REQUIRE(loadModule(engine, kWasmCounter).has_value());
+
+    for (int i = 0; i < 3; ++i) EventBus::publish(ScriptSignal{nameId("cos"), 1.0f, 0});
+
+    // Sygnały muszą zostać zdjęte mimo braku handlera, inaczej pierścień
+    // zapchałby się i zaczął gubić zdarzenia adresowane do kogoś innego.
+    CHECK_EQ(static_cast<int>(engine.dispatchSignals(8)), 3);
+    CHECK_EQ(static_cast<int>(engine.dispatchSignals(8)), 0);
+
+    engine.removeBindings();
+    engine.close();
     EventBus::reset();
 }
 

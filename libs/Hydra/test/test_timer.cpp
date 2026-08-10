@@ -75,9 +75,16 @@ TEST("Timer: stop zatrzymuje natychmiast") {
     rtos::delayMs(70);
 
     CHECK(t.stop());
+
+    // `stop()` gwarantuje brak *nowych* wywołań, ale to już rozpoczęte biegnie
+    // do końca — patrz kontrakt w Rtos.hpp. Odczyt punktu odniesienia zaraz po
+    // `stop()` łapał więc czasem tik w locie i test przewracał się mniej więcej
+    // raz na osiem przebiegów. Krótka chwila na dokończenie, potem pomiar.
+    rtos::delayMs(10);
     const int afterStop = gTicks.load();
 
-    // Kluczowe: zatrzymanie nie czeka na koniec bieżącego okresu.
+    // Kluczowe: zatrzymanie nie czeka na koniec bieżącego okresu. Gdyby timer
+    // nadal chodził, w 80 ms przy okresie 20 ms zmieściłyby się cztery tiki.
     rtos::delayMs(80);
     CHECK_EQ(gTicks.load(), afterStop);
     CHECK(!(t.running()));

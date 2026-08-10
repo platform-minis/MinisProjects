@@ -30,6 +30,18 @@ const Import kPwmImports[] = {
     {"pwm_release", "i(i)",  wasmPwmRelease},
 };
 
+const Import kEventImports[] = {
+    {"event_emit",    "v(iifi)", wasmEventEmit},
+    {"event_name_id", "i(ii)",   wasmEventNameId},
+};
+
+const Import kI2cImports[] = {
+    {"i2c_ping",  "i(ii)",    wasmI2cPing},
+    {"i2c_scan",  "i(iii)",   wasmI2cScan},
+    {"i2c_read",  "i(iiiii)", wasmI2cRead},
+    {"i2c_write", "i(iiiii)", wasmI2cWrite},
+};
+
 /** Grupa importów wraz z liczebnością — do pętli linkującej. */
 struct ImportGroup {
     const Import* imports;
@@ -43,4 +55,6 @@ const ImportGroup kImportGroups[] = {
     {kGpioImports, 4, &BindingSet::gpio},
     {kAdcImports, 2, &BindingSet::adc},
     {kPwmImports, 4, &BindingSet::pwm},
+    {kEventImports, 2, &BindingSet::event},
+    {kI2cImports, 4, &BindingSet::i2c},
 };

@@ -46,3 +46,19 @@ pwm  | pwm_setup   | i(ii) | wasmPwmSetup   | pin, freqHz | Konfiguruje kanał P
 pwm  | pwm_duty    | i(ii) | wasmPwmDuty    | pin, permille | Wypełnienie w promilach (0–1000).
 pwm  | pwm_us      | i(ii) | wasmPwmUs      | pin, us | Szerokość impulsu w mikrosekundach — sterowanie serwem.
 pwm  | pwm_release | i(i)  | wasmPwmRelease | pin | Zwalnia kanał PWM.
+
+# Zdarzenia. Moduł publikuje przez `event_emit`, a odbiera przez eksportowaną
+# funkcję `on_event(nameId: i32, value: f32, data: i32)` — WebAssembly nie ma
+# domknięć rejestrowanych w tabeli, więc odbiór jest eksportem, nie callbackiem.
+# `event_name_id` daje ten sam skrót nazwy, którego używa host, żeby moduł mógł
+# porównać identyfikator zamiast przechowywać napisy.
+event | event_emit    | v(iifi) | wasmEventEmit   | namePtr, nameLen, value, data | Publikuje sygnał na magistrali zdarzeń.
+event | event_name_id | i(ii)   | wasmEventNameId | namePtr, nameLen | Skrót nazwy (FNV-1a, 16 bit) — do porównań w `on_event`.
+
+# I2C w konwencji z buforem wyjściowym. Lua oddaje tu tabele, których
+# WebAssembly nie zna, więc dane wracają do pamięci liniowej modułu pod
+# wskazany offset, a wynik funkcji mówi ile ich jest albo że był błąd.
+i2c | i2c_ping  | i(ii)    | wasmI2cPing  | bus, addr | 1 gdy układ odpowiada, 0 gdy nie.
+i2c | i2c_scan  | i(iii)   | wasmI2cScan  | bus, outPtr, capacity | Zapisuje znalezione adresy pod `outPtr`; zwraca ich liczbę albo -1.
+i2c | i2c_read  | i(iiiii) | wasmI2cRead  | bus, addr, reg, outPtr, len | Odczyt rejestru do pamięci modułu; liczba bajtów albo -1.
+i2c | i2c_write | i(iiiii) | wasmI2cWrite | bus, addr, reg, dataPtr, len | Zapis do rejestru z pamięci modułu; 1 albo -1.

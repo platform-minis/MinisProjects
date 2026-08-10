@@ -21,12 +21,17 @@
  * `loop()` i zwraca `JobState::Exhausted`; kolejny przebieg zaczyna funkcję od
  * początku. Urządzenie żyje, ciągłość przebiegu przepada.
  *
- * **3. Powierzchnia bindingów jest węższa.** WebAssembly zna cztery typy
- * liczbowe i pamięć liniową — tabel nie ma. Grupy `i2c` i `event` z
- * `BindingSet` nie są jeszcze wystawione, bo obie oddają albo przyjmują dane
- * o kształcie tabeli. Wymaga to konwencji z buforem wyjściowym i jest osobną
- * decyzją; niewystawiona grupa po prostu nie zostaje zlinkowana, więc moduł
- * jej używający nie wczyta się z jasnym błędem, zamiast działać połowicznie.
+ * **3. Dane wracają przez bufor, nie przez tabelę.** WebAssembly zna cztery
+ * typy liczbowe i pamięć liniową — tabel nie ma. Tam, gdzie Lua oddaje tabelę
+ * (`i2c.scan`, `i2c.read`), moduł podaje offset w swojej pamięci, a wynik
+ * funkcji mówi, ile bajtów tam trafiło albo że był błąd. Każdy taki bufor jest
+ * sprawdzany wobec granic pamięci modułu.
+ *
+ * Zdarzenia idą podobnie w drugą stronę: moduł publikuje przez `event_emit`,
+ * a odbiera przez **eksportowaną** funkcję `on_event(nameId, value, data)` —
+ * bo nie ma domknięć, które dałoby się zarejestrować tak, jak `hydra.event.on`
+ * w Lua. Grupa niewłączona w `BindingSet` nie zostaje zlinkowana, więc moduł
+ * jej żądający nie wczyta się z jasnym błędem, zamiast działać połowicznie.
  *
  * ## Co widzi moduł
  *
@@ -40,8 +45,12 @@
  *     (import "hydra" "gpio_write" (func $gpio_write (param i32 i32) (result i32)))
  *     (import "hydra" "gpio_read"  (func $gpio_read (param i32) (result i32)))
  *
+ * Pełna lista: `docs/wasm-imports.md`, generowana z `tools/wasm_bindings.def`
+ * razem z deklaracjami dla AssemblyScript.
+ *
  * Moduł eksportuje `setup` i `loop`, obie bez argumentów i bez wyniku — ta sama
- * umowa, co w Lua. Obie są opcjonalne.
+ * umowa, co w Lua. Obie są opcjonalne. Trzecim, również opcjonalnym eksportem
+ * jest `on_event(i32, f32, i32)`.
  *
  * ## Pamięć
  *
@@ -102,11 +111,14 @@ public:
      * środowiskiem — inaczej niż tabela globalna w Lua.
      */
     Status installBindings(const BindingSet& set) override;
-    void   removeBindings() override {}
+    void   removeBindings() override;
     /**
-     * Zawsze zero: dostarczanie zdarzeń do modułu wymaga wywołania zwrotnego
-     * w drugą stronę, a kolejka sygnałów jest dziś związana z Lua. Osobne
-     * zadanie — patrz nagłówek klasy.
+     * Oddaje sygnały z magistrali eksportowanej funkcji `on_event`.
+     *
+     * Odbiór jest eksportem, a nie callbackiem: WebAssembly nie ma domknięć,
+     * które dałoby się zarejestrować w tabeli tak, jak robi to `hydra.event.on`
+     * w Lua. Moduł bez `on_event` też opróżnia pierścień — inaczej zapchałby
+     * się i zaczął gubić zdarzenia adresowane do kogoś innego.
      */
     u32    dispatchSignals(u32 maxSignals) override;
 

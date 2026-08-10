@@ -174,6 +174,16 @@ public:
 
     /** Uzbraja albo przezbraja timer. Dla jednorazowego liczy od teraz. */
     bool start(u32 timeoutMs = 0);
+
+    /**
+     * Wyrejestrowuje timer z kolejki. Po powrocie nie padnie **nowe** wywołanie
+     * zwrotne — ale to, które już się zaczęło, biegnie do końca. Tak działa
+     * `xTimerStop` we FreeRTOS-ie i tak samo zachowuje się backend hostowy.
+     *
+     * Kto potrzebuje pewności, że callback nie dotyka już jego danych, ma
+     * zsynchronizować się sam. Zatrzymanie czekające na zakończenie wywołania
+     * zwrotnego zakleszczyłoby się przy `stop()` wołanym z jego wnętrza.
+     */
     bool stop(u32 timeoutMs = 0);
 
     /** Zmienia okres i uzbraja. Okres 0 jest odrzucany — nie zatrzymuje timera. */

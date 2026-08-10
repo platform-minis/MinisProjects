@@ -77,3 +77,31 @@ export declare function pwm_us(pin: i32, us: i32): i32;
 @external("hydra", "pwm_release")
 export declare function pwm_release(pin: i32): i32;
 
+// --- event ---------------------------------------------------------------
+
+/** Publikuje sygnał na magistrali zdarzeń. */
+@external("hydra", "event_emit")
+export declare function event_emit(namePtr: i32, nameLen: i32, value: f32, data: i32): void;
+
+/** Skrót nazwy (FNV-1a, 16 bit) — do porównań w `on_event`. */
+@external("hydra", "event_name_id")
+export declare function event_name_id(namePtr: i32, nameLen: i32): i32;
+
+// --- i2c -----------------------------------------------------------------
+
+/** 1 gdy układ odpowiada, 0 gdy nie. */
+@external("hydra", "i2c_ping")
+export declare function i2c_ping(bus: i32, addr: i32): i32;
+
+/** Zapisuje znalezione adresy pod `outPtr`; zwraca ich liczbę albo -1. */
+@external("hydra", "i2c_scan")
+export declare function i2c_scan(bus: i32, outPtr: i32, capacity: i32): i32;
+
+/** Odczyt rejestru do pamięci modułu; liczba bajtów albo -1. */
+@external("hydra", "i2c_read")
+export declare function i2c_read(bus: i32, addr: i32, reg: i32, outPtr: i32, len: i32): i32;
+
+/** Zapis do rejestru z pamięci modułu; 1 albo -1. */
+@external("hydra", "i2c_write")
+export declare function i2c_write(bus: i32, addr: i32, reg: i32, dataPtr: i32, len: i32): i32;
+

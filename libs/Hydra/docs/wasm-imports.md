@@ -49,9 +49,30 @@ Grupa niewłączona w `BindingSet` nie zostaje zlinkowana. Moduł, który jej
 | `pwm_us` | `pwm_us(pin: i32, us: i32): i32` | Szerokość impulsu w mikrosekundach — sterowanie serwem. |
 | `pwm_release` | `pwm_release(pin: i32): i32` | Zwalnia kanał PWM. |
 
-## Czego tu nie ma
+## `event`
 
-- **`i2c`** — `scan()` i `read()` oddają tabele, a WebAssembly tabel nie
-  zna. Wymaga konwencji z buforem wyjściowym.
-- **`event`** — odbiór zdarzeń wymaga wywołania zwrotnego do modułu,
-  a kolejka sygnałów jest dziś związana z interpreterem Lua.
+| Funkcja | Sygnatura AssemblyScript | Opis |
+|---|---|---|
+| `event_emit` | `event_emit(namePtr: i32, nameLen: i32, value: f32, data: i32): void` | Publikuje sygnał na magistrali zdarzeń. |
+| `event_name_id` | `event_name_id(namePtr: i32, nameLen: i32): i32` | Skrót nazwy (FNV-1a, 16 bit) — do porównań w `on_event`. |
+
+## `i2c`
+
+| Funkcja | Sygnatura AssemblyScript | Opis |
+|---|---|---|
+| `i2c_ping` | `i2c_ping(bus: i32, addr: i32): i32` | 1 gdy układ odpowiada, 0 gdy nie. |
+| `i2c_scan` | `i2c_scan(bus: i32, outPtr: i32, capacity: i32): i32` | Zapisuje znalezione adresy pod `outPtr`; zwraca ich liczbę albo -1. |
+| `i2c_read` | `i2c_read(bus: i32, addr: i32, reg: i32, outPtr: i32, len: i32): i32` | Odczyt rejestru do pamięci modułu; liczba bajtów albo -1. |
+| `i2c_write` | `i2c_write(bus: i32, addr: i32, reg: i32, dataPtr: i32, len: i32): i32` | Zapis do rejestru z pamięci modułu; 1 albo -1. |
+
+## Eksporty, których host szuka w module
+
+| Eksport | Sygnatura | Kiedy wołany |
+|---|---|---|
+| `setup` | `(): void` | raz, po wczytaniu modułu |
+| `loop` | `(): void` | w każdym przebiegu taska, z budżetem |
+| `on_event` | `(nameId: i32, value: f32, data: i32): void` | dla każdego sygnału z magistrali |
+
+Wszystkie trzy są opcjonalne. `on_event` zastępuje `hydra.event.on`
+z Lua: WebAssembly nie ma domknięć, które dałoby się zarejestrować
+w tabeli, więc odbiór jest eksportem, a nie wywołaniem zwrotnym.

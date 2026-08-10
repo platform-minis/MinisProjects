@@ -11,6 +11,8 @@
 
 #include "hydra/script/Bindings.hpp"
 
+#include "SignalQueue.hpp"
+
 #include <string.h>
 
 #include "hydra/core/Log.hpp"
@@ -396,44 +398,8 @@ const Reg kI2cReg[] = {
  * jedną rzecz — odkłada POD do pierścienia — a interpretację przejmuje task
  * skryptu w `dispatchSignals`.
  */
-#ifndef HYDRA_SCRIPT_SIGNAL_QUEUE
-#  define HYDRA_SCRIPT_SIGNAL_QUEUE 16
-#endif
-
-struct SignalQueue {
-    ScriptSignal items[HYDRA_SCRIPT_SIGNAL_QUEUE];
-    u8           head    = 0;
-    u8           tail    = 0;
-    u32          dropped = 0;
-    rtos::Mutex  mtx;
-};
-
-SignalQueue gQueue;
-SubId       gSubscription = kInvalidSub;
-
 /** Klucz tabeli handlerów w rejestrze Lua. */
 constexpr const char* kHandlerTable = "hydra.script.handlers";
-
-void pushSignal(const ScriptSignal& s) {
-    rtos::LockGuard guard(gQueue.mtx);
-    const u8        next = static_cast<u8>((gQueue.head + 1) % HYDRA_SCRIPT_SIGNAL_QUEUE);
-    if (next == gQueue.tail) {
-        // Pełny pierścień: gubimy najnowszy, nie najstarszy. Sygnał zgubiony
-        // po cichu byłby gorszy od widocznego w liczniku.
-        ++gQueue.dropped;
-        return;
-    }
-    gQueue.items[gQueue.head] = s;
-    gQueue.head               = next;
-}
-
-bool popSignal(ScriptSignal& out) {
-    rtos::LockGuard guard(gQueue.mtx);
-    if (gQueue.tail == gQueue.head) return false;
-    out         = gQueue.items[gQueue.tail];
-    gQueue.tail = static_cast<u8>((gQueue.tail + 1) % HYDRA_SCRIPT_SIGNAL_QUEUE);
-    return true;
-}
 
 /** Zostawia na stosie tabelę handlerów, tworząc ją przy pierwszym użyciu. */
 void pushHandlerTable(lua_State* L) {
@@ -507,11 +473,7 @@ Status installBindings(Interp& interp, const BindingSet& set) {
 
     if (set.event) {
         HYDRA_CHECK(interp.registerLib("hydra.event", kEventReg));
-        if (gSubscription == kInvalidSub) {
-            auto sub = EventBus::subscribe<ScriptSignal>([](const ScriptSignal& s) { pushSignal(s); });
-            if (!sub) return fail(sub.error());
-            gSubscription = *sub;
-        }
+        HYDRA_CHECK(detail::signalQueueSubscribe());
     }
     return ok();
 }
@@ -522,7 +484,7 @@ u32 dispatchSignals(Interp& interp, u32 maxSignals) {
 
     u32          handled = 0;
     ScriptSignal signal{};
-    while (handled < maxSignals && popSignal(signal)) {
+    while (handled < maxSignals && detail::signalQueuePop(signal)) {
         pushHandlerTable(L);
         lua_geti(L, -1, static_cast<lua_Integer>(signal.nameId));
         if (!lua_isfunction(L, -1)) {
@@ -550,15 +512,10 @@ u32 dispatchSignals(Interp& interp, u32 maxSignals) {
     return handled;
 }
 
-u32 droppedSignals() { return gQueue.dropped; }
+u32 droppedSignals() { return detail::signalQueueDropped(); }
 
 void removeBindings(Interp& interp) {
-    if (gSubscription != kInvalidSub) {
-        EventBus::unsubscribe(gSubscription);
-        gSubscription = kInvalidSub;
-    }
-    rtos::LockGuard guard(gQueue.mtx);
-    gQueue.head = gQueue.tail = 0;
+    detail::signalQueueRelease();
     (void)interp;
 }
 

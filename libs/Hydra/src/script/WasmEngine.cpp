@@ -20,10 +20,13 @@ WAMR wymaga innej drogi osadzenia niz vendor_wasm3.sh — patrz docs/plan-wasm-r
 #include <stdio.h>
 #include <string.h>
 
+#include "hydra/core/EventBus.hpp"
 #include "hydra/core/Log.hpp"
 #include "hydra/core/Rtos.hpp"
 #include "hydra/hal/Hal.hpp"
 #include "hydra/script/WasmAlloc.h"
+
+#include "SignalQueue.hpp"
 
 extern "C" {
 #include "wasm3.h"
@@ -44,6 +47,12 @@ namespace {
 /** Pula domyślna silnika WASM. Rozmiar ustala `Profile.hpp`. */
 alignas(8) u8 gDefaultWasmPool[HYDRA_WASM_HEAP_BYTES];
 bool gDefaultWasmPoolTaken = false;
+
+/**
+ * Budżet jednego wywołania `on_event`. Handler zdarzenia jest kodem użytkownika
+ * i nie ma prawa zatrzymać obsługi pozostałych sygnałów.
+ */
+constexpr u32 kEventHandlerFuel = 10000;
 
 /** Nazwa modułu, w którym leżą wszystkie importy Hydry. */
 constexpr const char* kImportModule = "hydra";
@@ -195,6 +204,126 @@ m3ApiRawFunction(wasmPwmRelease) {
     m3ApiReturn(r ? 1u : 0u);
 }
 
+
+// --- Zdarzenia -------------------------------------------------------------
+
+/**
+ * Skrót nazwy liczony nad parą (offset, długość).
+ *
+ * Musi dawać dokładnie to samo, co `nameId()` z `Events.hpp`, bo po tej samej
+ * liczbie host rozpoznaje sygnał. Osobna funkcja, bo tamta chodzi po napisie
+ * zakończonym zerem, a w pamięci liniowej modułu zera nie ma.
+ */
+u16 nameIdOfSpan(const char* text, u32 length) {
+    u32 h = 2166136261u;
+    for (u32 i = 0; i < length; ++i) {
+        h ^= static_cast<u8>(text[i]);
+        h *= 16777619u;
+    }
+    return static_cast<u16>((h >> 16) ^ (h & 0xFFFF));
+}
+
+m3ApiRawFunction(wasmEventEmit) {
+    m3ApiGetArgMem(const char*, namePtr);
+    m3ApiGetArg(uint32_t, nameLen);
+    m3ApiGetArg(float, value);
+    m3ApiGetArg(int32_t, data);
+
+    m3ApiCheckMem(namePtr, nameLen);
+
+    ScriptSignal signal{};
+    signal.nameId = nameIdOfSpan(namePtr, nameLen);
+    signal.value  = value;
+    signal.data   = data;
+    EventBus::publish(signal);
+    m3ApiSuccess();
+}
+
+m3ApiRawFunction(wasmEventNameId) {
+    m3ApiReturnType(uint32_t);
+    m3ApiGetArgMem(const char*, namePtr);
+    m3ApiGetArg(uint32_t, nameLen);
+
+    m3ApiCheckMem(namePtr, nameLen);
+    m3ApiReturn(static_cast<uint32_t>(nameIdOfSpan(namePtr, nameLen)));
+}
+
+// --- I2C -------------------------------------------------------------------
+//
+// Lua oddaje tu tabele, których WebAssembly nie zna. Dane wracają więc do
+// pamięci liniowej modułu pod wskazany offset, a wynik funkcji mówi, ile ich
+// jest — albo że był błąd. Każdy bufor jest sprawdzany wobec granic pamięci
+// modułu: `m3ApiCheckMem` chroni przed offsetem, który moduł policzył źle.
+
+m3ApiRawFunction(wasmI2cPing) {
+    m3ApiReturnType(uint32_t);
+    m3ApiGetArg(uint32_t, bus);
+    m3ApiGetArg(uint32_t, addr);
+
+    bool present = false;
+    (void)hal::Hal::i2c(static_cast<u8>(bus)).transaction([&](hal::II2cBus::Session& s) {
+        present = s.ping(static_cast<u8>(addr)).has_value();
+        return ok();
+    });
+    m3ApiReturn(present ? 1u : 0u);
+}
+
+m3ApiRawFunction(wasmI2cScan) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, bus);
+    m3ApiGetArgMem(uint8_t*, outPtr);
+    m3ApiGetArg(uint32_t, capacity);
+
+    m3ApiCheckMem(outPtr, capacity);
+    if (capacity == 0 || capacity > 128) m3ApiReturn(-1);
+
+    auto found = hal::Hal::i2c(static_cast<u8>(bus)).scan(outPtr, static_cast<u8>(capacity));
+    m3ApiReturn(found ? static_cast<int32_t>(*found) : -1);
+}
+
+m3ApiRawFunction(wasmI2cRead) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, bus);
+    m3ApiGetArg(uint32_t, addr);
+    m3ApiGetArg(uint32_t, reg);
+    m3ApiGetArgMem(uint8_t*, outPtr);
+    m3ApiGetArg(uint32_t, length);
+
+    m3ApiCheckMem(outPtr, length);
+    if (length == 0) m3ApiReturn(-1);
+
+    // Argumenty w strukturze, a wewnątrz domknięcia jeden wskaźnik: `Delegate`
+    // ma stałą pojemność, a przechwycenie pięciu zmiennych ją przekracza.
+    struct Op { u8 addr; u8 reg; u8* out; u32 len; bool done; } op{
+        static_cast<u8>(addr), static_cast<u8>(reg), outPtr, length, false};
+
+    (void)hal::Hal::i2c(static_cast<u8>(bus)).transaction([&op](hal::II2cBus::Session& s) {
+        op.done = s.readReg(op.addr, op.reg, ByteSpan{op.out, op.len}).has_value();
+        return ok();
+    });
+    m3ApiReturn(op.done ? static_cast<int32_t>(length) : -1);
+}
+
+m3ApiRawFunction(wasmI2cWrite) {
+    m3ApiReturnType(int32_t);
+    m3ApiGetArg(uint32_t, bus);
+    m3ApiGetArg(uint32_t, addr);
+    m3ApiGetArg(uint32_t, reg);
+    m3ApiGetArgMem(const uint8_t*, dataPtr);
+    m3ApiGetArg(uint32_t, length);
+
+    m3ApiCheckMem(dataPtr, length);
+
+    struct Op { u8 addr; u8 reg; const u8* data; u32 len; bool done; } op{
+        static_cast<u8>(addr), static_cast<u8>(reg), dataPtr, length, false};
+
+    (void)hal::Hal::i2c(static_cast<u8>(bus)).transaction([&op](hal::II2cBus::Session& s) {
+        op.done = s.writeReg(op.addr, op.reg, CByteSpan{op.data, op.len}).has_value();
+        return ok();
+    });
+    m3ApiReturn(op.done ? 1 : -1);
+}
+
 /** Jeden import: nazwa, sygnatura wasm3 i funkcja. */
 struct Import {
     const char*      name;
@@ -289,12 +418,56 @@ void WasmEngine::close() {
 
 Status WasmEngine::installBindings(const BindingSet& set) {
     bindings_ = set;
+
+    // Subskrypcja magistrali musi powstać już tutaj, a nie przy linkowaniu:
+    // sygnał opublikowany między `installBindings()` a `load()` ma trafić do
+    // pierścienia, a nie przepaść.
+    if (set.event) HYDRA_CHECK(detail::signalQueueSubscribe());
     return ok();
 }
 
+void WasmEngine::removeBindings() { detail::signalQueueRelease(); }
+
 u32 WasmEngine::dispatchSignals(u32 maxSignals) {
-    (void)maxSignals;
-    return 0;
+    if (runtime_ == nullptr || module_ == nullptr || !bindings_.event) return 0;
+
+    // Odbiór zdarzeń jest eksportem, nie callbackiem: WebAssembly nie ma
+    // domknięć, które dałoby się zarejestrować w tabeli tak, jak robi to
+    // `hydra.event.on` w Lua. Moduł, który zdarzeń nie słucha, po prostu
+    // tej funkcji nie eksportuje.
+    IM3Function handler = nullptr;
+    if (m3_FindFunction(&handler, static_cast<IM3Runtime>(runtime_), "on_event") != m3Err_none) {
+        // Sygnały i tak trzeba zdjąć z pierścienia, inaczej zapchałby się
+        // i zaczął gubić zdarzenia adresowane do kogoś innego.
+        u32          drained = 0;
+        ScriptSignal ignored{};
+        while (drained < maxSignals && detail::signalQueuePop(ignored)) ++drained;
+        return drained;
+    }
+
+    u32          handled = 0;
+    ScriptSignal signal{};
+    while (handled < maxSignals && detail::signalQueuePop(signal)) {
+        // Budżet stały, nie z konfiguracji modułu: handler zdarzenia jest kodem
+        // użytkownika i nie ma prawa zatrzymać obsługi pozostałych sygnałów
+        // ani całego przebiegu.
+        m3_SetFuel(static_cast<IM3Runtime>(runtime_), kEventHandlerFuel);
+
+        const uint32_t nameId = signal.nameId;
+        const float    value  = signal.value;
+        const int32_t  data   = signal.data;
+        const void*    args[] = {&nameId, &value, &data};
+
+        M3Result r = m3_Call(handler, 3, args);
+        if (r != m3Err_none) {
+            // Błąd w handlerze nie może zatrzymać pozostałych — tak samo, jak
+            // `lua_pcall` w wariancie dla Lua.
+            captureError(r);
+            HYDRA_LOGW("on_event(%u): %s", nameId, error_);
+        }
+        ++handled;
+    }
+    return handled;
 }
 
 Status WasmEngine::linkBindings() {
