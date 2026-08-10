@@ -27,6 +27,7 @@ WAMR wymaga innej drogi osadzenia niz vendor_wasm3.sh — patrz docs/plan-wasm-r
 #include "hydra/script/WasmAlloc.h"
 
 #include "SignalQueue.hpp"
+#include "WasmApi.hpp"
 
 extern "C" {
 #include "wasm3.h"
@@ -64,19 +65,23 @@ constexpr const char* kImportModule = "hydra";
 // Napisy przekazuje się parą (offset, długość): pamięć modułu jest jego własną
 // przestrzenią adresową i wskaźnik hosta nic by tam nie znaczył.
 
+// Przejściówki wasm3: zdejmują argumenty ze stosu, sprawdzają wskaźniki wobec
+// granic pamięci modułu i wołają wspólną treść z `WasmApi.hpp`. Sama treść nie
+// może tu mieszkać — WAMR podaje argumenty inaczej i powstałyby dwie kopie.
+
 m3ApiRawFunction(wasmMillis) {
     m3ApiReturnType(uint32_t);
-    m3ApiReturn(static_cast<uint32_t>(rtos::nowMs()));
+    m3ApiReturn(wasmapi::millis());
 }
 
 m3ApiRawFunction(wasmMicros) {
     m3ApiReturnType(uint32_t);
-    m3ApiReturn(static_cast<uint32_t>(rtos::nowUs()));
+    m3ApiReturn(wasmapi::micros());
 }
 
 m3ApiRawFunction(wasmDelay) {
     m3ApiGetArg(uint32_t, ms);
-    rtos::delayMs(ms);
+    wasmapi::delay(ms);
     m3ApiSuccess();
 }
 
@@ -86,141 +91,73 @@ m3ApiRawFunction(wasmLog) {
     m3ApiGetArg(uint32_t, length);
 
     m3ApiCheckMem(text, length);
-
-    // Kopiujemy, bo tekst w pamięci liniowej nie jest zakończony zerem,
-    // a `HYDRA_LOG_AT` oczekuje napisu C.
-    char line[HYDRA_LOG_LINE_MAX];
-    const size_t n = length < sizeof(line) - 1 ? length : sizeof(line) - 1;
-    memcpy(line, text, n);
-    line[n] = '\0';
-
-    const LogLevel lv = (level <= static_cast<uint32_t>(LogLevel::Error))
-                            ? static_cast<LogLevel>(level)
-                            : LogLevel::Info;
-    HYDRA_LOG_AT(lv, "wasm", "%s", line);
+    wasmapi::logText(level, text, length);
     m3ApiSuccess();
 }
-
-// --- GPIO ------------------------------------------------------------------
-//
-// Tryb pinu jest liczbą, a nie napisem jak w Lua: przekazanie napisu kosztowałoby
-// parę (offset, długość) i porównanie tekstu przy każdym wywołaniu, a wartości
-// `hal::PinMode` są i tak częścią API frameworka.
 
 m3ApiRawFunction(wasmGpioMode) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, pin);
     m3ApiGetArg(uint32_t, mode);
-
-    if (mode > static_cast<uint32_t>(hal::PinMode::Analog)) m3ApiReturn(0);
-
-    auto r = hal::Hal::gpio().configure(static_cast<hal::PinNum>(pin),
-                                        static_cast<hal::PinMode>(mode));
-    m3ApiReturn(r ? 1u : 0u);
+    m3ApiReturn(wasmapi::gpioMode(pin, mode));
 }
 
 m3ApiRawFunction(wasmGpioWrite) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, pin);
     m3ApiGetArg(uint32_t, value);
-
-    auto r = hal::Hal::gpio().write(static_cast<hal::PinNum>(pin), value != 0);
-    m3ApiReturn(r ? 1u : 0u);
+    m3ApiReturn(wasmapi::gpioWrite(pin, value));
 }
 
 m3ApiRawFunction(wasmGpioRead) {
     m3ApiReturnType(int32_t);
     m3ApiGetArg(uint32_t, pin);
-
-    auto v = hal::Hal::gpio().read(static_cast<hal::PinNum>(pin));
-    // -1 zamiast pary (wartość, błąd): WebAssembly nie zwraca dwóch wyników,
-    // a stan pinu jest zawsze 0 albo 1, więc wartość spoza zakresu jest
-    // jednoznaczna.
-    m3ApiReturn(v ? (*v ? 1 : 0) : -1);
+    m3ApiReturn(wasmapi::gpioRead(pin));
 }
 
 m3ApiRawFunction(wasmGpioToggle) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, pin);
-
-    auto r = hal::Hal::gpio().toggle(static_cast<hal::PinNum>(pin));
-    m3ApiReturn(r ? 1u : 0u);
+    m3ApiReturn(wasmapi::gpioToggle(pin));
 }
-
-// --- ADC -------------------------------------------------------------------
 
 m3ApiRawFunction(wasmAdcRaw) {
     m3ApiReturnType(int32_t);
     m3ApiGetArg(uint32_t, pin);
-
-    auto v = hal::Hal::adc().readRaw(static_cast<hal::PinNum>(pin));
-    m3ApiReturn(v ? static_cast<int32_t>(*v) : -1);
+    m3ApiReturn(wasmapi::adcRaw(pin));
 }
 
 m3ApiRawFunction(wasmAdcMv) {
     m3ApiReturnType(int32_t);
     m3ApiGetArg(uint32_t, pin);
-
-    auto v = hal::Hal::adc().readMv(static_cast<hal::PinNum>(pin));
-    m3ApiReturn(v ? static_cast<int32_t>(*v) : -1);
+    m3ApiReturn(wasmapi::adcMv(pin));
 }
-
-// --- PWM -------------------------------------------------------------------
 
 m3ApiRawFunction(wasmPwmSetup) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, pin);
     m3ApiGetArg(uint32_t, freq);
-
-    auto r = hal::Hal::pwm().configure(static_cast<hal::PinNum>(pin), freq, 10);
-    m3ApiReturn(r ? 1u : 0u);
+    m3ApiReturn(wasmapi::pwmSetup(pin, freq));
 }
 
 m3ApiRawFunction(wasmPwmDuty) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, pin);
     m3ApiGetArg(uint32_t, permille);
-
-    auto r = hal::Hal::pwm().setDutyPermille(static_cast<hal::PinNum>(pin),
-                                             static_cast<u16>(permille));
-    m3ApiReturn(r ? 1u : 0u);
+    m3ApiReturn(wasmapi::pwmDuty(pin, permille));
 }
 
 m3ApiRawFunction(wasmPwmUs) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, pin);
     m3ApiGetArg(uint32_t, us);
-
-    auto r = hal::Hal::pwm().writeMicroseconds(static_cast<hal::PinNum>(pin),
-                                               static_cast<u16>(us));
-    m3ApiReturn(r ? 1u : 0u);
+    m3ApiReturn(wasmapi::pwmUs(pin, us));
 }
 
 m3ApiRawFunction(wasmPwmRelease) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, pin);
-
-    auto r = hal::Hal::pwm().release(static_cast<hal::PinNum>(pin));
-    m3ApiReturn(r ? 1u : 0u);
-}
-
-
-// --- Zdarzenia -------------------------------------------------------------
-
-/**
- * Skrót nazwy liczony nad parą (offset, długość).
- *
- * Musi dawać dokładnie to samo, co `nameId()` z `Events.hpp`, bo po tej samej
- * liczbie host rozpoznaje sygnał. Osobna funkcja, bo tamta chodzi po napisie
- * zakończonym zerem, a w pamięci liniowej modułu zera nie ma.
- */
-u16 nameIdOfSpan(const char* text, u32 length) {
-    u32 h = 2166136261u;
-    for (u32 i = 0; i < length; ++i) {
-        h ^= static_cast<u8>(text[i]);
-        h *= 16777619u;
-    }
-    return static_cast<u16>((h >> 16) ^ (h & 0xFFFF));
+    m3ApiReturn(wasmapi::pwmRelease(pin));
 }
 
 m3ApiRawFunction(wasmEventEmit) {
@@ -230,12 +167,7 @@ m3ApiRawFunction(wasmEventEmit) {
     m3ApiGetArg(int32_t, data);
 
     m3ApiCheckMem(namePtr, nameLen);
-
-    ScriptSignal signal{};
-    signal.nameId = nameIdOfSpan(namePtr, nameLen);
-    signal.value  = value;
-    signal.data   = data;
-    EventBus::publish(signal);
+    wasmapi::eventEmit(namePtr, nameLen, value, data);
     m3ApiSuccess();
 }
 
@@ -245,27 +177,14 @@ m3ApiRawFunction(wasmEventNameId) {
     m3ApiGetArg(uint32_t, nameLen);
 
     m3ApiCheckMem(namePtr, nameLen);
-    m3ApiReturn(static_cast<uint32_t>(nameIdOfSpan(namePtr, nameLen)));
+    m3ApiReturn(static_cast<uint32_t>(wasmapi::nameIdOfSpan(namePtr, nameLen)));
 }
-
-// --- I2C -------------------------------------------------------------------
-//
-// Lua oddaje tu tabele, których WebAssembly nie zna. Dane wracają więc do
-// pamięci liniowej modułu pod wskazany offset, a wynik funkcji mówi, ile ich
-// jest — albo że był błąd. Każdy bufor jest sprawdzany wobec granic pamięci
-// modułu: `m3ApiCheckMem` chroni przed offsetem, który moduł policzył źle.
 
 m3ApiRawFunction(wasmI2cPing) {
     m3ApiReturnType(uint32_t);
     m3ApiGetArg(uint32_t, bus);
     m3ApiGetArg(uint32_t, addr);
-
-    bool present = false;
-    (void)hal::Hal::i2c(static_cast<u8>(bus)).transaction([&](hal::II2cBus::Session& s) {
-        present = s.ping(static_cast<u8>(addr)).has_value();
-        return ok();
-    });
-    m3ApiReturn(present ? 1u : 0u);
+    m3ApiReturn(wasmapi::i2cPing(bus, addr));
 }
 
 m3ApiRawFunction(wasmI2cScan) {
@@ -275,10 +194,7 @@ m3ApiRawFunction(wasmI2cScan) {
     m3ApiGetArg(uint32_t, capacity);
 
     m3ApiCheckMem(outPtr, capacity);
-    if (capacity == 0 || capacity > 128) m3ApiReturn(-1);
-
-    auto found = hal::Hal::i2c(static_cast<u8>(bus)).scan(outPtr, static_cast<u8>(capacity));
-    m3ApiReturn(found ? static_cast<int32_t>(*found) : -1);
+    m3ApiReturn(wasmapi::i2cScan(bus, outPtr, capacity));
 }
 
 m3ApiRawFunction(wasmI2cRead) {
@@ -290,18 +206,7 @@ m3ApiRawFunction(wasmI2cRead) {
     m3ApiGetArg(uint32_t, length);
 
     m3ApiCheckMem(outPtr, length);
-    if (length == 0) m3ApiReturn(-1);
-
-    // Argumenty w strukturze, a wewnątrz domknięcia jeden wskaźnik: `Delegate`
-    // ma stałą pojemność, a przechwycenie pięciu zmiennych ją przekracza.
-    struct Op { u8 addr; u8 reg; u8* out; u32 len; bool done; } op{
-        static_cast<u8>(addr), static_cast<u8>(reg), outPtr, length, false};
-
-    (void)hal::Hal::i2c(static_cast<u8>(bus)).transaction([&op](hal::II2cBus::Session& s) {
-        op.done = s.readReg(op.addr, op.reg, ByteSpan{op.out, op.len}).has_value();
-        return ok();
-    });
-    m3ApiReturn(op.done ? static_cast<int32_t>(length) : -1);
+    m3ApiReturn(wasmapi::i2cRead(bus, addr, reg, outPtr, length));
 }
 
 m3ApiRawFunction(wasmI2cWrite) {
@@ -313,15 +218,7 @@ m3ApiRawFunction(wasmI2cWrite) {
     m3ApiGetArg(uint32_t, length);
 
     m3ApiCheckMem(dataPtr, length);
-
-    struct Op { u8 addr; u8 reg; const u8* data; u32 len; bool done; } op{
-        static_cast<u8>(addr), static_cast<u8>(reg), dataPtr, length, false};
-
-    (void)hal::Hal::i2c(static_cast<u8>(bus)).transaction([&op](hal::II2cBus::Session& s) {
-        op.done = s.writeReg(op.addr, op.reg, CByteSpan{op.data, op.len}).has_value();
-        return ok();
-    });
-    m3ApiReturn(op.done ? 1 : -1);
+    m3ApiReturn(wasmapi::i2cWrite(bus, addr, reg, dataPtr, length));
 }
 
 /** Jeden import: nazwa, sygnatura wasm3 i funkcja. */
