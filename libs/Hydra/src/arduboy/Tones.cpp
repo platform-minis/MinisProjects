@@ -105,10 +105,12 @@ void Tones::advance() {
     noTone();
 }
 
-void Tones::update() {
+void Tones::update() { update(rtos::nowMs()); }
+
+void Tones::update(Millis nowMs) {
     if (!playing()) return;
 
-    const u32 now = static_cast<u32>(rtos::nowMs());
+    const u32 now = static_cast<u32>(nowMs);
     if (!primed_) {
         // Pierwsze wywołanie ustala tylko punkt odniesienia. Bez tego melodia
         // rozpoczęta tuż po starcie systemu dostałaby na wejściu cały czas,

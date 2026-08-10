@@ -86,6 +86,17 @@ public:
     /** Przesuwa melodię. Woła się raz na klatkę. */
     void update();
 
+    /**
+     * Wariant z jawnym czasem — ta sama konwencja, co `MinisIotModule::step()`.
+     *
+     * Istnieje dla testów: melodia z nutami po kilkadziesiąt milisekund
+     * sprawdzana przez usypianie wątku przewraca się przy każdym dłuższym
+     * zawahaniu planisty, bo `update()` przeskakuje wtedy dwie nuty naraz
+     * i robi to **poprawnie**. Sterowanie czasem z zewnątrz zdejmuje z testu
+     * zależność od obciążenia maszyny, nie zmieniając zachowania na urządzeniu.
+     */
+    void update(Millis now);
+
     /** Częstotliwość brzmiąca w tej chwili; 0 to cisza. Do testów i diagnostyki. */
     u16 currentFrequency() const { return currentFreq_; }
 

@@ -446,7 +446,7 @@ TEST("arduboy: drawPlusMask czyta przeplecioną maskę") {
 // ═══════════════════════════════════════════════════════════════════════════
 
 TEST("arduboy: sekwencer przechodzi po nutach") {
-    static const u16 melody[] = {440, 20, 880, 20, kTonesEnd};
+    static const u16 melody[] = {440, 200, 880, 200, kTonesEnd};
 
     Tones tones;
     u16 lastFreq = 0xFFFF;
@@ -457,13 +457,20 @@ TEST("arduboy: sekwencer przechodzi po nutach") {
     CHECK(tones.playing());
     CHECK_EQ(tones.currentFrequency(), 440);
 
-    tones.update();          // pierwsze wywołanie ustala punkt odniesienia
-    rtos::delayMs(30);
-    tones.update();
+    // Czas podajemy wprost, zamiast usypiać wątek. Poprzednia wersja usypiała
+    // na 30 ms przy nutach po 20 ms, więc każde zawahanie planisty dłuższe niż
+    // nuta przeskakiwało dwie naraz — i test przewracał się losowo, najczęściej
+    // pod sanitizerami, które spowalniają wykonanie. Sterowanie zegarem znosi
+    // zależność od obciążenia maszyny i przy okazji skraca test do zera.
+    const Millis t0 = rtos::nowMs();
+
+    tones.update(t0);
+    CHECK_EQ(tones.currentFrequency(), 440);
+
+    tones.update(t0 + 300);
     CHECK_EQ(tones.currentFrequency(), 880);
 
-    rtos::delayMs(30);
-    tones.update();
+    tones.update(t0 + 600);
     CHECK(!(tones.playing()));
     CHECK_EQ(lastFreq, 0);
     CHECK(changes >= 3);
@@ -482,15 +489,16 @@ TEST("arduboy: wyciszenie nie zatrzymuje melodii") {
 }
 
 TEST("arduboy: TONES_REPEAT zapętla bez końca") {
-    static const u16 loop[] = {440, 10, kTonesRepeat};
+    static const u16 loop[] = {440, 100, kTonesRepeat};
 
     Tones tones;
     tones.tones(loop);
-    tones.update();
 
-    for (u8 i = 0; i < 5; ++i) {
-        rtos::delayMs(15);
-        tones.update();
+    const Millis t0 = rtos::nowMs();
+    tones.update(t0);
+
+    for (u8 i = 1; i <= 5; ++i) {
+        tones.update(t0 + static_cast<Millis>(i) * 150);
         // Powtórka nie może się nigdy skończyć ani zawiesić na pustej nucie.
         CHECK(tones.playing());
         CHECK_EQ(tones.currentFrequency(), 440);
