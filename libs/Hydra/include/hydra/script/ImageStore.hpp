@@ -121,6 +121,20 @@ public:
      */
     void adoptBuiltin(CByteSpan image);
 
+    /**
+     * Wolny slot jako bufor do zapisu z zewnątrz — dla odczytu z pamięci
+     * trwałej, który ma trafić prosto tutaj zamiast przez drugi bufor
+     * wielkości obrazu. Pusty span, gdy wolnego slotu nie ma.
+     */
+    ByteSpan stagingBuffer();
+
+    /**
+     * Uznaje obraz wpisany do wolnego slotu za aktywny, zachowując poprzedni
+     * do wycofania. Używane po odtworzeniu z pamięci trwałej — skrót jest tam
+     * sprawdzany przy odczycie, więc magazyn nie liczy go po raz drugi.
+     */
+    Status adoptRestored(size_t bytes);
+
     const ImageRef& active() const { return active_; }
     const ImageRef& previous() const { return previous_; }
 
@@ -129,6 +143,16 @@ public:
     size_t expected() const { return expected_; }
     /** Czy zebrany obraz przeszedł weryfikację i czeka na przełączenie. */
     bool   staged() const { return verified_; }
+
+    /**
+     * Obraz w slocie przyjmującym — do sprawdzeń, które muszą patrzeć na
+     * zebrane bajty, a nie na to, co zapowiedział nadawca (np. podpis).
+     * Pusty span, gdy transfer nie trwa.
+     */
+    CByteSpan stagedImage() const {
+        if (staging_ < 0) return CByteSpan{};
+        return CByteSpan{slots_[staging_].data(), received_};
+    }
 
     Stats stats() const { return stats_; }
 

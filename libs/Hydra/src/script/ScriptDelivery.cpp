@@ -17,6 +17,7 @@
 #include "hydra/core/App.hpp"
 #include "hydra/core/Log.hpp"
 #include "hydra/util/Base64.hpp"
+#include "hydra/util/Sha256.hpp"
 
 HYDRA_LOG_MODULE("script.ota")
 
@@ -46,6 +47,11 @@ Status ScriptDelivery::onInit() {
         // sam wskaźnik, żeby wycofanie wróciło dokładnie do niego.
         cfg_.store->adoptBuiltin(cfg_.script->image());
     }
+
+    // Obraz z pamięci trwałej, jeśli jakiś przetrwał restart. Musi wejść po
+    // przejęciu wbudowanego, żeby wycofanie miało dokąd wrócić także wtedy,
+    // gdy odtworzona wersja okaże się zła.
+    restorePersisted();
 
     return cfg_.minis->addExtension(
         kExtType, [this](const char* id, const char* op, json::JsonView params) {
@@ -84,6 +90,11 @@ void ScriptDelivery::step(Millis now) {
         cfg_.store->confirm();
         ++stats_.confirms;
         HYDRA_LOGI("nowy skrypt potwierdzony");
+
+        // Zapis dopiero teraz, a nie przy `commit`: do pamięci trwałej trafia
+        // wyłącznie wersja, która dowiodła, że wstaje. Inaczej restart w środku
+        // okresu próbnego przywracałby właśnie tę, przed którą się bronimy.
+        persistActive();
     }
 }
 
@@ -100,6 +111,9 @@ void ScriptDelivery::rollbackNow(const char* reason) {
 
     ++stats_.rollbacks;
     HYDRA_LOGW("wycofanie skryptu: %s", reason);
+
+    // Wersja, do której wracamy, jest sprawdzona — niech przetrwa restart.
+    persistActive();
 
     const auto& image = restored.value();
     auto reloaded = cfg_.script->reload(image.data, image.bytes, "=rollback");
@@ -148,6 +162,20 @@ void ScriptDelivery::opBegin(const char* id, json::JsonView params) {
     auto* engine = cfg_.script->engine();
     if (engine == nullptr || !engine->acceptsVariant(variant)) {
         return respondErr(id, "variant", "silnik nie wykona obrazu w tym wariancie");
+    }
+
+    // Podpis, jeśli urządzenie ma klucz. Sam skrót mówi wyłącznie, że obraz nie
+    // uległ uszkodzeniu w drodze — napastnik policzy go równie dobrze. HMAC
+    // wymaga znajomości klucza, więc podmiana wymaga jego zdobycia.
+    haveHmac_ = false;
+    if (cfg_.hmacKey.length() > 0) {
+        char mac[2 * util::kSha256Size + 1] = {};
+        if (!params.get("hmac").asString(mac, sizeof(mac)) ||
+            !util::Sha256::fromHex(mac, wantHmac_)) {
+            ++stats_.unsigned_;
+            return respondErr(id, "unsigned", "urzadzenie wymaga podpisanego obrazu");
+        }
+        haveHmac_ = true;
     }
 
     // Nazwa jest wygodą diagnostyczną: pojawia się w komunikatach o błędach
@@ -205,6 +233,15 @@ void ScriptDelivery::opCommit(const char* id) {
         return respondErr(id, "checksum", "skrot sie nie zgadza");
     }
 
+    // Podpis sprawdzamy po skrócie, a przed przełączeniem: obraz uszkodzony
+    // w drodze i obraz podstawiony to dwie różne awarie i zasługują na dwie
+    // różne odpowiedzi.
+    if (haveHmac_ && !verifySignature()) {
+        ++stats_.unsigned_;
+        cfg_.store->abortTransfer();
+        return respondErr(id, "signature", "podpis sie nie zgadza");
+    }
+
     auto activated = cfg_.store->activateStaged();
     if (!activated) return respondErr(id, "failed", "nie mozna przelaczyc obrazu");
 
@@ -254,6 +291,72 @@ void ScriptDelivery::opStatus(const char* id) {
 // ---------------------------------------------------------------------------
 // Pomocnicze
 // ---------------------------------------------------------------------------
+
+void ScriptDelivery::persistActive() {
+    if (cfg_.persist == nullptr || !cfg_.persist->enabled()) return;
+
+    const auto& active = cfg_.store->active();
+    if (!active.valid()) return;
+
+    // Obraz wbudowany nie ma po co lądować w pamięci trwałej — jest w firmware.
+    // Zapisany plik trzeba wtedy usunąć, inaczej po restarcie wróciłaby wersja,
+    // od której właśnie odeszliśmy.
+    if (active.slot < 0) {
+        (void)cfg_.persist->clear();
+        return;
+    }
+
+    auto saved = cfg_.persist->save(active.span());
+    if (!saved) HYDRA_LOGW("obraz nie zostal zapisany na trwale");
+}
+
+void ScriptDelivery::restorePersisted() {
+    if (cfg_.persist == nullptr || !cfg_.persist->enabled()) return;
+
+    // Odczyt idzie prosto do wolnego slotu magazynu — bez drugiego bufora
+    // wielkości obrazu, na który na urządzeniu zwykle nie ma miejsca.
+    auto slot = cfg_.store->stagingBuffer();
+    if (slot.data() == nullptr) return;
+
+    auto loaded = cfg_.persist->load(slot);
+    if (!loaded) return;   // brak pliku albo uszkodzony — zostajemy z wbudowanym
+
+    auto adopted = cfg_.store->adoptRestored(loaded.value());
+    if (!adopted) {
+        HYDRA_LOGE("odtworzony obraz nie zmiescil sie w magazynie");
+        return;
+    }
+
+    const auto& image = cfg_.store->active();
+    auto reloaded = cfg_.script->reload(image.data, image.bytes, "=trwaly");
+    if (!reloaded) {
+        // Odtworzony obraz nie wstał. Wracamy do wbudowanego i kasujemy plik,
+        // żeby nie próbować go przy każdym rozruchu — pętla restartów byłaby
+        // gorsza od utraty ostatniej wersji.
+        HYDRA_LOGE("odtworzony obraz nie wstal: %s", cfg_.script->engine()->error());
+        (void)cfg_.persist->clear();
+        auto back = cfg_.store->rollback();
+        if (back) (void)cfg_.script->reload(back.value().data, back.value().bytes, "=wbudowany");
+        return;
+    }
+
+    HYDRA_LOGI("odtworzono obraz z pamieci trwalej, %u B", static_cast<u32>(image.bytes));
+}
+
+bool ScriptDelivery::verifySignature() const {
+    // Liczymy nad tym samym obrazem, który przed chwilą przeszedł weryfikację
+    // skrótu — czyli nad zawartością slotu, a nie nad tym, co zapowiedział
+    // nadawca. Inaczej podpis potwierdzałby deklarację, a nie dane.
+    const auto& staged = cfg_.store->stagedImage();
+    if (staged.data() == nullptr) return false;
+
+    u8 got[util::kSha256Size] = {};
+    util::HmacSha256::compute(
+        CByteSpan{reinterpret_cast<const u8*>(cfg_.hmacKey.reveal()), cfg_.hmacKey.length()},
+        staged, got);
+
+    return util::Sha256::equal(got, wantHmac_);
+}
 
 bool ScriptDelivery::applyImage(const ImageRef& image) {
     auto reloaded = cfg_.script->reload(image.data, image.bytes, imageName_);

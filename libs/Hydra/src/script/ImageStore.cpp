@@ -44,6 +44,33 @@ void ImageStore::adoptBuiltin(CByteSpan image) {
     previous_ = ImageRef{};
 }
 
+ByteSpan ImageStore::stagingBuffer() {
+    const i8 slot = pickFreeSlot();
+    if (slot < 0) return ByteSpan{};
+    staging_ = slot;
+    return slots_[slot];
+}
+
+Status ImageStore::adoptRestored(size_t bytes) {
+    if (staging_ < 0) return fail(Err::NotInitialized);
+    if (bytes == 0 || bytes > capacity()) return fail(Err::OutOfRange);
+
+    ImageRef fresh{};
+    fresh.data  = slots_[staging_].data();
+    fresh.bytes = bytes;
+    fresh.slot  = staging_;
+    util::Sha256::hash(fresh.span(), fresh.sha);
+
+    previous_ = active_;
+    active_   = fresh;
+
+    staging_  = -1;
+    received_ = 0;
+    expected_ = 0;
+    verified_ = false;
+    return ok();
+}
+
 i8 ImageStore::pickFreeSlot() const {
     for (i8 i = 0; i < 2; ++i) {
         if (active_.slot == i) continue;

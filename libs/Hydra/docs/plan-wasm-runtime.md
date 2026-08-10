@@ -228,14 +228,21 @@ Trzy decyzje podjęte w trakcie:
 3. **Nazwa `ImageStore`, nie `ModuleStore`** jak w pierwotnym planie — „moduł"
    w Hydrze znaczy `IModule`, a to jest magazyn obrazów, nie modułów.
 
-### Czego świadomie nie ma
+### Dopisane później
 
-- **Trwałości między restartami.** Po restarcie urządzenie wraca do obrazu
-  wbudowanego. Dopisanie: zapis obrazu do `IFileSystem` przy `confirm()`
-  i odczyt przy starcie, przed `ScriptModule::init()`.
-- **Podpisu.** SHA-256 mówi, że obraz nie uległ uszkodzeniu — nie że pochodzi
-  od właściciela urządzenia. `util::HmacSha256` jest już w drzewie i wpina się
-  w to samo miejsce, co weryfikacja skrótu.
+- **Trwałość między restartami** — `script::ImageFile` (osobna klasa, nie pole
+  w `ImageStore`: to inny cykl życia i inna droga awarii). Zapis **po
+  potwierdzeniu**, nie przy `commit` — inaczej restart w środku okresu próbnego
+  przywracałby właśnie tę wersję, przed którą się bronimy. Odczyt idzie prosto
+  do wolnego slotu magazynu, bez drugiego bufora wielkości obrazu.
+- **Podpis HMAC** — `ScriptDelivery::Config::hmacKey`. Brak podpisu przy
+  ustawionym kluczu kończy się odmową **przed transferem**; zły podpis —
+  po weryfikacji skrótu, a przed przełączeniem. Liczony nad zawartością slotu,
+  nie nad tym, co zapowiedział nadawca; inaczej potwierdzałby deklarację,
+  a nie dane.
+
+### Czego nadal świadomie nie ma
+
 - **Wznowienia przerwanego transferu.** Zerwane połączenie oznacza transfer
   od zera. Przy kilkudziesięciu kilobajtach to akceptowalne; przy AOT z fazy 3
   trzeba będzie wrócić do tematu.

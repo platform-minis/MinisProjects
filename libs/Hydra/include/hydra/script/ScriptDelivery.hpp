@@ -46,8 +46,10 @@
 #if HYDRA_ENABLE_SCRIPT && HYDRA_ENABLE_MINIS
 
 #include "hydra/core/IModule.hpp"
+#include "hydra/core/Secret.hpp"
 #include "hydra/core/Task.hpp"
 #include "hydra/minis/MinisModule.hpp"
+#include "hydra/script/ImageFile.hpp"
 #include "hydra/script/ImageStore.hpp"
 #include "hydra/script/ScriptModule.hpp"
 
@@ -76,6 +78,26 @@ public:
         ImageStore*            store  = nullptr;
 
         /**
+         * Trwałość między restartami. Bez niej urządzenie po zaniku zasilania
+         * wraca do skryptu wkompilowanego w firmware — a wszystko, co wgrano
+         * przez sieć, przepada.
+         */
+        ImageFile* persist = nullptr;
+
+        /**
+         * Klucz potwierdzający autentyczność obrazu.
+         *
+         * Pusty oznacza sprawdzanie **wyłącznie spójności**: skrót mówi, że
+         * obraz nie uległ uszkodzeniu w drodze, ale nie że pochodzi od
+         * właściciela urządzenia — napastnik policzy go równie dobrze.
+         * Dopuszczalne w sieci zamkniętej, nie w Internecie.
+         *
+         * Z kluczem `begin` musi nieść pole `hmac`, a obraz bez podpisu jest
+         * odrzucany przed transferem.
+         */
+        SecretString<64> hmacKey;
+
+        /**
          * Jak długo obserwować nową wersję, zanim zostanie uznana za dobrą.
          * Musi z zapasem przekraczać `maxConsecutiveErrors` przebiegów modułu
          * skryptowego — inaczej wersja psująca się w `loop()` zdąży zostać
@@ -90,6 +112,7 @@ public:
 
     struct Stats {
         u32 begins    = 0;
+        u32 unsigned_ = 0;   ///< odrzucone z powodu braku albo złego podpisu
         u32 chunks    = 0;
         u32 commits   = 0;   ///< obrazy przełączone i wczytane
         u32 rejects   = 0;   ///< odrzucone przy weryfikacji skrótu
@@ -118,6 +141,8 @@ protected:
 
 private:
     void opBegin(const char* id, json::JsonView params);
+    /** Czy obraz w slocie ma podpis zgodny z kluczem. */
+    bool verifySignature() const;
     void opChunk(const char* id, json::JsonView params);
     void opCommit(const char* id);
     void opAbort(const char* id);
@@ -126,6 +151,11 @@ private:
     /** Wczytuje obraz do modułu. Zwraca false, gdy skrypt nie wstał. */
     bool applyImage(const ImageRef& image);
     void rollbackNow(const char* reason);
+
+    /** Zapisuje aktywny obraz do pamięci trwałej, jeśli jest gdzie. */
+    void persistActive();
+    /** Odtwarza obraz z pamięci trwałej przy starcie. */
+    void restorePersisted();
 
     void respondOk(const char* id, const char* dataJson = nullptr);
     void respondErr(const char* id, const char* code, const char* message);
@@ -142,6 +172,10 @@ private:
      * zapamiętuje sam wskaźnik — napis musi przeżyć podmianę.
      */
     char imageName_[24] = {};
+
+    /** Podpis zapowiedziany w `begin`; sprawdzany przy `commit`. */
+    u8   wantHmac_[util::kSha256Size] = {};
+    bool haveHmac_ = false;
 
     u8   chunk_[HYDRA_SCRIPT_CHUNK_MAX] = {};
     char b64_[((HYDRA_SCRIPT_CHUNK_MAX + 2) / 3) * 4 + 4] = {};
