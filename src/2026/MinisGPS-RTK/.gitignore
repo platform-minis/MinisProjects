@@ -1,0 +1,19 @@
+# PlatformIO / Arduino
+.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/
+build/
+*.bin
+*.elf
+*.map
+
+# Sekrety — konfiguracja lokalna
+firmware/config.h
+
+# Dokumentacja zrzucona ze stron (duże pliki, nie do repo)
+doc/*.mht
+
+# System
+.DS_Store
+Thumbs.db
