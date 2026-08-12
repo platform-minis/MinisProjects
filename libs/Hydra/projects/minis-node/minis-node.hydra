@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════════════
+#  minis-node — węzeł IoT MyCastle na układzie i w przeglądarce
+#
+#  Ten sam kod, te same encje, ten sam protokół. Różni je jedno:
+#  skąd bierze się gniazdo dla MQTT.
+#
+#      esp32s3        WiFiClient → TCP → broker (port 1883)
+#      przegladarka   WebSocket przeglądarki → broker (port 9001)
+#
+#  Symulowane urządzenie łączy się z **prawdziwym** brokerem i widać je
+#  w MyCastle obok fizycznych. Nie jest to makieta protokołu — to ten sam
+#  kod, który pójdzie na płytkę.
+#
+#      hydra gen . --hydra ../..
+#      ./build-wasm.sh && ./serve-wasm.py
+#
+#  Broker musi wystawiać port WebSocket z podprotokołem `mqtt`; Aedes
+#  robi to obok portu TCP.
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: minis-node
+  version: 1.0.0
+  description: "Węzeł MyCastle: ten sam kod na ESP32 i w karcie przeglądarki"
+  license: MIT
+
+targets:
+  default: przegladarka
+
+  # Karta przeglądarki. Bez okna — węzeł nie ma interfejsu, a strona jest
+  # tylko konsolą i panelem bodźców.
+  przegladarka:
+    mcu: wasm
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+    memory:
+      flash: 8MB
+      partitions: ota_2app
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]
+
+  net: {}
+
+  minis:
+    user: user1
+    heartbeat_s: 30
+    auto_register: true

@@ -1,0 +1,120 @@
+<!doctype html>
+<!--
+  Strona celu przeglądarkowego Hydry.
+
+  Emscripten ma własną stronę domyślną, ale ona zakłada program konsolowy
+  z canvasem obok. Tutaj canvas jest urządzeniem, a obok niego stoi panel
+  bodźców — i to jest cała różnica: `stim` na hoście podmienia atrapę HAL,
+  na stanowisku steruje przekaźnikiem, a tu jest suwakiem i przyciskiem.
+
+  Panel nie wie nic o konkretnym projekcie. Nóżki i adresy wpisuje się ręcznie,
+  bo plik `.hydra` nie jest tu dostępny — mapowanie na czytelne nazwy należy
+  do Studio, które ten plik ma.
+-->
+<meta charset="utf-8">
+<title>Hydra — cel przeglądarkowy</title>
+<style>
+  :root { color-scheme: dark; --bg:#12141a; --panel:#1c1f27; --line:#2c313d;
+          --ink:#e6e8ee; --dim:#9aa1b1; --accent:#5b8dd9; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:14px/1.5 ui-sans-serif, system-ui, sans-serif;
+         display:flex; gap:20px; padding:20px; align-items:flex-start; flex-wrap:wrap; }
+  canvas { background:#000; image-rendering:pixelated; border:1px solid var(--line);
+           border-radius:6px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px;
+           padding:14px 16px; min-width:270px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em;
+       color:var(--dim); margin:0 0 10px; font-weight:600; }
+  .row { display:flex; align-items:center; gap:8px; margin:8px 0; }
+  label { color:var(--dim); min-width:66px; font-size:13px; }
+  input[type=number] { width:58px; }
+  input, button { background:#252932; color:var(--ink); border:1px solid var(--line);
+                  border-radius:4px; padding:4px 8px; font:inherit; }
+  button { cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  input[type=range] { flex:1; min-width:100px; padding:0; }
+  #log { font:12px/1.45 ui-monospace, monospace; color:var(--dim); white-space:pre-wrap;
+         max-height:130px; overflow:auto; margin-top:10px; border-top:1px solid var(--line);
+         padding-top:8px; }
+  .hint { color:var(--dim); font-size:12px; margin-top:10px; }
+</style>
+
+<canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+
+<div class="panel">
+  <h2>Bodźce</h2>
+
+  <div class="row">
+    <label for="dpin">Nóżka</label>
+    <input type="number" id="dpin" value="12" min="0" max="63">
+    <button onclick="stim('digital', [+dpin.value, 1])">wysoki</button>
+    <button onclick="stim('digital', [+dpin.value, 0])">niski</button>
+    <button onclick="stim('edge', [+dpin.value])">zbocze</button>
+  </div>
+
+  <div class="row">
+    <label for="apin">Analog</label>
+    <input type="number" id="apin" value="34" min="0" max="63">
+    <input type="range" id="mv" min="0" max="3300" value="1650"
+           oninput="mvOut.textContent = mv.value + ' mV'; stim('analog', [+apin.value, +mv.value])">
+  </div>
+  <div class="row"><label></label><span id="mvOut" class="hint">1650 mV</span></div>
+
+  <div class="row">
+    <label for="addr">I²C</label>
+    <input type="number" id="addr" value="118" min="0" max="127">
+    <button onclick="stim('presence', [0, +addr.value, 1])">obecny</button>
+    <button onclick="stim('presence', [0, +addr.value, 0])">wypięty</button>
+  </div>
+
+  <div class="row">
+    <label for="faults">Awarie</label>
+    <input type="number" id="faults" value="3" min="1" max="99">
+    <button onclick="stim('bus_fault', [0, +faults.value])">zepsuj magistralę</button>
+  </div>
+
+  <div class="row">
+    <label></label>
+    <button onclick="stim('reset', [])">stan wyjściowy</button>
+  </div>
+
+  <div id="log"></div>
+  <div class="hint">Klawiatura działa po kliknięciu w obraz.</div>
+</div>
+
+<script>
+  // Sygnatury mostu z src/wasm/StimBridge.cpp. Każda funkcja zwraca zero albo
+  // kod błędu — panel pokazuje go, zamiast udawać, że bodziec przeszedł.
+  const SIGN = {
+    digital:   ['number', 'number'],
+    edge:      ['number'],
+    analog:    ['number', 'number'],
+    presence:  ['number', 'number', 'number'],
+    register:  ['number', 'number', 'number', 'number', 'number'],
+    bus_fault: ['number', 'number'],
+    reset:     [],
+  };
+
+  function note(text) {
+    const box = document.getElementById('log');
+    box.textContent += text + '\n';
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function stim(name, args) {
+    if (!window.Module || !Module.ccall) { note('moduł jeszcze się ładuje'); return; }
+    const type = name === 'reset' ? null : 'number';
+    const code = Module.ccall('hydra_stim_' + name, type, SIGN[name], args);
+    note(code ? `${name}(${args}) → błąd ${code}` : `${name}(${args})`);
+  }
+
+  var Module = {
+    canvas: document.getElementById('canvas'),
+    // Wyjście programu idzie do panelu, nie tylko do konsoli przeglądarki:
+    // komunikat o braku czegoś ma być widoczny obok obrazu, a nie po
+    // otwarciu narzędzi deweloperskich.
+    print: note,
+    printErr: note,
+  };
+</script>
+{{{ SCRIPT }}}

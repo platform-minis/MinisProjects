@@ -1,0 +1,28 @@
+{
+  "name": "MinisGPS-RTK",
+  "version": "0.2.0",
+  "description": "Driver GNSS RTK Quectel LC29H (NMEA/UART) dla ESP32 — parser GGA/RMC/GSA/GST, diagnostyka RTK, nieblokujące wejście RTCM3 pod klienta NTRIP.",
+  "keywords": ["gnss", "gps", "rtk", "lc29h", "ntrip", "nmea", "esp32"],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marcin Hersztowski",
+      "url": "https://github.com/mhersztowski",
+      "maintainer": true
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mhersztowski/minisgps-rtk.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "headers": ["Lc29hSensor.h", "LocationJson.h"],
+  "export": {
+    "exclude": ["doc/*.mht"]
+  },
+  "build": {
+    "srcDir": "src",
+    "includeDir": "src"
+  }
+}

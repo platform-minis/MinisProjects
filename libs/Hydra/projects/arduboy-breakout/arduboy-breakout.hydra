@@ -1,0 +1,76 @@
+# ═══════════════════════════════════════════════════════════════════
+#  arduboy-breakout — prawdziwa gra na Arduboya, źródło nietknięte
+#
+#  `src/ArduBreakout.ino` jest bajt w bajt plikiem z repozytorium
+#  MLXXXp/Arduboy2 (examples/ArduBreakout). Można to sprawdzić:
+#
+#      sha256sum src/ArduBreakout.ino
+#      dc9f9dd150cb7a941d272e8dde9212a0f8d6cabd858295b2e2950a814f8f9174
+#
+#  Obok leży `src/main.cpp` — szkielet szkicu, który dokleja prototypy
+#  funkcji. Dokładnie to samo robi środowisko Arduino przed kompilacją,
+#  tylko niewidocznie. To jedyny plik, którego w oryginale nie ma.
+#
+#  LICENCJA: gra jest na LGPL 2.1 lub nowszej (Sebastian Goscik 2011,
+#  zmiany Scott Allen 2016–2020). Nagłówek licencyjny w `.ino` musi
+#  zostać. Reszta projektu jest na MIT.
+#
+#  Sterowanie na PC:
+#      ← →            paletka
+#      A / Z / Enter  przycisk A (start, wyrzut piłki)
+#      S / X / Backsp przycisk B
+#
+#  Dźwięk wychodzi na kartę dźwiękową hosta — falą prostokątną, tak jak
+#  na brzęczyku oryginału. Najlepsze wyniki i inicjały trafiają do
+#  `eeprom.bin` obok binarki.
+#
+#      hydra check .
+#      hydra gen   . --hydra ../..
+#      hydra build . --hydra ../.. -e podglad
+# ═══════════════════════════════════════════════════════════════════
+hydra: "0.4"
+
+project:
+  name: arduboy-breakout
+  version: 1.0.0
+  description: "ArduBreakout — niezmieniona gra na Arduboya, na PC z dźwiękiem"
+  license: LGPL-2.1-or-later
+
+targets:
+  default: podglad
+
+  podglad:
+    mcu: native
+    native:
+      window:
+        width: 128
+        height: 64
+        format: mono1
+        scale: 6
+        title: "ArduBreakout"
+
+  # Ten sam program w karcie przeglądarki. Różni się wyłącznie sposobem
+  # budowy — atrapy HAL i okno SDL są te same, co przy celu `podglad`.
+  przegladarka:
+    mcu: wasm
+    native:
+      window:
+        width: 128
+        height: 64
+        format: mono1
+        scale: 6
+        title: "ArduBreakout"
+
+  esp32s3:
+    mcu: esp32s3
+    platformio: { board: esp32-s3-devkitc-1 }
+    memory:
+      flash: 8MB
+
+modules:
+  core:
+    log:
+      default: info
+      sinks: [uart0]
+
+  arduboy: {}
