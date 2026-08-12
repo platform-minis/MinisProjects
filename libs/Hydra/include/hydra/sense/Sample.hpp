@@ -53,6 +53,18 @@ enum class AnomalyKind : u8 {
     Frozen,   ///< wartość nie zmienia się mimo kolejnych odczytów
     Spike,    ///< skok większy niż spodziewany między próbkami
     OutOfRange,
+    /**
+     * Model uznał okno za nietypowe.
+     *
+     * Odróżnione od pozostałych, bo mówi co innego. Tamte trzy nazywają
+     * **co** jest nie tak — czujnik zamarł, wartość skoczyła, wyszła poza
+     * zakres — i każda z nich wskazuje regułę, którą ktoś świadomie zapisał.
+     * Ta mówi tylko, że przebieg **nie wygląda jak zwykle**, i nie potrafi
+     * powiedzieć dlaczego. Zlanie ich w jedno zabrałoby odbiorcy możliwość
+     * innego potraktowania obu: próg jest pewny i tłumaczalny, model bywa
+     * czulszy i bywa w błędzie.
+     */
+    Learned,
 };
 
 constexpr const char* toString(AnomalyKind k) {
@@ -61,6 +73,7 @@ constexpr const char* toString(AnomalyKind k) {
         case AnomalyKind::Frozen:     return "frozen";
         case AnomalyKind::Spike:      return "spike";
         case AnomalyKind::OutOfRange: return "out-of-range";
+        case AnomalyKind::Learned:    return "learned";
     }
     return "unknown";
 }

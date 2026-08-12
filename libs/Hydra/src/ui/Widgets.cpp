@@ -584,6 +584,79 @@ void Joystick::draw(gfx::ISurface& surface, const Theme& theme) {
     surface.drawCircle(knobX, knobY, knobR, theme.border);
 }
 
+
+// ---------------------------------------------------------------------------
+// SpectrumView
+// ---------------------------------------------------------------------------
+
+void SpectrumView::setRange(float floorDb, float ceilingDb) {
+    if (ceilingDb <= floorDb) return;
+    floorDb_ = floorDb;
+    ceilDb_ = ceilingDb;
+}
+
+void SpectrumView::update(const float* bins, u16 count) {
+    if (bins == nullptr) return;
+    count_ = count < HYDRA_UI_SPECTRUM_BARS ? count : HYDRA_UI_SPECTRUM_BARS;
+
+    for (u16 i = 0; i < count_; ++i) {
+        values_[i] = bins[i];
+        // Szczyt podnosi się natychmiast, opada powoli — inaczej krótkie
+        // uderzenie zniknęłoby, zanim ktokolwiek zdąży je zobaczyć.
+        if (bins[i] >= peaks_[i]) peaks_[i] = bins[i];
+        else                      peaks_[i] -= peakFall_;
+        if (peaks_[i] < floorDb_) peaks_[i] = floorDb_;
+    }
+}
+
+void SpectrumView::draw(gfx::ISurface& surface, const Theme& theme) {
+    if (frame_) surface.drawRect(bounds_, theme.border);
+    if (count_ == 0) return;
+
+    const Rect plot = frame_ ? bounds_.inflated(-1) : bounds_;
+    if (plot.empty()) return;
+
+    const float span = ceilDb_ - floorDb_;
+    if (span <= 0.0f) return;
+
+    /*
+     * Szerokość słupka w pikselach, co najmniej jeden.
+     *
+     * Przy 64 prążkach na ekranie 128 pikseli wychodzą dwa piksele na słupek.
+     * Gdy prążków jest więcej niż pikseli, część nie zmieści się w ogóle —
+     * i to jest właściwe miejsce na tę stratę, bo tylko tutaj wiadomo, ile
+     * miejsca naprawdę jest.
+     */
+    const i16 barWidth = plot.w > count_ ? static_cast<i16>(plot.w / count_) : 1;
+    const u16 visible = static_cast<u16>(plot.w / barWidth) < count_
+                            ? static_cast<u16>(plot.w / barWidth)
+                            : count_;
+
+    for (u16 i = 0; i < visible; ++i) {
+        const float norm = (values_[i] - floorDb_) / span;
+        const float clamped = norm < 0.0f ? 0.0f : (norm > 1.0f ? 1.0f : norm);
+        const i16 height = static_cast<i16>(clamped * static_cast<float>(plot.h));
+
+        const i16 x = static_cast<i16>(plot.x + i * barWidth);
+        if (height > 0) {
+            const Rect bar{x, static_cast<i16>(plot.y + plot.h - height),
+                           static_cast<i16>(barWidth > 1 ? barWidth - 1 : 1), height};
+            surface.fillRect(bar, theme.accent);
+        }
+
+        if (peakFall_ > 0.0f) {
+            const float peakNorm = (peaks_[i] - floorDb_) / span;
+            const float peakClamped = peakNorm < 0.0f ? 0.0f : (peakNorm > 1.0f ? 1.0f : peakNorm);
+            const i16 peakY = static_cast<i16>(plot.y + plot.h -
+                                               static_cast<i16>(peakClamped * static_cast<float>(plot.h)));
+            if (peakY >= plot.y && peakY < plot.y + plot.h) {
+                const Rect mark{x, peakY, static_cast<i16>(barWidth > 1 ? barWidth - 1 : 1), 1};
+                surface.fillRect(mark, theme.text);
+            }
+        }
+    }
+}
+
 }  // namespace ui
 }  // namespace hydra
 

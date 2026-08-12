@@ -289,7 +289,26 @@ Status SensorHub::process(Entry& e, Micros stampUs) {
     Calibration::apply(e.cal, s);
     for (u8 c = 0; c < s.n; ++c) s.value[c] = e.filter[c].apply(s.value[c]);
 
-    const auto hit = e.anomaly.check(s);
+    auto hit = e.anomaly.check(s);
+
+    /*
+     * Model dostaje próbkę zawsze, ale zgłasza tylko wtedy, gdy progi milczą.
+     *
+     * Zawsze — bo okno musi płynąć bez dziur: pominięcie próbki dlatego, że
+     * inny mechanizm już coś wykrył, dałoby modelowi przebieg, którego nigdy
+     * nie widział przy uczeniu.
+     *
+     * Tylko gdy progi milczą — bo dwa zdarzenia o tej samej próbce znaczą dla
+     * odbiorcy „dwie anomalie", a nie „ta sama, widziana dwa razy". Próg jest
+     * przy tym pewniejszy: mówi, **co** jest nie tak, a model tylko, że coś.
+     */
+    if (e.model != nullptr) {
+        const auto learned = e.model->feed(s);
+        if (hit.kind == AnomalyKind::None && learned.kind != AnomalyKind::None) {
+            hit = learned;
+        }
+    }
+
     if (hit.kind != AnomalyKind::None) {
         // Zamrożona wartość to dane nieaktualne, skok i przekroczenie zakresu
         // to dane podejrzane — subskrybent widzi różnicę bez zaglądania
@@ -304,6 +323,18 @@ Status SensorHub::process(Entry& e, Micros stampUs) {
     ++e.stats.published;
     ++total_.published;
     return ok();
+}
+
+Status SensorHub::attachModel(u8 index, ModelDetector& detector) {
+    if (index >= count_) return fail(Err::OutOfRange);
+    entries_[index].model = &detector;
+    HYDRA_LOGI("czujnik %u: detektor nauczony podpięty", static_cast<unsigned>(index));
+    return ok();
+}
+
+void SensorHub::detachModel(u8 index) {
+    if (index >= count_) return;
+    entries_[index].model = nullptr;
 }
 
 }  // namespace sense

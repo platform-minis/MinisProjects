@@ -1,0 +1,39 @@
+{
+  "name": "HydraTflm",
+  "version": "1.0.0",
+  "description": "TensorFlow Lite Micro w konfiguracji dla Hydry: interpreter z alokatorem arenowym, jądra referencyjne, bez CMSIS-NN i bez akceleratorów. Osobna biblioteka, żeby nie trafiać do budowy projektów, które modelu nie używają.",
+  "keywords": ["tflm", "tflite", "tensorflow", "inference", "ml", "hydra"],
+  "license": "Apache-2.0",
+  "frameworks": ["arduino"],
+  "platforms": ["espressif32", "raspberrypi", "ststm32", "native"],
+  "headers": ["tensorflow/lite/micro/micro_interpreter.h"],
+  "build": {
+    "srcDir": "src",
+    "includeDir": "src",
+    "libArchive": true,
+    "flags": [
+      "-Isrc",
+      "-Isrc/third_party/flatbuffers/include",
+      "-Isrc/third_party/gemmlowp",
+      "-Isrc/third_party/ruy",
+      "-Isrc/third_party/kissfft",
+
+      "-DTF_LITE_STATIC_MEMORY",
+      "-DTF_LITE_DISABLE_X86_NEON",
+
+      "-DTF_LITE_STRIP_ERROR_STRINGS",
+
+      "-Wno-unused-parameter",
+      "-Wno-sign-compare",
+      "-Wno-missing-field-initializers",
+      "-Wno-type-limits"
+    ],
+    "srcFilter": [
+      "+<tensorflow/>",
+      "+<third_party/>",
+      "+<signal/>",
+      "-<*_test.cpp>",
+      "-<**/*_test.cpp>"
+    ]
+  }
+}

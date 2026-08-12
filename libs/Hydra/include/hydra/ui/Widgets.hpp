@@ -146,6 +146,55 @@ private:
 
 // ---------------------------------------------------------------------------
 
+/** Ile słupków mieści analizator. Jeden słupek to zwykle 1–3 piksele szerokości. */
+#ifndef HYDRA_UI_SPECTRUM_BARS
+#  define HYDRA_UI_SPECTRUM_BARS 64
+#endif
+
+/**
+ * Analizator widma — słupki rosnące od dołu.
+ *
+ * Dane przychodzą z `media::SpectrumAnalyzer` w decybelach i widżet ich nie
+ * przelicza: skala logarytmiczna jest już zrobiona po stronie potoku, a robienie
+ * jej drugi raz w rysowaniu oznaczałoby dwa miejsca, w których trzeba pamiętać
+ * o podłodze ciszy.
+ *
+ * ## Opadanie szczytów
+ *
+ * Widmo skacze szybciej, niż oko nadąża. Szczyt każdego słupka opada powoli
+ * (`peakFallDb` na klatkę) i zostawia ślad — to jest ten sam zabieg, co
+ * w analizatorach sprzętowych, i robi się go tutaj, a nie w potoku, bo zależy
+ * od częstotliwości odświeżania ekranu, a nie od częstotliwości okien.
+ */
+class SpectrumView : public Widget {
+public:
+    /** Podaje nowe widmo; `count` wartości w decybelach. */
+    void update(const float* bins, u16 count);
+
+    /** Zakres pionowy w decybelach. Domyślnie od −80 do 0. */
+    void setRange(float floorDb, float ceilingDb);
+
+    /** O ile decybeli opada szczyt na klatkę. Zero wyłącza ślad szczytu. */
+    void setPeakFall(float db) { peakFall_ = db; }
+
+    void setShowFrame(bool show) { frame_ = show; }
+
+    u16 bars() const { return count_; }
+
+    void draw(gfx::ISurface& surface, const Theme& theme) override;
+
+private:
+    float values_[HYDRA_UI_SPECTRUM_BARS] = {};
+    float peaks_[HYDRA_UI_SPECTRUM_BARS] = {};
+    u16   count_ = 0;
+    float floorDb_ = -80.0f;
+    float ceilDb_  = 0.0f;
+    float peakFall_ = 1.5f;
+    bool  frame_ = true;
+};
+
+// ---------------------------------------------------------------------------
+
 /** Przycisk ekranowy z etykietą. Reaguje na dotyk i na enkoder z fokusem. */
 class Button : public Widget {
 public:

@@ -45,6 +45,11 @@ public:
         Config& logSink(ILogSink& s) { logSink_ = &s; return *this; }
 
         /** Okres taska core.house (watchdog, statystyki, drenaż logów). */
+        /**
+         * Okres taska porządkowego. **0 wyłącza task** — wtedy aplikacja
+         * z własną pętlą woła App::housekeeping() sama. Potrzebne tam, gdzie
+         * wątek jest kosztowny albo niedostępny (cel przeglądarkowy).
+         */
         Config& housekeepingMs(u32 ms) { houseMs_ = ms; return *this; }
 
         /** Wyłącza publikację SysHeartbeat (np. przy bardzo ciasnym budżecie RAM). */

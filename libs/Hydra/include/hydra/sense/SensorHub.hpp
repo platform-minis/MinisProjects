@@ -101,6 +101,23 @@ public:
     SensorCal calibration(u8 index) const;
     Status    setCalibration(u8 index, const SensorCal& cal, bool persist = true);
 
+    /**
+     * Podpina detektor nauczony do czujnika.
+     *
+     * Wskaźnik, nie wartość: detektor niesie okno próbek o rozmiarze wziętym
+     * z modelu, a wpis czujnika jest tablicą statyczną — trzymanie okna
+     * w każdym wpisie kosztowałoby pamięć wszystkich czujników po to, żeby
+     * dać ją jednemu. Detektor tworzy aplikacja, bo to ona wie, gdzie leży
+     * arena, model i bufor.
+     *
+     * Można wołać po starcie: podpięcie modelu nie zmienia harmonogramu ani
+     * niczego nie alokuje.
+     */
+    Status attachModel(u8 index, ModelDetector& detector);
+
+    /** Odpina detektor — czujnik wraca do samych progów. */
+    void detachModel(u8 index);
+
 protected:
     Status onInit() override;
     Status onStart() override;
@@ -113,6 +130,8 @@ private:
         SensorCal     cal{};
         ChannelFilter filter[kMaxChannels];
         AnomalyDetector anomaly;
+        /** Detektor nauczony; `nullptr` znaczy „ten czujnik ma same progi". */
+        ModelDetector*  model = nullptr;
 
         TopicId  topic    = kInvalidTopic;
         PollMode mode     = PollMode::Periodic;

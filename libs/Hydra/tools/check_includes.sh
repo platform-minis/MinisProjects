@@ -196,6 +196,27 @@ else
     printf '%s✓%s typy wasm3 nie wyciekają poza src/\n' "$GREEN" "$OFF"
 fi
 
+# ---------------------------------------------------------------------------
+# TensorFlow Lite Micro widoczny tylko w pliku wiążącym
+#
+# Ta sama reguła, co dla wasm3, i z tego samego powodu: nagłówki TFLM ciągną
+# kilkaset plików do każdej jednostki, która je włączy. `TflmEngine.hpp`
+# operuje na `void*` i buforze bajtów, żeby aplikacja widziała
+# `IInferenceEngine`, a nie TensorFlow.
+#
+# Testy są wyłączone spod reguły świadomie: to one budują resolver operatorów,
+# a lista operatorów należy do aplikacji — patrz HydraTflm/VENDOR.md.
+# ---------------------------------------------------------------------------
+hits=$(grep -rnE "^[[:space:]]*#[[:space:]]*include[[:space:]]*[<\"](tensorflow|signal)/[^>\"]*[>\"]" \
+        include src examples templates 2>/dev/null \
+    | grep -v '^src/infer/TflmEngine\.cpp' || true)
+
+if [ -n "$hits" ]; then
+    report "nagłówki TFLM poza plikiem wiążącym (src/infer/TflmEngine.cpp)" "$hits"
+else
+    printf '%s✓%s TFLM widoczny tylko w TflmEngine.cpp\n' "$GREEN" "$OFF"
+fi
+
 # --- Podsumowanie ----------------------------------------------------------
 
 echo

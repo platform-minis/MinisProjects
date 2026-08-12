@@ -7,7 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "hydra/core/Log.hpp"
 #include "hydra/hal/Hal.hpp"
+
+HYDRA_LOG_MODULE("sense")
 
 namespace hydra {
 namespace sense {
@@ -132,6 +135,106 @@ AnomalyDetector::Hit AnomalyDetector::check(const Sample& s) {
     }
 
     primed_ = true;
+    return hit;
+}
+
+// ---------------------------------------------------------------------------
+// Detekcja nauczona
+// ---------------------------------------------------------------------------
+
+Status ModelDetector::configure(const Config& cfg) {
+    if (engine_ == nullptr) {
+        HYDRA_LOGE("brak silnika — ustaw setEngine() przed configure()");
+        return fail(Err::NotInitialized);
+    }
+    if (cfg.channel >= kMaxChannels) return fail(Err::BadArgument);
+
+    const infer::TensorInfo in = engine_->input(0);
+    if (!in.valid()) {
+        HYDRA_LOGE("silnik nie podaje kształtu wejścia — czy model jest wczytany?");
+        return fail(Err::NotInitialized);
+    }
+    if (in.type != infer::TensorType::F32) {
+        // Detektor karmi model próbkami po kalibracji i filtrze, czyli
+        // liczbami zmiennoprzecinkowymi. Model skwantyzowany wymagałby skali,
+        // którą trzeba znać przy uczeniu — a wtedy to nie jest już to samo
+        // wejście, tylko inne.
+        HYDRA_LOGE("model chce %s, a próbki czujnika są zmiennoprzecinkowe",
+                   infer::toString(in.type));
+        return fail(Err::NotSupported);
+    }
+
+    windowSamples_ = in.elements();
+    if (window_ == nullptr || capacity_ < windowSamples_) {
+        // Rozmiar okna wynika z modelu, więc aplikacja nie zna go przed
+        // wczytaniem — sprawdzamy tutaj, a nie przy podawaniu bufora.
+        HYDRA_LOGE("bufor okna ma %u próbek, a model potrzebuje %u",
+                   static_cast<unsigned>(capacity_), static_cast<unsigned>(windowSamples_));
+        return fail(Err::OutOfMemory);
+    }
+
+    cfg_ = cfg;
+    if (cfg_.hopSamples == 0) cfg_.hopSamples = static_cast<u16>(windowSamples_);
+    filled_ = 0;
+    return ok();
+}
+
+void ModelDetector::reset() {
+    filled_ = 0;
+    lastScore_ = 0.0f;
+}
+
+AnomalyDetector::Hit ModelDetector::feed(const Sample& s) {
+    AnomalyDetector::Hit hit;
+    if (engine_ == nullptr || window_ == nullptr || windowSamples_ == 0) return hit;
+    if (cfg_.channel >= s.n) return hit;
+
+    window_[filled_++] = s.value[cfg_.channel];
+    if (filled_ < windowSamples_) return hit;
+
+    if (auto r = engine_->setInput(0, window_, windowSamples_ * sizeof(float)); !r) {
+        HYDRA_LOGE("setInput: %s", engine_->error());
+        filled_ = 0;
+        return hit;
+    }
+    if (auto r = engine_->invoke(); !r) {
+        HYDRA_LOGE("invoke: %s", engine_->error());
+        filled_ = 0;
+        return hit;
+    }
+
+    const infer::TensorInfo out = engine_->output(0);
+    float score = 0.0f;
+    if (out.elements() == 1 && out.type == infer::TensorType::F32) {
+        (void)engine_->readOutput(0, &score, sizeof(score));
+    } else {
+        // Model o wielu wyjściach to klasyfikator, a nie miara nietypowości —
+        // detektor czujnika nie ma jak przypisać jego klasom znaczenia.
+        // Taki model należy do elementu potoku, nie tutaj.
+        HYDRA_LOGW("model ma %u wyjść — detektor czujnika oczekuje jednej liczby",
+                   static_cast<unsigned>(out.elements()));
+    }
+
+    lastScore_ = score;
+    ++evaluations_;
+
+    // Przesuw okna: zakładka pozwala zareagować szybciej niż raz na pełne
+    // okno, kosztem tylu inferencji, ile razy okna na siebie zachodzą.
+    if (cfg_.hopSamples >= filled_) {
+        filled_ = 0;
+    } else {
+        const u32 keep = filled_ - cfg_.hopSamples;
+        memmove(window_, window_ + cfg_.hopSamples, keep * sizeof(float));
+        filled_ = keep;
+    }
+
+    if (score > cfg_.threshold) {
+        hit.kind = AnomalyKind::Learned;
+        hit.channel = cfg_.channel;
+        // Wartością jest wynik modelu, nie próbka: „0,87" mówi, jak bardzo
+        // przebieg odstaje, a ostatnia próbka nie mówi o oknie nic.
+        hit.value = score;
+    }
     return hit;
 }
 

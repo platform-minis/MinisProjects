@@ -119,15 +119,24 @@ Status App::begin() {
     }
 
     // 5. core.house — najniższy priorytet, dowolny rdzeń (rozdz. 4.2).
-    Task::Cfg hc;
-    hc.name       = "core.house";
-    hc.prio       = Prio::Idle;
-    hc.core       = Core::Any;
-    hc.stackWords = HYDRA_DEFAULT_STACK;
-    if (auto r = s.house.startPeriodic(hc, c.houseMs_, [] { App::housekeeping(); }); !r) {
-        HYDRA_LOGE("core.house: %s", toString(r.error()));
-        for (i8 j = static_cast<i8>(c.moduleCount_) - 1; j >= 0; --j) c.modules_[j]->stop();
-        return r;
+    //
+    // Okres 0 znaczy „bez własnego taska": aplikacja ma własną pętlę i woła
+    // App::housekeeping() sama. Tak działa cel przeglądarkowy — w emscriptenie
+    // każdy wątek to Web Worker, a te wymagają SharedArrayBuffer, czyli
+    // nagłówków COOP/COEP na serwerze. Te z kolei odcinają stronie wszystkie
+    // zasoby cross-origin, więc jeden task porządkowy potrafi narzucić
+    // warunki hostingu całej aplikacji, w której osadzony jest podgląd.
+    if (c.houseMs_ > 0) {
+        Task::Cfg hc;
+        hc.name       = "core.house";
+        hc.prio       = Prio::Idle;
+        hc.core       = Core::Any;
+        hc.stackWords = HYDRA_DEFAULT_STACK;
+        if (auto r = s.house.startPeriodic(hc, c.houseMs_, [] { App::housekeeping(); }); !r) {
+            HYDRA_LOGE("core.house: %s", toString(r.error()));
+            for (i8 j = static_cast<i8>(c.moduleCount_) - 1; j >= 0; --j) c.modules_[j]->stop();
+            return r;
+        }
     }
 
     s.startedMs = rtos::nowMs();
@@ -150,7 +159,7 @@ void App::stop() {
     AppState& s = st();
     if (!s.running) return;
 
-    s.house.stopAndWait(2 * s.cfg.houseMs_ + 100);
+    if (s.cfg.houseMs_ > 0) s.house.stopAndWait(2 * s.cfg.houseMs_ + 100);
 
     for (i8 i = static_cast<i8>(s.cfg.moduleCount_) - 1; i >= 0; --i) {
         s.cfg.modules_[i]->stop();

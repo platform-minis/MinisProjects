@@ -85,7 +85,14 @@ Status run(const char* title, u8 scale) {
         return fail(Err::NotInitialized);
     }
 
-    App::config().name("arduboy").logLevel(LogLevel::Info).logSink(gConsole);
+    // Bez taska porządkowego: gra ma własną pętlę i woła housekeeping niżej.
+    //
+    // Osobny wątek nic tu nie wnosi, a na celu przeglądarkowym kosztuje —
+    // każdy wątek emscriptena to Web Worker, a te wymagają SharedArrayBuffer,
+    // czyli nagłówków COOP/COEP na serwerze. Jedna ścieżka dla okna na PC
+    // i dla kanwy w przeglądarce jest warta więcej niż ten wątek.
+    App::config().name("arduboy").logLevel(LogLevel::Info).logSink(gConsole)
+                 .housekeepingMs(0);
     HYDRA_CHECK(App::begin());
 
     gfx::SdlDisplay display;
@@ -132,11 +139,23 @@ Status run(const char* title, u8 scale) {
 
     setup();
 
+    Millis lastHouseMs = rtos::nowMs();
+
     while (display.pump()) {
         loop();
 
         // Zrzut rekordów następuje sam, chwilę po ostatniej zmianie.
         eeprom().tick();
+
+        // Praca, którą normalnie wykonuje task core.house: drenaż kolejki
+        // zdarzeń i logów, statystyki. Raz na sekundę, czyli w tym samym
+        // rytmie, co domyślny okres taska — a nie 60 razy na sekundę razem
+        // z klatkami gry.
+        const Millis nowMs = rtos::nowMs();
+        if (nowMs - lastHouseMs >= 1000) {
+            lastHouseMs = nowMs;
+            App::housekeeping();
+        }
 
         // Oddech dla systemu, gdy gra czeka na swoją klatkę.
         //

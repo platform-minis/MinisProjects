@@ -23,7 +23,9 @@ BUILD    ?= build/$(HOST_TAG)
 EXTRA    ?=
 BIN       = $(BUILD)/hydra_tests
 
-INCLUDES  = -I../include -I../src/wasm3 -I../../HydraWamr/src/core/iwasm/include -I.
+INCLUDES  = -I../include -I../src/pocketmod -I../src/wasm3 -I../../HydraWamr/src/core/iwasm/include -I. \
+            -I../../HydraTflm/src -I../../HydraTflm/src/third_party/flatbuffers/include \
+            -I../../HydraTflm/src/third_party/gemmlowp -I../../HydraTflm/src/third_party/ruy
 # Wyjątki i RTTI wyłączone tak samo jak w buildzie na MCU (rozdz. 11) —
 # inaczej testy nie sprawdzałyby tego samego kodu, co urządzenie.
 #
@@ -32,7 +34,7 @@ INCLUDES  = -I../include -I../src/wasm3 -I../../HydraWamr/src/core/iwasm/include
 # a reszta zostaje ze starym układem obiektu — objawem jest losowy SIGABRT,
 # nie błąd kompilacji.
 CXXFLAGS  = -std=c++17 -O1 -g -Wall -Wextra -Wshadow -Wno-unused-parameter \
-            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_SCRIPT_ENGINE_WASM=1 -DHYDRA_SCRIPT_ENGINE_WAMR=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 \
+            -fno-exceptions -fno-rtti -DHYDRA_FORCE_HOST -DHYDRA_ENABLE_SENSE=1 -DHYDRA_ENABLE_NET=1 -DHYDRA_ENABLE_UI=1 -DHYDRA_ENABLE_MOTION=1 -DHYDRA_ENABLE_OTA=1 -DHYDRA_ENABLE_SCRIPT=1 -DHYDRA_SCRIPT_ENGINE_WASM=1 -DHYDRA_SCRIPT_ENGINE_WAMR=1 -DHYDRA_ENABLE_MINIS=1 -DHYDRA_ENABLE_MEDIA=1 -DHYDRA_ENABLE_ARDUBOY=1 -DHYDRA_ENABLE_INFER_TFLM=1 -DTF_LITE_STATIC_MEMORY \
             -MMD -MP $(INCLUDES) $(EXTRA)
 LDFLAGS   = -lpthread $(EXTRA)
 
@@ -66,13 +68,38 @@ MEDIA_SRC = $(wildcard ../src/media/*.cpp) $(wildcard ../src/media/elements/*.cp
 # w testach nikt nie dostarcza.
 ARDUBOY_SRC = $(filter-out ../src/arduboy/Runtime.cpp,$(wildcard ../src/arduboy/*.cpp))
 STIM_SRC  = $(wildcard ../src/stim/*.cpp)
+# Inferencja: na razie sam szew i silnik bez modelu. TFLM dojdzie osobną
+# biblioteką, tak jak WAMR — patrz docs/plan-tflm.md.
+INFER_SRC = $(wildcard ../src/infer/*.cpp)
+# Model do testów: tablica bajtów wygenerowana z `.tflite`. Testy nie mogą
+# wymagać konwertera, tak samo jak nie wymagają toolchaina Arduino.
+MODEL_SRC = $(wildcard tflm_model_*.cpp)
+
+# TensorFlow Lite Micro — osobna biblioteka, tak jak WAMR i z tego samego
+# powodu: PlatformIO kompiluje całe `src/`, a 200 plików TFLM nie ma czego
+# szukać w projekcie bez modelu. Drzewo odtwarza `tools/vendor_tflm.sh`.
+TFLM_ROOT = ../../HydraTflm/src
+TFLM_SRC  = $(shell find $(TFLM_ROOT) -name '*.cpp' -not -name '*_test.cpp' 2>/dev/null)
+TFLM_OBJ  = $(patsubst $(TFLM_ROOT)/%.cpp,$(BUILD)/tflm/%.o,$(TFLM_SRC))
+TFLM_INC  = -I$(TFLM_ROOT) -I$(TFLM_ROOT)/third_party/flatbuffers/include \
+            -I$(TFLM_ROOT)/third_party/gemmlowp -I$(TFLM_ROOT)/third_party/ruy \
+            -I$(TFLM_ROOT)/third_party/kissfft
+# `TF_LITE_STATIC_MEMORY` przestawia TFLM na arenę zamiast malloca — to ta sama
+# reguła, co w całej Hydrze. `STRIP_ERROR_STRINGS` zdejmuje komunikaty, które
+# na MCU zajmują kilkanaście kB flasha; tu zostawiamy je włączone, bo w testach
+# to one mówią, dlaczego model się nie wczytał.
+TFLM_DEF  = -DTF_LITE_STATIC_MEMORY -DTF_LITE_DISABLE_X86_NEON
 TEST_SRC  = $(wildcard test_*.cpp)
-SRC       = $(CORE_SRC) $(HAL_SRC) $(SENSE_SRC) $(NET_SRC) $(GFX_SRC) $(UI_SRC) $(MOTION_SRC) $(SHELL_SRC) $(UTIL_SRC) $(SCRIPT_SRC) $(MINIS_SRC) $(MEDIA_SRC) $(ARDUBOY_SRC) $(STIM_SRC) $(TEST_SRC)
+SRC       = $(CORE_SRC) $(HAL_SRC) $(SENSE_SRC) $(NET_SRC) $(GFX_SRC) $(UI_SRC) $(MOTION_SRC) $(SHELL_SRC) $(UTIL_SRC) $(SCRIPT_SRC) $(MINIS_SRC) $(MEDIA_SRC) $(ARDUBOY_SRC) $(STIM_SRC) $(INFER_SRC) $(MODEL_SRC) $(TEST_SRC)
 OBJ       = $(patsubst %.cpp,$(BUILD)/%.o,$(notdir $(SRC)))
 
 # Osadzone źródła Lua kompilują się jako C, nie jako C++. Kompilacja ich jako
 # C++ zmieniłaby obsługę błędów interpretera z setjmp/longjmp na wyjątki, które
 # w Hydrze są wyłączone — czyli wywróciłaby cały mechanizm pcall.
+# pocketmod: jeden plik C z ciałem biblioteki nagłówkowej.
+POCKETMOD_SRC = $(wildcard ../src/pocketmod/*.c)
+POCKETMOD_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(notdir $(POCKETMOD_SRC)))
+
 LUA_SRC   = $(wildcard ../src/lua/*.c)
 LUA_OBJ   = $(patsubst %.c,$(BUILD)/%.o,$(notdir $(LUA_SRC)))
 
@@ -123,7 +150,7 @@ DEP       = $(OBJ:.o=.d) $(LUA_OBJ:.o=.d) $(WASM3_OBJ:.o=.d)
 
 VPATH     = ../src/core:../src/hal:../src/hal/mock:../src/hal/host:../src/sense:../src/drivers/sense:\
             ../src/net:../src/net/mock:../src/gfx:../src/gfx/sdl:../src/ui:../src/ui/mock:../src/ui/lvgl:../src/motion:../src/shell:../src/diag:../src/util:../src/ota:\
-            ../src/script:../src/minis:../src/minis/links:../src/media:../src/media/elements:../src/media/sdl:../src/arduboy:../src/stim:../src/lua:../src/wasm3:$(subst $() $(),:,$(patsubst %/,%,$(sort $(dir $(WAMR_SRC))))):.
+            ../src/script:../src/minis:../src/minis/links:../src/media:../src/media/elements:../src/media/sdl:../src/arduboy:../src/stim:../src/infer:../src/pocketmod:../src/lua:../src/wasm3:$(subst $() $(),:,$(patsubst %/,%,$(sort $(dir $(WAMR_SRC))))):.
 
 .PHONY: docs all run asan tsan examples stub clean
 
@@ -140,6 +167,14 @@ $(BUILD)/%.o: %.cpp | $(BUILD)
 $(BUILD)/wamr_%.o: %.c | $(BUILD)
 	$(CC) -std=gnu99 -O1 -g -MMD -MP $(WAMR_INC) $(WAMR_DEF) $(EXTRA) -c $< -o $@
 
+$(BUILD)/tflm/%.o: $(TFLM_ROOT)/%.cpp | $(BUILD)
+	@mkdir -p $(dir $@)
+	$(CXX) -std=c++17 -O1 -g -fno-exceptions -fno-rtti -MMD -MP \
+	       $(TFLM_INC) $(TFLM_DEF) $(EXTRA) \
+	       -Wno-unused-parameter -Wno-sign-compare -Wno-missing-field-initializers \
+	       -Wno-unused-private-field -Wno-deprecated-declarations \
+	       -c $< -o $@
+
 $(BUILD)/%.o: %.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -149,8 +184,8 @@ $(BUILD)/%.o: %.c | $(BUILD)
 $(WAMR_ASM_OBJ): $(WAMR_ASM) | $(BUILD)
 	$(CC) -x assembler-with-cpp $(WAMR_DEF) -c $< -o $@
 
-$(BIN): $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(WAMR_OBJ) $(WAMR_ASM_OBJ)
-	$(CXX) $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(WAMR_OBJ) $(WAMR_ASM_OBJ) $(LDFLAGS) -o $@
+$(BIN): $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(WAMR_OBJ) $(WAMR_ASM_OBJ) $(TFLM_OBJ) $(POCKETMOD_OBJ)
+	$(CXX) $(OBJ) $(LUA_OBJ) $(WASM3_OBJ) $(WAMR_OBJ) $(WAMR_ASM_OBJ) $(TFLM_OBJ) $(POCKETMOD_OBJ) $(LDFLAGS) -o $@
 
 run: $(BIN)
 	@./$(BIN) $(FILTER)

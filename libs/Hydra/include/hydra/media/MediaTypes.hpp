@@ -29,7 +29,17 @@ namespace hydra {
 namespace media {
 
 /** Rodzina danych płynących przez pad. */
-enum class MediaKind : u8 { None = 0, Audio, Video };
+/**
+ * Rodzaj danych na padzie.
+ *
+ * `Features` doszedł razem z MFCC i jest tu z konkretnego powodu: to pierwsza
+ * rzecz w potoku, która **nie jest strumieniem w czasie**. Próbki mikrofonu
+ * i odczyty prądu są ciągiem wartości o znanej częstotliwości — jedne i drugie
+ * mieszczą się w `Audio`. Współczynniki cepstralne to wektor liczb opisujący
+ * **okno** sygnału: nie mają częstotliwości próbkowania ani kanałów, mają
+ * długość i stawkę okien na sekundę.
+ */
+enum class MediaKind : u8 { None = 0, Audio, Video, Features };
 
 /**
  * Układ próbek audio.
@@ -140,6 +150,21 @@ struct MediaFormat {
         return f;
     }
 
+    /**
+     * Wektor cech: `count` liczb `float` na okno.
+     *
+     * `frameRateMilli` niesie stawkę okien na sekundę ×1000 — to samo pole,
+     * co przy obrazie, bo znaczy dokładnie to samo: ile porcji na sekundę.
+     */
+    static MediaFormat features(u16 count, u32 windowsPerSecondMilli = 0) {
+        MediaFormat f;
+        f.kind = MediaKind::Features;
+        f.width = count;
+        f.frameRateMilli = windowsPerSecondMilli;
+        f.sampleFormat = SampleFormat::F32;
+        return f;
+    }
+
     static MediaFormat video(FrameFormat format, u16 w, u16 h, u32 fpsMilli = 0) {
         MediaFormat f;
         f.kind = MediaKind::Video;
@@ -152,11 +177,17 @@ struct MediaFormat {
 
     bool equals(const MediaFormat& other) const;
 
-    /** Bajty jednej ramki audio (wszystkie kanały) albo jednego piksela. */
+    /** Bajty jednej ramki audio (wszystkie kanały), piksela albo wektora cech. */
     u32 unitBytes() const {
-        return kind == MediaKind::Audio
-                   ? static_cast<u32>(bytesPerSample(sampleFormat)) * channels
-                   : static_cast<u32>(bitsPerPixel(frameFormat)) / 8u;
+        if (kind == MediaKind::Audio) {
+            return static_cast<u32>(bytesPerSample(sampleFormat)) * channels;
+        }
+        if (kind == MediaKind::Features) {
+            // Jednostką jest cały wektor: cechy nie mają sensu pojedynczo,
+            // a blok z połową wektora byłby danymi nie do zinterpretowania.
+            return static_cast<u32>(width) * sizeof(float);
+        }
+        return static_cast<u32>(bitsPerPixel(frameFormat)) / 8u;
     }
 
     /** Bajty pełnej klatki obrazu; 0 dla formatów o zmiennej długości. */
@@ -195,10 +226,21 @@ enum class MediaFault : u8 {
     PoolEmpty,      ///< źródło nie miało z czego wziąć bufora
     FormatMismatch, ///< pady połączone, ale formaty się nie zgadzają
     TooLarge,       ///< blok większy niż bufor odbiorcy
+    /**
+     * Element nie wykonał swojej pracy z powodu leżącego w nim samym.
+     *
+     * Odróżnione od pozostałych, bo tamte opisują **przepływ** — kolejkę,
+     * pulę, rozmiar. Ta mówi, że dane dopłynęły poprawnie, a mimo to nic
+     * z nich nie wyszło: model odmówił wykonania, sprzęt zwrócił błąd.
+     * Bez tego rozróżnienia usterka silnika wygląda w statystykach jak
+     * zapchana kolejka i szuka się jej w złym miejscu.
+     */
+    Internal,
 };
 
 constexpr const char* toString(MediaFault f) {
     switch (f) {
+        case MediaFault::Internal:       return "internal";
         case MediaFault::Underrun:       return "underrun";
         case MediaFault::Overrun:        return "overrun";
         case MediaFault::PoolEmpty:      return "pool-empty";

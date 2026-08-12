@@ -52,6 +52,17 @@ targets:
         scale: 6
         title: "Jaskinia"
 
+  # Ta sama gra w przeglądarce: kanwa zamiast okna, ten sam kod rysujący.
+  web:
+    mcu: wasm
+    native:
+      window:
+        width: 128
+        height: 64
+        format: mono1
+        scale: 6
+        title: "Jaskinia"
+
   esp32s3:
     mcu: esp32s3
     platformio: { board: esp32-s3-devkitc-1 }
